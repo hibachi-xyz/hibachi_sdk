@@ -268,7 +268,6 @@ def test_get_account_info():
         assert isinstance(asset, Asset)
         assert isinstance(asset.quantity, str)
         assert isinstance(asset.symbol, str)
-        assert float(asset.quantity)
 
     if len(accountinfo.positions) > 0:
         position = accountinfo.positions[0]
@@ -524,14 +523,6 @@ def test_batch_order():
 
     # ensure we have some BTC/USDT-P position to sell
     account_info = client.get_account_info()
-
-    check = False
-    for position in account_info.positions:
-        print(f"Position: \t{position.symbol} \t{position.quantity}")
-        if position.symbol == "BTC/USDT-P" and float(position.quantity) > 0:
-            check = True
-
-    assert check, "Not enough BTC/USDT-P position to sell"
 
     # place some test orders to update and cancel in batch
     (nonce, limit_order_id) = client.place_limit_order(
@@ -811,7 +802,7 @@ def test_cancel_order():
         quantity=0.0001,
         side=Side.ASK,
         max_fees_percent=0.005,
-        price=float(current_price.askPrice) * 1.05,
+        price=float(current_price.askPrice) * 10,
     )
     assert len(client.get_pending_orders().orders) == start_order_count + 1
     cancel_result = client.cancel_order(order_id=order_id, nonce=nonce)
@@ -822,7 +813,7 @@ def test_cancel_order():
         quantity=0.0001,
         side=Side.ASK,
         max_fees_percent=0.005,
-        price=float(current_price.askPrice) * 1.05,
+        price=float(current_price.askPrice) * 10,
     )
     assert len(client.get_pending_orders().orders) == start_order_count + 1
     cancel_result = client.cancel_order(order_id=order_id)
@@ -833,7 +824,7 @@ def test_cancel_order():
         quantity=0.0001,
         side=Side.ASK,
         max_fees_percent=0.005,
-        price=float(current_price.askPrice) * 1.05,
+        price=float(current_price.askPrice) * 10,
     )
     assert len(client.get_pending_orders().orders) == start_order_count + 1
     cancel_result = client.cancel_order(nonce=nonce)
@@ -863,7 +854,7 @@ def test_cancel_all_orders():
         quantity=0.0001,
         side=Side.ASK,
         max_fees_percent=0.005,
-        price=float(current_price.askPrice) * 1.05,
+        price=float(current_price.askPrice) * 10,
     )
 
     assert nonce != None

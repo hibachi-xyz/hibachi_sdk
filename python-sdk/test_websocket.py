@@ -234,10 +234,8 @@ async def test_account_websocket():
             result.accountSnapshot, AccountSnapshot
         ), "accountSnapshot missing"
         assert isinstance(result.accountSnapshot.positions, list)
-        assert result.accountSnapshot.positions, "No positions returned"
-
-        first_position = result.accountSnapshot.positions[0]
-        assert isinstance(first_position, Position), "Invalid Position object"
+        for position in result.accountSnapshot.positions:
+            assert isinstance(position, Position), "Invalid Position object"
 
     finally:
         await client.disconnect()

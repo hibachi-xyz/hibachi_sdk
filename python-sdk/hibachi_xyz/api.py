@@ -202,7 +202,7 @@ class HibachiApiClient:
                 FutureContract, contract
             )
 
-        fee_config = FeeConfig(**exchange_info["feeConfig"])
+        fee_config = create_with(FeeConfig, exchange_info["feeConfig"])
 
         # Parse future contracts
         future_contracts = [
@@ -211,7 +211,9 @@ class HibachiApiClient:
         ]
 
         # Parse withdrawal limit
-        withdrawal_limit = WithdrawalLimit(**exchange_info["instantWithdrawalLimit"])
+        withdrawal_limit = create_with(
+            WithdrawalLimit, exchange_info["instantWithdrawalLimit"]
+        )
 
         # Parse maintenance windows
         maintenance_windows = [
@@ -298,12 +300,13 @@ class HibachiApiClient:
 
         self.future_contracts = {}
         for market in market_inventory["markets"]:
-            contract = FutureContract(**market["contract"])
+            contract = create_with(FutureContract, market["contract"])
             self.future_contracts[contract.symbol] = contract
 
         markets = [
             Market(
-                contract=FutureContract(**m["contract"]), info=MarketInfo(**m["info"])
+                contract=create_with(FutureContract, m["contract"]),
+                info=create_with(MarketInfo, m["info"]),
             )
             for m in market_inventory["markets"]
         ]
@@ -313,7 +316,7 @@ class HibachiApiClient:
                 create_with(CrossChainAsset, cca)
                 for cca in market_inventory["crossChainAssets"]
             ],
-            feeConfig=FeeConfig(**market_inventory["feeConfig"]),
+            feeConfig=create_with(FeeConfig, market_inventory["feeConfig"]),
             markets=markets,
             tradingTiers=[
                 create_with(TradingTier, tt) for tt in market_inventory["tradingTiers"]
@@ -324,14 +327,16 @@ class HibachiApiClient:
 
     def get_prices(self, symbol: str) -> PriceResponse:
         response = self.__send_simple_request(f"/market/data/prices?symbol={symbol}")
-        response["fundingRateEstimation"] = FundingRateEstimation(
-            **response["fundingRateEstimation"]
+        response["fundingRateEstimation"] = create_with(
+            FundingRateEstimation,
+            response["fundingRateEstimation"],
         )
         return create_with(PriceResponse, response)
 
     def get_stats(self, symbol: str) -> StatsResponse:
-        return StatsResponse(
-            **self.__send_simple_request(f"/market/data/stats?symbol={symbol}")
+        return create_with(
+            StatsResponse,
+            self.__send_simple_request(f"/market/data/stats?symbol={symbol}"),
         )
 
     def get_trades(self, symbol: str) -> TradesResponse:
