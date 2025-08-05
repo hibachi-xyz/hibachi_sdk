@@ -69,7 +69,12 @@ from hibachi_xyz.types import (
     CancelOrder,
 )
 
-from hibachi_xyz.helpers import create_with, default_api_url, default_data_api_url
+from hibachi_xyz.helpers import (
+    create_with,
+    default_api_url,
+    default_data_api_url,
+    full_precision_string,
+)
 
 
 def price_to_bytes(price: float, contract: FutureContract) -> bytes:
@@ -1476,17 +1481,17 @@ class HibachiApiClient:
         request = {
             "nonce": nonce,
             "symbol": symbol,
-            "quantity": str(quantity),
+            "quantity": full_precision_string(quantity),
             "orderType": "MARKET",
             "side": side.value,
-            "maxFeesPercent": str(max_fees_percent),
+            "maxFeesPercent": full_precision_string(max_fees_percent),
             "signature": signature,
         }
         if price is not None:
             request["orderType"] = "LIMIT"
-            request["price"] = str(price)
+            request["price"] = full_precision_string(price)
         if trigger_price is not None:
-            request["triggerPrice"] = str(trigger_price)
+            request["triggerPrice"] = full_precision_string(trigger_price)
             if trigger_direction is not None:
                 request["triggerDirection"] = trigger_direction.value
         if twap_config is not None:
@@ -1521,19 +1526,19 @@ class HibachiApiClient:
         signature = self.__sign_payload(payload)
         request = {
             "nonce": nonce,
-            "updatedQuantity": str(quantity),
-            "quantity": str(quantity),
-            "maxFeesPercent": str(max_fees_percent),
+            "updatedQuantity": full_precision_string(quantity),
+            "quantity": full_precision_string(quantity),
+            "maxFeesPercent": full_precision_string(max_fees_percent),
             "signature": signature,
         }
         if price is not None:
-            request["updatedPrice"] = str(price)
-            request["price"] = str(price)
+            request["updatedPrice"] = full_precision_string(price)
+            request["price"] = full_precision_string(price)
         if order_id is not None:
             request["orderId"] = str(order_id)
         if trigger_price is not None:
-            request["updatedTriggerPrice"] = str(trigger_price)
-            request["trigger_price"] = str(trigger_price)
+            request["updatedTriggerPrice"] = full_precision_string(trigger_price)
+            request["trigger_price"] = full_precision_string(trigger_price)
         if creation_deadline is not None:
             deadline = floor(time()) + creation_deadline
             request["creationDeadline"] = deadline

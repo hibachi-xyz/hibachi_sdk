@@ -7,10 +7,19 @@ from hibachi_xyz.types import ExchangeInfo, FutureContract, MaintenanceWindow
 from datetime import datetime
 from prettyprinter import cpprint
 from dataclasses import asdict, dataclass
+from decimal import Decimal
 import inspect
 
 default_api_url = "https://api.hibachi.xyz"
 default_data_api_url = "https://data-api.hibachi.xyz"
+
+
+Numeric = Union[int, float, Decimal]
+
+
+def full_precision_string(n: Numeric) -> Decimal:
+    return format(Decimal(str(n)).normalize(), "f")
+
 
 # allow an object to be created from any superset of the required args
 # intending to future proof against updates adding fields
