@@ -39,7 +39,7 @@ async def example_ws_account(max_messages: int = None):
         try:
             await client.connect()
             result_start = await client.stream_start()
-            print(f"[Connected] stream_start result:")
+            print("[Connected] stream_start result:")
             print_data(result_start)
 
             print("Listening for account WebSocket messages (Ctrl+C to stop)...")

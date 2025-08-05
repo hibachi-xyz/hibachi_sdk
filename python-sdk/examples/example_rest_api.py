@@ -1,62 +1,15 @@
-import os
 
-from dotenv import load_dotenv
 from hibachi_xyz import (
     CancelOrder,
     CreateOrder,
     HibachiApiClient,
-    HibachiApiError,
-    Interval,
     TWAPConfig,
     TWAPQuantityMode,
     UpdateOrder,
-    get_version,
 )
 from hibachi_xyz.env_setup import setup_environment
-from hibachi_xyz.helpers import (
-    format_maintenance_window,
-    get_next_maintenance_window,
-    get_withdrawal_fee_for_amount,
-    print_data,
-)
 from hibachi_xyz.types import (
-    AccountInfo,
-    AccountTrade,
-    AccountTradesResponse,
-    Asset,
-    CapitalBalance,
-    CapitalHistory,
-    CrossChainAsset,
-    DepositInfo,
-    ExchangeInfo,
-    FeeConfig,
-    FundingRateEstimation,
-    FutureContract,
-    InventoryResponse,
-    Kline,
-    KlinesResponse,
-    MaintenanceWindow,
-    Market,
-    OpenInterestResponse,
-    Order,
-    OrderBook,
-    OrderBookLevel,
-    OrderStatus,
-    OrderType,
-    PendingOrdersResponse,
-    Position,
-    PriceResponse,
-    Settlement,
-    SettlementsResponse,
     Side,
-    StatsResponse,
-    TakerSide,
-    Trade,
-    TradesResponse,
-    TradingTier,
-    Transaction,
-    WithdrawalLimit,
-    WithdrawResponse,
 )
 
 
@@ -112,7 +65,7 @@ def example_auth_rest_api():
     #   tradeMakerFeeRate='0.00015000',
     #   tradeTakerFeeRate='0.00045000')
     #
-    print(f"\nAccount Info:\n-------------------")
+    print("\nAccount Info:\n-------------------")
     account_info = hibachi.get_account_info()
     print(account_info)
 
@@ -161,7 +114,7 @@ def example_auth_rest_api():
     #         # ... more trades
     #     ]
     # )
-    print(f"\nAccount Trades:\n-------------------")
+    print("\nAccount Trades:\n-------------------")
     trades_response = hibachi.get_account_trades()
     print(trades_response)
 
@@ -188,7 +141,7 @@ def example_auth_rest_api():
     #         # ... more settlements
     #     ]
     # )
-    print(f"\nSettlements History:\n-------------------")
+    print("\nSettlements History:\n-------------------")
     settlements_response = hibachi.get_settlements_history()
     print(settlements_response)
 
@@ -219,7 +172,7 @@ def example_auth_rest_api():
     #         ]
     # )
     #
-    print(f"\nPending Orders:\n-------------------")
+    print("\nPending Orders:\n-------------------")
     pending_orders_response = hibachi.get_pending_orders()
     print(pending_orders_response)
     # example:
@@ -227,7 +180,7 @@ def example_auth_rest_api():
 
     # Get Capital Balance
     #
-    print(f"\nCapital Balance:\n-------------------")
+    print("\nCapital Balance:\n-------------------")
     capital_balance = hibachi.get_capital_balance()
     print(capital_balance.balance)
 
@@ -257,7 +210,7 @@ def example_auth_rest_api():
     #         # ... more transactions
     #     ]
     # )
-    print(f"\nCapital History:\n-------------------")
+    print("\nCapital History:\n-------------------")
     history = hibachi.get_capital_history()
     print(history)
 
@@ -266,7 +219,7 @@ def example_auth_rest_api():
 
     # Place a Market Order
     # For more information please see the README documentation
-    print(f"\nPlacing a Market Order:\n-------------------")
+    print("\nPlacing a Market Order:\n-------------------")
     print(hibachi.account_id)
     (nonce, order_id) = hibachi.place_market_order(
         symbol="BTC/USDT-P",
@@ -309,7 +262,7 @@ def example_auth_rest_api():
     #   totalQuantity='0.0001000000',
     #   triggerPrice='102124.41440'
     # )
-    print(f"\nGet Order Details:\n-------------------")
+    print("\nGet Order Details:\n-------------------")
     order_details = hibachi.get_order_details(order_id=order_id)
     print(order_details.status, order_details.symbol, order_details.price)
 
@@ -489,7 +442,7 @@ def example_auth_rest_api():
         ]
     )
 
-    print(f"\nBatch Order Response:\n-------------------")
+    print("\nBatch Order Response:\n-------------------")
     # assert all batch orders were successful
     for order in response.orders:
         print(f"Batch Order result: nonce({order.nonce}) orderId({order.orderId})")

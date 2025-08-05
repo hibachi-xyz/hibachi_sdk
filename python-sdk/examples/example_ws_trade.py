@@ -2,7 +2,7 @@ import asyncio
 
 from hibachi_xyz import HibachiWSTradeClient, print_data
 from hibachi_xyz.env_setup import setup_environment
-from hibachi_xyz.types import OrderPlaceParams, OrderStatus, OrderType, Side
+from hibachi_xyz.types import OrderPlaceParams, OrderType, Side
 
 
 async def example_ws_trade():

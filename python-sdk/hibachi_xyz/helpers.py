@@ -1,12 +1,12 @@
 import asyncio
-from typing import Dict, List, Optional, TypeVar, Union, Any, Callable
+from typing import Dict, Optional, TypeVar, Union, Any, Callable
 
 from websockets import ClientConnection, HeadersLike
 import websockets
-from hibachi_xyz.types import ExchangeInfo, FutureContract, MaintenanceWindow
+from hibachi_xyz.types import ExchangeInfo, MaintenanceWindow
 from datetime import datetime
 from prettyprinter import cpprint
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from decimal import Decimal
 import inspect
 

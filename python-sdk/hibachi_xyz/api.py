@@ -1,24 +1,19 @@
 from dataclasses import asdict
-from enum import Enum
 from hashlib import sha256
 import hmac
-import json
 from math import floor
 from time import time, time_ns
-from typing import Any, Dict, Optional, TypeAlias, List, Tuple, Union
+from typing import Any, Dict, Optional
 
 from eth_keys import keys
 import requests
 
 from hibachi_xyz.types import (
-    BatchOrder,
     BatchResponse,
     BatchResponseOrder,
     ExchangeInfo,
-    FeeConfig,
     FutureContract,
     MaintenanceWindow,
-    Order,
     OrderIdVariant,
     PendingOrdersResponse,
     TriggerDirection,
@@ -1020,7 +1015,7 @@ class HibachiApiClient:
         )
         request_data["accountId"] = self.account_id
         response = self.__send_authorized_request(
-            "POST", f"/trade/order", json=request_data
+            "POST", "/trade/order", json=request_data
         )
         order_id = int(response["orderId"])
         return (nonce, order_id)
@@ -1086,7 +1081,7 @@ class HibachiApiClient:
         )
         request_data["accountId"] = self.account_id
         response = self.__send_authorized_request(
-            "POST", f"/trade/order", json=request_data
+            "POST", "/trade/order", json=request_data
         )
         order_id = int(response["orderId"])
         return (nonce, order_id)
@@ -1132,7 +1127,7 @@ class HibachiApiClient:
         request_data = {"accountId": int(self.account_id), "orders": orders_data}
 
         result = self.__send_authorized_request(
-            "POST", f"/trade/orders", json=request_data
+            "POST", "/trade/orders", json=request_data
         )
         orders = [create_with(BatchResponseOrder, order) for order in result["orders"]]
         if len(orders) < 1:
@@ -1179,7 +1174,7 @@ class HibachiApiClient:
         )
 
         return self.__send_authorized_request(
-            "PUT", f"/trade/order", json=request_data_two
+            "PUT", "/trade/order", json=request_data_two
         )
 
     def _update_order_generate_sig(
@@ -1253,7 +1248,7 @@ class HibachiApiClient:
         request_data = self._cancel_order_request_data(order_id, nonce, True)
         request_data["accountId"] = int(self.account_id)
         return self.__send_authorized_request(
-            "DELETE", f"/trade/order", json=request_data
+            "DELETE", "/trade/order", json=request_data
         )
 
     def cancel_all_orders(self, contractId: Optional[int] = None) -> Dict[str, Any]:
@@ -1282,7 +1277,7 @@ class HibachiApiClient:
             request_data = self._cancel_order_request_data(None, nonce, False)
             request_data["accountId"] = int(self.account_id)
             return self.__send_authorized_request(
-                "DELETE", f"/trade/orders", json=request_data
+                "DELETE", "/trade/orders", json=request_data
             )
 
     def batch_orders(
@@ -1341,7 +1336,7 @@ class HibachiApiClient:
         request_data = {"accountId": int(self.account_id), "orders": orders_data}
 
         result = self.__send_authorized_request(
-            "POST", f"/trade/orders", json=request_data
+            "POST", "/trade/orders", json=request_data
         )
         orders = [create_with(BatchResponseOrder, order) for order in result["orders"]]
         result["orders"] = orders

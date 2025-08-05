@@ -4,7 +4,7 @@ import time
 from typing import Callable, Dict, List, Optional
 
 import websockets
-from hibachi_xyz.helpers import connect_with_retry, default_api_url, print_data
+from hibachi_xyz.helpers import connect_with_retry, default_api_url
 from hibachi_xyz.types import AccountSnapshot, AccountStreamStartResult, Position
 
 

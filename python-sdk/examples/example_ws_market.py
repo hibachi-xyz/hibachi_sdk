@@ -4,7 +4,6 @@ from hibachi_xyz import (
     HibachiWSMarketClient,
     WebSocketSubscription,
     WebSocketSubscriptionTopic,
-    print_data,
 )
 
 

@@ -1,13 +1,10 @@
-import asyncio
 import json
-import os
 import random
 import time
 from dataclasses import asdict
-from typing import Any, Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import websockets
-from eth_keys import keys
 from hibachi_xyz.api import HibachiApiClient
 from hibachi_xyz.helpers import (
     connect_with_retry,
@@ -17,35 +14,15 @@ from hibachi_xyz.helpers import (
 )
 
 from .types import (
-    AccountInfo,
-    AccountTradesResponse,
-    CapitalBalance,
-    CapitalHistory,
-    DepositInfo,
     EnableCancelOnDisconnectParams,
     Nonce,
     Order,
-    OrderCancelParams,
-    OrderModifyParams,
     OrderPlaceParams,
-    OrderPlaceResponse,
-    OrderPlaceResponseResult,
-    OrderResponse,
     OrdersBatchParams,
-    OrdersCancelParams,
-    OrdersStatusParams,
     OrdersStatusResponse,
-    OrderStatusParams,
     OrderStatusResponse,
-    PendingOrdersResponse,
-    SettlementsResponse,
     Side,
-    WebSocketMarketSubscriptionListResponse,
     WebSocketResponse,
-    WebSocketSubscription,
-    WebSocketSubscriptionTopic,
-    WithdrawRequest,
-    WithdrawResponse,
 )
 
 

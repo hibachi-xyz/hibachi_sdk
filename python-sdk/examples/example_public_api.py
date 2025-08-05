@@ -1,64 +1,12 @@
-import os
 from hibachi_xyz import (
     get_version,
     HibachiApiClient,
-    HibachiApiError,
     Interval,
-    TWAPConfig,
-    TWAPQuantityMode,
-    CreateOrder,
-    UpdateOrder,
-    CancelOrder,
-)
-from hibachi_xyz.types import (
-    FundingRateEstimation,
-    Order,
-    Side,
-    OrderStatus,
-    OrderType,
-    PriceResponse,
-    StatsResponse,
-    TradesResponse,
-    Trade,
-    TakerSide,
 )
 from hibachi_xyz.helpers import (
     format_maintenance_window,
     get_next_maintenance_window,
-    get_withdrawal_fee_for_amount,
-    print_data,
 )
-from hibachi_xyz.types import (
-    ExchangeInfo,
-    FeeConfig,
-    FutureContract,
-    MaintenanceWindow,
-    WithdrawalLimit,
-    KlinesResponse,
-    Kline,
-    OpenInterestResponse,
-    OrderBook,
-    OrderBookLevel,
-    AccountInfo,
-    Asset,
-    Position,
-    AccountTradesResponse,
-    AccountTrade,
-    SettlementsResponse,
-    Settlement,
-    PendingOrdersResponse,
-    Order,
-    CapitalHistory,
-    Transaction,
-    WithdrawResponse,
-    DepositInfo,
-    CapitalBalance,
-    InventoryResponse,
-    CrossChainAsset,
-    Market,
-    TradingTier,
-)
-from dotenv import load_dotenv
 
 
 def example_public_api():
@@ -70,7 +18,7 @@ def example_public_api():
     # HibachiApiClient can be initialized without env variables
     hibachi = HibachiApiClient()
     exch_info = hibachi.get_exchange_info()
-    print(f"\nExchange Info:\n-------------------")
+    print("\nExchange Info:\n-------------------")
 
     print(exch_info)
     # feeConfig: FeeConfig
@@ -79,7 +27,7 @@ def example_public_api():
     # maintenanceWindow: List[MaintenanceWindow]
 
     # status: "NORMAL" | "MAINTENANCE"
-    print(f"\nExchange status:\n----------------------------------")
+    print("\nExchange status:\n----------------------------------")
     print(exch_info.status)
 
     # Maintenance Window
@@ -168,7 +116,7 @@ def example_public_api():
     # Get Open Interest
     # OpenInterestResponse(totalQuantity='2.1586388558')
     open_interest = hibachi.get_open_interest("BTC/USDT-P")
-    print(f"\nOpen Interest for BTC/USDT-P:\n----------------------------------")
+    print("\nOpen Interest for BTC/USDT-P:\n----------------------------------")
     print(open_interest.totalQuantity)
 
     # Get Order Book
@@ -261,7 +209,7 @@ def example_public_api():
     # )
 
     inventory = hibachi.get_inventory()
-    print(f"\nInventory:\n----------------------------------")
+    print("\nInventory:\n----------------------------------")
     print(inventory)
 
     # commented for safety, uncomment to use

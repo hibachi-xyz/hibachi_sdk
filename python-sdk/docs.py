@@ -1,15 +1,11 @@
 # Run this file to create the docs
 import os
-from pydoc_markdown.interfaces import Context
 from pydoc_markdown.contrib.loaders.python import PythonLoader
 from pydoc_markdown.contrib.renderers.markdown import MarkdownRenderer
 from pydoc_markdown.contrib.processors.filter import FilterProcessor
-from pydoc_markdown.contrib.loaders.python import PythonLoader
 from pydoc_markdown import PydocMarkdown
 from pydoc_markdown.contrib.processors.crossref import CrossrefProcessor
-from pydoc_markdown.contrib.processors.filter import FilterProcessor
 from pydoc_markdown.contrib.processors.smart import SmartProcessor
-from pydoc_markdown.contrib.renderers.docusaurus import DocusaurusRenderer
 from pydoc_markdown.interfaces import Loader
 
 

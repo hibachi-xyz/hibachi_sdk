@@ -1,12 +1,5 @@
-import asyncio
-import json
-import os
-import time
-from dataclasses import asdict, dataclass
-from typing import List, Union
+from typing import List
 
-import websockets
-from eth_keys import keys
 from hibachi_xyz import (
     CancelOrder,
     CreateOrder,
@@ -20,10 +13,8 @@ from hibachi_xyz import (
 )
 from hibachi_xyz.env_setup import setup_environment
 from hibachi_xyz.helpers import (
-    format_maintenance_window,
     get_next_maintenance_window,
     get_withdrawal_fee_for_amount,
-    print_data,
 )
 from hibachi_xyz.types import (
     AccountInfo,
@@ -51,7 +42,6 @@ from hibachi_xyz.types import (
     OrderType,
     PendingOrdersResponse,
     Position,
-    PriceResponse,
     Settlement,
     SettlementsResponse,
     Side,
@@ -64,7 +54,6 @@ from hibachi_xyz.types import (
     WithdrawalLimit,
     WithdrawResponse,
 )
-from prettyprinter import pformat
 
 
 def is_convertible_to_float(value: str) -> bool:

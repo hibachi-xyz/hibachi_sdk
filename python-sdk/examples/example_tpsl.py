@@ -11,7 +11,6 @@ import asyncio
 from hibachi_xyz import HibachiWSTradeClient
 from hibachi_xyz.env_setup import setup_environment
 
-from dotenv import load_dotenv
 
 
 def example_tpsl_rest():

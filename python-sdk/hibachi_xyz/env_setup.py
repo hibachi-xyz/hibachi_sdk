@@ -8,10 +8,10 @@ def setup_environment():
     # Load the .env file if it exists
     env_file_path = Path(".env")
     if env_file_path.exists():
-        print(f"Loading environment variables from .env file")
+        print("Loading environment variables from .env file")
         load_dotenv()  # This loads variables from .env file (if it exists)
     else:
-        print(f".env file not found. Falling back to Bash Environment variables.")
+        print(".env file not found. Falling back to Bash Environment variables.")
 
     # Use a default environment if no environment is passed
     environment = os.getenv(

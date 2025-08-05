@@ -1,4 +1,3 @@
-import asyncio
 
 import pytest
 from examples.example_public_api import example_public_api
