@@ -88,7 +88,7 @@ async def test_trade_websocket():
         current_price = client.api.get_prices("BTC/USDT-P")
         print(f"current_price: {current_price}")
 
-        start_order_count = len(client.api.get_pending_orders().orders)
+        len(client.api.get_pending_orders().orders)
 
         (nonce, order_id) = client.api.place_limit_order(
             symbol="BTC/USDT-P",
@@ -109,7 +109,7 @@ async def test_trade_websocket():
 
         # test cancel using websocket
 
-        result_of_cancel_all_orders = await client.cancel_all_orders()
+        await client.cancel_all_orders()
 
         assert len(client.api.get_pending_orders().orders) == 0
 

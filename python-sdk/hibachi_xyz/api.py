@@ -162,7 +162,7 @@ class HibachiApiClient:
             private_key_bytes = bytes.fromhex(private_key)
             self._private_key = keys.PrivateKey(private_key_bytes)
 
-        if private_key.startswith("0x") == False:
+        if private_key.startswith("0x") is False:
             self._private_key_hmac = private_key
 
     """ Market API endpoints, can be called without having an account """
@@ -1161,7 +1161,6 @@ class HibachiApiClient:
         """
         self.__check_auth_data()
         order = self.get_order_details(order_id=order_id)
-        symbol = order.symbol
 
         request_data_two = self._update_order_generate_sig(
             order,

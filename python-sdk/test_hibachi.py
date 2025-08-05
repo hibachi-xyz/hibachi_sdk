@@ -82,25 +82,25 @@ def test_get_version():
 
 def test_exchange_info():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
 
     exch_info = client.get_exchange_info()
-    assert exch_info != None
+    assert exch_info is not None
 
     assert isinstance(exch_info, ExchangeInfo)
 
-    assert exch_info.feeConfig != None
+    assert exch_info.feeConfig is not None
     assert isinstance(exch_info.feeConfig, FeeConfig)
 
-    assert exch_info.futureContracts[0] != None
+    assert exch_info.futureContracts[0] is not None
     assert isinstance(exch_info.futureContracts[0], FutureContract)
 
     assert isinstance(exch_info.futureContracts[0].displayName, str)
 
-    assert exch_info.instantWithdrawalLimit != None
+    assert exch_info.instantWithdrawalLimit is not None
     assert isinstance(exch_info.instantWithdrawalLimit, WithdrawalLimit)
 
-    assert exch_info.maintenanceWindow != None
+    assert exch_info.maintenanceWindow is not None
     assert isinstance(exch_info.maintenanceWindow, List)
     assert isinstance(exch_info.status, str)
 
@@ -109,13 +109,13 @@ def test_exchange_info():
 
     next_maintainance_window = get_next_maintenance_window(exch_info)
 
-    if next_maintainance_window != None:
+    if next_maintainance_window is not None:
         assert isinstance(next_maintainance_window, MaintenanceWindow)
 
 
 def test_get_prices():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
     prices = client.get_prices("BTC/USDT-P")
 
     assert isinstance(prices.askPrice, str)
@@ -129,7 +129,7 @@ def test_get_prices():
 
 def test_get_stats():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
     testsymbol = "BTC/USDT-P"
     stats = client.get_stats(testsymbol)
 
@@ -146,7 +146,7 @@ def test_get_stats():
 
 def test_get_trades():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
     trades_response = client.get_trades("BTC/USDT-P")
 
     assert isinstance(trades_response, TradesResponse)
@@ -170,7 +170,7 @@ def test_get_trades():
 
 def test_get_klines():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
     klines_response = client.get_klines("BTC/USDT-P", Interval.ONE_WEEK)
 
     assert isinstance(klines_response, KlinesResponse)
@@ -207,7 +207,7 @@ def test_get_klines():
 
 def test_get_open_interest():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
     open_interest = client.get_open_interest("BTC/USDT-P")
 
     assert isinstance(open_interest, OpenInterestResponse)
@@ -217,7 +217,7 @@ def test_get_open_interest():
 
 def test_get_orderbook():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
     orderbook = client.get_orderbook("SOL/USDT-P", 5, 0.01)
 
     assert isinstance(orderbook, OrderBook)
@@ -323,7 +323,7 @@ def test_get_settlements_history():
     client = HibachiApiClient(
         api_endpoint, data_api_endpoint, account_id=account_id, api_key=api_key
     )
-    assert client != None
+    assert client is not None
     # assert account_id != "your-account-id"
     # assert api_key != "your-api-key"
     # client.set_account_id(account_id)
@@ -349,7 +349,7 @@ def test_get_pending_orders():
     client = HibachiApiClient(
         api_endpoint, data_api_endpoint, account_id=account_id, api_key=api_key
     )
-    assert client != None
+    assert client is not None
     # assert account_id != "your-account-id"
     # assert api_key != "your-api-key"
     # client.set_account_id(account_id)
@@ -383,7 +383,7 @@ def test_place_market_order():
         api_key=api_key,
         private_key=private_key,
     )
-    assert client != None
+    assert client is not None
     # assert account_id != "your-account-id"
     # assert api_key != "your-api-key"
     # assert private_key != "your-private"
@@ -511,7 +511,7 @@ def test_batch_order():
     print(f"Limit order ID: {limit_order_id}, Nonce: {nonce}")
 
     # ensure we have some BTC/USDT-P position to sell
-    account_info = client.get_account_info()
+    client.get_account_info()
 
     # place some test orders to update and cancel in batch
     (nonce, limit_order_id) = client.place_limit_order(
@@ -687,7 +687,7 @@ def test_get_capital_history():
 
 def test_withdraw():
     client = HibachiApiClient(api_endpoint, data_api_endpoint)
-    assert client != None
+    assert client is not None
     assert account_id != "your-account-id"
     assert api_key != "your-api-key"
     assert private_key != "your-private"
@@ -718,7 +718,7 @@ def test_get_deposit_info():
     client = HibachiApiClient(
         api_endpoint, data_api_endpoint, account_id=account_id, api_key=api_key
     )
-    assert client != None
+    assert client is not None
 
     # To get public_key inspect network traffic in the browser.
     # GET api.hibachi.xyz/user/subaccounts
@@ -734,7 +734,7 @@ def test_get_deposit_info():
 
 def test_get_inventory():
     client = HibachiApiClient()
-    assert client != None
+    assert client is not None
 
     inventory = client.get_inventory()
 
@@ -764,7 +764,7 @@ def test_transfer():
         api_key=api_key,
         private_key=private_key,
     )
-    assert client != None
+    assert client is not None
 
     transfer = client.transfer(
         coin="USDT", quantity="0.5", dstPublicKey=dst_public_key, max_fees="0"
@@ -781,7 +781,7 @@ def test_cancel_order():
         api_key=api_key,
         private_key=private_key,
     )
-    assert client != None
+    assert client is not None
     start_order_count = len(client.get_pending_orders().orders)
 
     current_price = client.get_prices("BTC/USDT-P")
@@ -794,7 +794,7 @@ def test_cancel_order():
         price=float(current_price.askPrice) * 10,
     )
     assert len(client.get_pending_orders().orders) == start_order_count + 1
-    cancel_result = client.cancel_order(order_id=order_id, nonce=nonce)
+    client.cancel_order(order_id=order_id, nonce=nonce)
     assert len(client.get_pending_orders().orders) == start_order_count
 
     (nonce, order_id) = client.place_limit_order(
@@ -805,7 +805,7 @@ def test_cancel_order():
         price=float(current_price.askPrice) * 10,
     )
     assert len(client.get_pending_orders().orders) == start_order_count + 1
-    cancel_result = client.cancel_order(order_id=order_id)
+    client.cancel_order(order_id=order_id)
     assert len(client.get_pending_orders().orders) == start_order_count
 
     (nonce, order_id) = client.place_limit_order(
@@ -816,7 +816,7 @@ def test_cancel_order():
         price=float(current_price.askPrice) * 10,
     )
     assert len(client.get_pending_orders().orders) == start_order_count + 1
-    cancel_result = client.cancel_order(nonce=nonce)
+    client.cancel_order(nonce=nonce)
     assert len(client.get_pending_orders().orders) == start_order_count
 
     for order in client.get_pending_orders().orders:
@@ -832,7 +832,7 @@ def test_cancel_all_orders():
         api_key=api_key,
         private_key=private_key,
     )
-    assert client != None
+    assert client is not None
 
     current_price = client.get_prices("BTC/USDT-P")
 
@@ -846,14 +846,14 @@ def test_cancel_all_orders():
         price=float(current_price.askPrice) * 10,
     )
 
-    assert nonce != None
-    assert order_id != None
+    assert nonce is not None
+    assert order_id is not None
 
     after_adding_order_count = len(client.get_pending_orders().orders)
 
     assert after_adding_order_count == start_order_count + 1
 
-    cancel_result = client.cancel_all_orders()
+    client.cancel_all_orders()
 
     order_count_after_cancel_all = len(client.get_pending_orders().orders)
 

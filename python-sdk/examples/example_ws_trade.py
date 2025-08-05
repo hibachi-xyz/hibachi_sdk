@@ -40,7 +40,7 @@ async def example_ws_trade():
         current_price = client.api.get_prices("BTC/USDT-P")
         print(f"current_price: {current_price}")
 
-        start_order_count = len(client.api.get_pending_orders().orders)
+        len(client.api.get_pending_orders().orders)
 
         (nonce, order_id) = client.api.place_limit_order(
             symbol="BTC/USDT-P",
@@ -57,7 +57,7 @@ async def example_ws_trade():
         orders_rest = client.api.get_pending_orders()
 
         # test cancel using websocket
-        result_of_cancel_all_orders = await client.cancel_all_orders()
+        await client.cancel_all_orders()
 
         # all orders cleared again...
 
@@ -88,7 +88,7 @@ async def example_ws_trade():
 
         print("TESTING WITH WEBSOCKET")
 
-        modify_result = await client.modify_order(
+        await client.modify_order(
             order=order.result,
             quantity=0.0001,
             price=price_after,
