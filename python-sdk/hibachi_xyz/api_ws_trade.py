@@ -98,6 +98,15 @@ class HibachiWSTradeClient:
 
     """
 
+    async def get_open_orders(self, symbol: str):
+        """
+        Fetches open orders for the specified symbol via WebSocket.
+        """
+        return await self.place_request(
+            action="GET_OPEN_ORDERS",
+            payload={"symbol": symbol}
+        )
+
     def __init__(
         self,
         api_key: str,
@@ -195,7 +204,7 @@ class HibachiWSTradeClient:
             "method": "order.cancel",
             "params": {
                 "orderId": str(orderId),
-                "accountId": str(self.account_id),
+                "accountId": self.account_id,
                 # "nonce": str(nonce)
             },
             "signature": prepare_packet.get("signature"),
