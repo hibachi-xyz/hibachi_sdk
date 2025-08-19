@@ -7,6 +7,7 @@ from typing import Callable, Dict, List, Optional
 import websockets
 from hibachi_xyz.api import HibachiApiClient
 from hibachi_xyz.helpers import (
+    get_hibachi_client,
     connect_with_retry,
     default_api_url,
     default_data_api_url,
@@ -109,7 +110,8 @@ class HibachiWSTradeClient:
     async def connect(self):
         """Establish WebSocket connection with retry logic"""
         self.websocket = await connect_with_retry(
-            web_url=self.api_endpoint + f"?accountId={self.account_id}",
+            web_url=self.api_endpoint
+            + f"?accountId={self.account_id}&hibachiClient={get_hibachi_client()}",
             headers=[("Authorization", self.api_key)],
         )
 

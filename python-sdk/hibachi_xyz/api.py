@@ -69,6 +69,7 @@ from hibachi_xyz.helpers import (
     default_api_url,
     default_data_api_url,
     full_precision_string,
+    get_hibachi_client,
 )
 
 
@@ -1344,7 +1345,10 @@ class HibachiApiClient:
     """ Private helpers """
 
     def __send_simple_request(self, path: str) -> Any:
-        response = requests.get(f"{self.data_api_url}{path}")
+        response = requests.get(
+            f"{self.data_api_url}{path}",
+            headers={"Hibachi-Client": get_hibachi_client()},
+        )
         error = _get_http_error(response)
         if error is not None:
             raise error
@@ -1364,6 +1368,7 @@ class HibachiApiClient:
             "Authorization": self.api_key,
             "Content-Type": "application/json",
             "Accept": "application/json",
+            "Hibachi-Client": get_hibachi_client(),
         }
 
         response = requests.request(

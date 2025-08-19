@@ -4,7 +4,7 @@ import time
 from typing import Callable, Dict, List, Optional
 
 import websockets
-from hibachi_xyz.helpers import connect_with_retry, default_api_url
+from hibachi_xyz.helpers import connect_with_retry, default_api_url, get_hibachi_client
 from hibachi_xyz.types import AccountSnapshot, AccountStreamStartResult, Position
 
 
@@ -27,7 +27,8 @@ class HibachiWSAccountClient:
 
     async def connect(self):
         self.websocket = await connect_with_retry(
-            web_url=self.api_endpoint + f"/ws/account?accountId={self.account_id}",
+            web_url=self.api_endpoint
+            + f"?accountId={self.account_id}&hibachiClient={get_hibachi_client()}",
             headers=[("Authorization", self.api_key)],
         )
 

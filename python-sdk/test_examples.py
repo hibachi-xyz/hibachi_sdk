@@ -1,4 +1,3 @@
-
 import pytest
 from examples.example_public_api import example_public_api
 from examples.example_rest_api import example_auth_rest_api

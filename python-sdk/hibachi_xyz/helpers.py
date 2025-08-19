@@ -8,13 +8,22 @@ from datetime import datetime
 from prettyprinter import cpprint
 from dataclasses import asdict
 from decimal import Decimal
+from functools import lru_cache
 import inspect
+
 
 default_api_url = "https://api.hibachi.xyz"
 default_data_api_url = "https://data-api.hibachi.xyz"
 
 
 Numeric = Union[int, float, Decimal]
+
+
+@lru_cache(maxsize=1)
+def get_hibachi_client() -> str:
+    import hibachi_xyz
+
+    return f"HibachiPythonSDK/{hibachi_xyz.__version__}"
 
 
 def full_precision_string(n: Numeric) -> Decimal:

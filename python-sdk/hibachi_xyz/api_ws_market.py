@@ -5,8 +5,12 @@ from typing import Callable, Dict, List, Optional
 
 import websockets
 
-from .helpers import connect_with_retry, default_data_api_url
-from .types import WebSocketSubscription
+from hibachi_xyz.helpers import (
+    connect_with_retry,
+    default_data_api_url,
+    get_hibachi_client,
+)
+from hibachi_xyz.types import WebSocketSubscription
 
 
 class HibachiWSMarketClient:
@@ -17,7 +21,9 @@ class HibachiWSMarketClient:
         self._receive_task: Optional[asyncio.Task] = None
 
     async def connect(self):
-        self.websocket = await connect_with_retry(self.api_endpoint)
+        self.websocket = await connect_with_retry(
+            self.api_endpoint + f"?hibachiClient={get_hibachi_client()}"
+        )
         self._receive_task = asyncio.create_task(self._receive_loop())
         return self
 

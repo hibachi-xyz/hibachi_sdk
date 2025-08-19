@@ -12,7 +12,6 @@ from hibachi_xyz import HibachiWSTradeClient
 from hibachi_xyz.env_setup import setup_environment
 
 
-
 def example_tpsl_rest():
     # load environment variables from .env file
     # make sure to create a .env file with the required variables
