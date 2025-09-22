@@ -7,6 +7,9 @@ parameters:
   publish_sdk:
     type: boolean
     default: false
+  run_integration_tests:
+    type: boolean
+    default: false
   environment:
     default: "test"
     type: enum
@@ -29,11 +32,15 @@ jobs:
       - run:
           name: Install SDK and dependencies and Run PyTest
           command: |
-            python3 -m venv myapp
-            source myapp/bin/activate 
-            pip install --upgrade pip
-            pip install 'hibachi-xyz[dev]'
-            ENVIRONMENT=$ENVIRONMENT pytest python-sdk/ -k "not example"
+            if [ "<< pipeline.parameters.run_integration_tests >>" = "true" ]; then
+              python3 -m venv myapp
+              source myapp/bin/activate
+              pip install --upgrade pip
+              pip install 'hibachi-xyz[dev]'
+              ENVIRONMENT=$ENVIRONMENT pytest python-sdk/ -k "not example"
+            else
+              echo "Integration tests disabled. Set run_integration_tests parameter to true to enable."
+            fi
       - slack/notify:
           event: fail
           channel: python-sdk-tests
