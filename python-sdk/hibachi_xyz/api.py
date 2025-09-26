@@ -1,4 +1,5 @@
 from dataclasses import asdict
+from decimal import Decimal
 from hashlib import sha256
 import hmac
 from math import floor
@@ -75,9 +76,9 @@ from hibachi_xyz.helpers import (
 
 def price_to_bytes(price: float, contract: FutureContract) -> bytes:
     return int(
-        price
-        * pow(2, 32)
-        * pow(10, contract.settlementDecimals - contract.underlyingDecimals)
+        Decimal(full_precision_string(price))
+        * pow(Decimal("2"), 32)
+        * pow(Decimal("10"), contract.settlementDecimals - contract.underlyingDecimals)
     ).to_bytes(8, "big")
 
 
@@ -1430,12 +1431,12 @@ class HibachiApiClient:
 
         nonce_bytes = nonce.to_bytes(8, "big")
         contract_id_bytes = contract_id.to_bytes(4, "big")
-        quantity_bytes = int(quantity * pow(10, contract.underlyingDecimals)).to_bytes(
+        quantity_bytes = int(Decimal(full_precision_string(quantity)) * pow(10, contract.underlyingDecimals)).to_bytes(
             8, "big"
         )
         price_bytes = b"" if price is None else price_to_bytes(price, contract)
         side_bytes = (0 if side.value == "ASK" else 1).to_bytes(4, "big")
-        max_fees_percent_bytes = int(max_fees_percent * pow(10, 8)).to_bytes(8, "big")
+        max_fees_percent_bytes = int(Decimal(full_precision_string(max_fees_percent)) * pow(10, 8)).to_bytes(8, "big")
 
         payload = (
             nonce_bytes
