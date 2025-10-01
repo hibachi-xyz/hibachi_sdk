@@ -7,13 +7,14 @@ from time import time, time_ns
 from typing import Any, Dict, Optional
 
 from eth_keys import keys
-import requests
+from hibachi_xyz.executors import RequestsHttpExecutor, HttpExecutor
 
 from hibachi_xyz.types import (
     BatchResponse,
     BatchResponseOrder,
     ExchangeInfo,
     FutureContract,
+    Json,
     MaintenanceWindow,
     OrderIdVariant,
     PendingOrdersResponse,
@@ -55,7 +56,6 @@ from hibachi_xyz.types import (
     TransferResponse,
     TWAPConfig,
     TPSLConfig,
-    HibachiApiError,
     Interval,
     Nonce,
     OrderId,
@@ -67,10 +67,9 @@ from hibachi_xyz.types import (
 
 from hibachi_xyz.helpers import (
     create_with,
-    default_api_url,
-    default_data_api_url,
+    DEFAULT_API_URL,
+    DEFAULT_DATA_API_URL,
     full_precision_string,
-    get_hibachi_client,
 )
 
 
@@ -80,16 +79,6 @@ def price_to_bytes(price: float, contract: FutureContract) -> bytes:
         * pow(Decimal("2"), 32)
         * pow(Decimal("10"), contract.settlementDecimals - contract.underlyingDecimals)
     ).to_bytes(8, "big")
-
-
-def _get_http_error(response: requests.Response) -> Optional[HibachiApiError]:
-    """Check if the response is an error and return an exception if it is
-    The builtin response.raise_for_status() does not show the server's response
-    """
-
-    if response.status_code > 299:
-        return HibachiApiError(response.status_code, response.text)
-    return None
 
 
 class HibachiApiClient:
@@ -123,8 +112,6 @@ class HibachiApiClient:
 
     """
 
-    api_url: str
-    data_api_url: str
     account_id: Optional[int] = None
     api_key: Optional[str] = None
 
@@ -133,30 +120,36 @@ class HibachiApiClient:
 
     future_contracts: Optional[Dict[str, FutureContract]] = None
 
+    _rest_executor: HttpExecutor
+
     def __init__(
         self,
-        api_url: str = default_api_url,
-        data_api_url: str = default_data_api_url,
+        api_url: str = DEFAULT_API_URL,
+        data_api_url: str = DEFAULT_DATA_API_URL,
         account_id: Optional[int] = None,
         api_key: Optional[str] = None,
         private_key: Optional[str] = None,
+        executor: HttpExecutor | None = None,
     ):
-        self.api_url = api_url
-        self.data_api_url = data_api_url
         self.account_id = (
             int(account_id)
             if isinstance(account_id, str) and account_id.isdigit()
             else account_id
         )
-        self.api_key = api_key
         if private_key is not None:
             self.set_private_key(private_key)
+
+        self._rest_executor = executor or RequestsHttpExecutor(
+            api_url=api_url,
+            data_api_url=data_api_url,
+            api_key=api_key,
+        )
 
     def set_account_id(self, account_id: int):
         self.account_id = account_id
 
     def set_api_key(self, api_key: str):
-        self.api_key = api_key
+        self._rest_executor.api_key = api_key
 
     def set_private_key(self, private_key: str):
         if private_key.startswith("0x"):
@@ -1342,43 +1335,25 @@ class HibachiApiClient:
         result["orders"] = orders
         return create_with(BatchResponse, result)
 
-    """ Private helpers """
+    """ Deferred helpers """
 
-    def __send_simple_request(self, path: str) -> Any:
-        response = requests.get(
-            f"{self.data_api_url}{path}",
-            headers={"Hibachi-Client": get_hibachi_client()},
-        )
-        error = _get_http_error(response)
-        if error is not None:
-            raise error
-        return response.json()
+    def __send_simple_request(self, path: str) -> Json:
+        return self._rest_executor.send_simple_request(path)
 
     def __check_auth_data(self):
         if self.account_id is None:
             raise RuntimeError("Account ID is not set")
-
-        if self.api_key is None:
-            raise RuntimeError("API key is not set")
+        return self._rest_executor.check_auth_data()
 
     def __send_authorized_request(
-        self, method: str, path: str, json: Optional[Any] = None
-    ) -> Any:
-        headers = {
-            "Authorization": self.api_key,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "Hibachi-Client": get_hibachi_client(),
-        }
+        self,
+        method: str,
+        path: str,
+        json: Json | None = None,
+    ) -> Json:
+        return self._rest_executor.send_authorized_request(method, path, json)
 
-        response = requests.request(
-            method, f"{self.api_url}{path}", headers=headers, json=json
-        )
-        error = _get_http_error(response)
-        if error is not None:
-            raise error
-
-        return response.json()
+    """ Private helpers """
 
     def __check_symbol(self, symbol: str):
         if self.future_contracts is None:
@@ -1431,12 +1406,15 @@ class HibachiApiClient:
 
         nonce_bytes = nonce.to_bytes(8, "big")
         contract_id_bytes = contract_id.to_bytes(4, "big")
-        quantity_bytes = int(Decimal(full_precision_string(quantity)) * pow(10, contract.underlyingDecimals)).to_bytes(
-            8, "big"
-        )
+        quantity_bytes = int(
+            Decimal(full_precision_string(quantity))
+            * pow(10, contract.underlyingDecimals)
+        ).to_bytes(8, "big")
         price_bytes = b"" if price is None else price_to_bytes(price, contract)
         side_bytes = (0 if side.value == "ASK" else 1).to_bytes(4, "big")
-        max_fees_percent_bytes = int(Decimal(full_precision_string(max_fees_percent)) * pow(10, 8)).to_bytes(8, "big")
+        max_fees_percent_bytes = int(
+            Decimal(full_precision_string(max_fees_percent)) * pow(10, 8)
+        ).to_bytes(8, "big")
 
         payload = (
             nonce_bytes

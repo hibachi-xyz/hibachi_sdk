@@ -16,6 +16,14 @@ class Interval(Enum):
 Nonce: TypeAlias = int
 OrderId: TypeAlias = int
 
+# Recursive type for any valid JSON value
+JsonValue: TypeAlias = (
+    None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
+)
+
+# A JSON document (must be object or array at the top level)
+Json: TypeAlias = dict[str, JsonValue] | list[JsonValue]
+
 
 @dataclass
 class OrderIdVariant:

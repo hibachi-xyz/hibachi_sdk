@@ -3,20 +3,20 @@ import json
 from dataclasses import asdict
 from typing import Callable, Dict, List, Optional
 
-import websockets
-
+from hibachi_xyz.errors import WebSocketConnectionError
+from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.helpers import (
     connect_with_retry,
-    default_data_api_url,
+    DEFAULT_DATA_API_URL,
     get_hibachi_client,
 )
 from hibachi_xyz.types import WebSocketSubscription
 
 
 class HibachiWSMarketClient:
-    def __init__(self, api_endpoint: str = default_data_api_url):
+    def __init__(self, api_endpoint: str = DEFAULT_DATA_API_URL):
         self.api_endpoint = api_endpoint.replace("https://", "wss://") + "/ws/market"
-        self.websocket: Optional[websockets.WebSocketClientProtocol] = None
+        self.websocket: Optional[WsConnection] = None
         self._event_handlers: Dict[str, List[Callable[[dict], None]]] = {}
         self._receive_task: Optional[asyncio.Task] = None
 
@@ -66,8 +66,8 @@ class HibachiWSMarketClient:
                         await handler(msg)
         except asyncio.CancelledError:
             pass
-        except websockets.ConnectionClosed:
-            print("[MarketClient] WebSocket closed.")
+        except WebSocketConnectionError as e:
+            print(f"[MarketClient] WebSocket closed: {e}")
         except Exception as e:
             print(f"[MarketClient] Receive loop error: {e}")
 

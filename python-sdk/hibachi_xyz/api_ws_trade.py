@@ -4,13 +4,13 @@ import time
 from dataclasses import asdict
 from typing import Callable, Dict, List, Optional
 
-import websockets
+from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.api import HibachiApiClient
 from hibachi_xyz.helpers import (
     get_hibachi_client,
     connect_with_retry,
-    default_api_url,
-    default_data_api_url,
+    DEFAULT_API_URL,
+    DEFAULT_DATA_API_URL,
     print_data,
 )
 
@@ -81,15 +81,15 @@ class HibachiWSTradeClient:
         api_key: str,
         account_id: int,
         account_public_key: str,
-        api_url: str = default_api_url,
-        data_api_url: str = default_data_api_url,
+        api_url: str = DEFAULT_API_URL,
+        data_api_url: str = DEFAULT_DATA_API_URL,
         private_key: Optional[str] = None,
     ):
         self.api_endpoint = api_url
         self.api_endpoint = (
             self.api_endpoint.replace("https://", "wss://") + "/ws/trade"
         )
-        self.websocket = None
+        self.websocket: WsConnection | None = None
 
         # random id start
         self.message_id = random.randint(1, 1000000)
@@ -193,7 +193,7 @@ class HibachiWSTradeClient:
         order: Order,
         quantity: float,
         price: str,
-        side: websockets.Side,
+        side: Side,
         maxFeesPercent: float,
         nonce: Optional[Nonce] = None,
     ) -> WebSocketResponse:

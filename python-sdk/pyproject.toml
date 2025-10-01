@@ -15,11 +15,13 @@ license = "MIT"
 dependencies = [
   "eth_keys == 0.6.1",
   "requests == 2.32.3",
+  "httpx >= 0.27.0",
   "toml == 0.10.2",
   "websockets >= 11.0.3",
   "python-dotenv >= 1.0.0",
   "prettyprinter >= 0.18.0",
-  "pip-system-certs"
+  "pip-system-certs",
+  "aiohttp (>=3.12.15,<4.0.0)"
 ]
 
 [project.optional-dependencies]
