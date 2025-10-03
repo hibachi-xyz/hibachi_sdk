@@ -1,7 +1,8 @@
 import asyncio
-from typing import Dict, Optional, TypeVar, Union, Any, Callable
+from typing import Dict, TypeVar, Union, Any, Callable
 
-from hibachi_xyz.executors import WebsocketsWsExecutor, WsConnection
+from hibachi_xyz.executors.interface import WsConnection
+from hibachi_xyz.executors.websockets import WebsocketsWsExecutor
 from hibachi_xyz.types import ExchangeInfo, MaintenanceWindow
 from datetime import datetime
 from prettyprinter import cpprint
@@ -42,7 +43,7 @@ def create_with(func: Callable[..., T], data: Dict[str, Any]) -> T:
 
 
 async def connect_with_retry(
-    web_url: str, headers: Optional[list[tuple[str, str]]] = None
+    web_url: str, headers: list[tuple[str, str]] | None = None
 ) -> WsConnection:
     """Establish WebSocket connection with retry logic"""
     max_retries = 10
@@ -105,7 +106,7 @@ def get_withdrawal_fee_for_amount(exchange_info: ExchangeInfo, amount: float) ->
 
 def get_next_maintenance_window(
     exchange_info: ExchangeInfo,
-) -> Optional[MaintenanceWindow]:
+) -> MaintenanceWindow | None:
     """
     Get the next maintenance window if any exists.
 
@@ -113,7 +114,7 @@ def get_next_maintenance_window(
         exchange_info: The exchange information
 
     Returns:
-        Optional[Dict]: Details about the next maintenance window or None if none exists
+        Optional[Dict | None: Details about the next maintenance window or None if none exists
     """
     windows = exchange_info.maintenanceWindow
     if not windows:

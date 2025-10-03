@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, Any
+from typing import Any
 from hibachi_xyz.types import Json
 
 
@@ -9,7 +9,7 @@ class HttpExecutor(ABC):
         self,
         method: str,
         path: str,
-        json: Optional[Any] = None,
+        json: Any | None = None,
     ) -> Any: ...
 
     @abstractmethod
@@ -25,19 +25,21 @@ class HttpExecutor(ABC):
 class WsConnection(ABC):
     @abstractmethod
     async def send(
+        self,
         serialized_body: str,
     ) -> None: ...
 
     @abstractmethod
-    async def recv() -> str: ...
+    async def recv(self) -> str: ...
 
     @abstractmethod
-    async def close() -> None: ...
+    async def close(self) -> None: ...
 
 
 class WsExecutor(ABC):
     @abstractmethod
     async def connect(
+        self,
         web_url: str,
         headers: dict[str, str] | None = None,
     ) -> WsConnection: ...

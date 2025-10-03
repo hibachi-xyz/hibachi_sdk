@@ -1,4 +1,4 @@
-from typing import List, Self, Optional, Dict, Any, Union, TypeAlias
+from typing import List, Self, Dict, Any, Union, TypeAlias
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -27,8 +27,8 @@ Json: TypeAlias = dict[str, JsonValue] | list[JsonValue]
 
 @dataclass
 class OrderIdVariant:
-    nonce: Optional[Nonce]
-    order_id: Optional[OrderId]
+    nonce: Nonce | None
+    order_id: OrderId | None
 
     @classmethod
     def from_nonce(cls, nonce: Nonce) -> Self:
@@ -88,12 +88,12 @@ class TPSLConfig:
     class Leg:
         order_type: "TPSLConfig.Type"
         price: float
-        quantity: Optional[float]
+        quantity: float | None
 
     def __init__(self):
         self.legs: List[TPSLConfig.Leg] = []
 
-    def add_take_profit(self, price: float, quantity: Optional[float] = None) -> Self:
+    def add_take_profit(self, price: float, quantity: float | None = None) -> Self:
         self.legs.append(
             TPSLConfig.Leg(
                 order_type=TPSLConfig.Type.TP,
@@ -103,7 +103,7 @@ class TPSLConfig:
         )
         return self
 
-    def add_stop_loss(self, price: float, quantity: Optional[float] = None) -> Self:
+    def add_stop_loss(self, price: float, quantity: float | None = None) -> Self:
         self.legs.append(
             TPSLConfig.Leg(
                 order_type=TPSLConfig.Type.SL,
@@ -185,21 +185,21 @@ class OrderFlags(Enum):
 class Order:
     accountId: int
     availableQuantity: str
-    contractId: Optional[int]
-    creationTime: Optional[int]
-    finishTime: Optional[int]
-    numOrdersRemaining: Optional[int]
-    numOrdersTotal: Optional[int]
-    orderFlags: Optional[OrderFlags]
+    contractId: int | None
+    creationTime: int | None
+    finishTime: int | None
+    numOrdersRemaining: int | None
+    numOrdersTotal: int | None
+    orderFlags: OrderFlags | None
     orderId: str
     orderType: OrderType
-    price: Optional[str]
-    quantityMode: Optional[str]
+    price: str | None
+    quantityMode: str | None
     side: Side
     status: OrderStatus
     symbol: str
-    totalQuantity: Optional[str]
-    triggerPrice: Optional[str]
+    totalQuantity: str | None
+    triggerPrice: str | None
 
     def __init__(
         self,
@@ -210,16 +210,16 @@ class Order:
         side: str,
         status: str,
         symbol: str,
-        numOrdersRemaining: Optional[int] = None,
-        numOrdersTotal: Optional[int] = None,
-        quantityMode: Optional[str] = None,
-        finishTime: Optional[int] = None,
-        price: Optional[str] = None,
-        totalQuantity: Optional[str] = None,
-        creationTime: Optional[int] = None,
-        contractId: Optional[int] = None,
-        orderFlags: Optional[str] = None,
-        triggerPrice: Optional[str] = None,
+        numOrdersRemaining: int | None = None,
+        numOrdersTotal: int | None = None,
+        quantityMode: str | None = None,
+        finishTime: int | None = None,
+        price: str | None = None,
+        totalQuantity: str | None = None,
+        creationTime: int | None = None,
+        contractId: int | None = None,
+        orderFlags: str | None = None,
+        triggerPrice: str | None = None,
     ):
         self.accountId = accountId
         self.availableQuantity = availableQuantity
@@ -268,9 +268,9 @@ class FutureContract:
     tickSize: str
     underlyingDecimals: int
     underlyingSymbol: str
-    marketCloseTimestamp: Optional[str] = field(default=None)
-    marketOpenTimestamp: Optional[str] = field(default=None)
-    marketCreationTimestamp: Optional[str] = field(default=None)
+    marketCloseTimestamp: str | None = field(default=None)
+    marketOpenTimestamp: str | None = field(default=None)
+    marketCreationTimestamp: str | None = field(default=None)
 
 
 @dataclass
@@ -315,12 +315,10 @@ class PriceResponse:
 
 @dataclass
 class BatchResponseOrder:
-    nonce: Optional[Nonce]
-    orderId: Optional[OrderId]
+    nonce: Nonce | None
+    orderId: OrderId | None
 
-    def __init__(
-        self, nonce: Optional[Nonce] = None, orderId: Optional[OrderId] = None
-    ):
+    def __init__(self, nonce: Nonce | None = None, orderId: OrderId | None = None):
         self.nonce = int(nonce) if isinstance(nonce, str) else nonce
         self.orderId = int(orderId) if isinstance(orderId, str) else orderId
 
@@ -479,19 +477,19 @@ class Transaction:
     status: str
     timestampSec: int
     transactionType: str
-    transactionHash: Optional[Union[str, str]]
-    token: Optional[str]
-    etaTsSec: Optional[int]
-    blockNumber: Optional[int]
-    chain: Optional[str]
-    instantWithdrawalChain: Optional[str]
-    instantWithdrawalToken: Optional[str]
-    isInstantWithdrawal: Optional[bool]
-    withdrawalAddress: Optional[str]
-    receivingAccountId: Optional[int]
-    receivingAddress: Optional[str]
-    srcAccountId: Optional[int]
-    srcAddress: Optional[str]
+    transactionHash: Union[str, str] | None
+    token: str | None
+    etaTsSec: int | None
+    blockNumber: int | None
+    chain: str | None
+    instantWithdrawalChain: str | None
+    instantWithdrawalToken: str | None
+    isInstantWithdrawal: bool | None
+    withdrawalAddress: str | None
+    receivingAccountId: int | None
+    receivingAddress: str | None
+    srcAccountId: int | None
+    srcAddress: str | None
 
     def __init__(
         self,
@@ -501,19 +499,19 @@ class Transaction:
         status: str,
         timestampSec: int,
         transactionType: str,
-        transactionHash: Optional[Union[str, str]] = None,
-        token: Optional[str] = None,
-        etaTsSec: Optional[int] = None,
-        blockNumber: Optional[int] = None,
-        chain: Optional[str] = None,
-        instantWithdrawalChain: Optional[str] = None,
-        instantWithdrawalToken: Optional[str] = None,
-        isInstantWithdrawal: Optional[bool] = None,
-        withdrawalAddress: Optional[str] = None,
-        receivingAddress: Optional[str] = None,
-        receivingAccountId: Optional[int] = None,
-        srcAccountId: Optional[int] = None,
-        srcAddress: Optional[str] = None,
+        transactionHash: Union[str, str] | None = None,
+        token: str | None = None,
+        etaTsSec: int | None = None,
+        blockNumber: int | None = None,
+        chain: str | None = None,
+        instantWithdrawalChain: str | None = None,
+        instantWithdrawalToken: str | None = None,
+        isInstantWithdrawal: bool | None = None,
+        withdrawalAddress: str | None = None,
+        receivingAddress: str | None = None,
+        receivingAccountId: int | None = None,
+        srcAccountId: int | None = None,
+        srcAddress: str | None = None,
     ):
         self.id = id
         self.assetId = assetId
@@ -604,10 +602,10 @@ class WebSocketMarketSubscriptionListResponse:
 
 @dataclass
 class WebSocketResponse:
-    id: Optional[int]
-    result: Optional[Dict[str, Any]]
-    status: Optional[int]
-    subscriptions: Optional[List[WebSocketSubscription]]
+    id: int | None
+    result: Dict[str, Any] | None
+    status: int | None
+    subscriptions: List[WebSocketSubscription] | None
 
 
 @dataclass
@@ -649,7 +647,7 @@ class WebSocketOrdersStatusParams:
 class WebSocketOrdersCancelParams:
     accountId: str
     nonce: str
-    contractId: Optional[int] = None
+    contractId: int | None = None
 
 
 @dataclass
@@ -663,9 +661,9 @@ class WebSocketBatchOrder:
     price: str
     maxFeesPercent: str
     signature: str
-    orderId: Optional[str] = None
-    updatedQuantity: Optional[str] = None
-    updatedPrice: Optional[str] = None
+    orderId: str | None = None
+    updatedQuantity: str | None = None
+    updatedPrice: str | None = None
 
 
 @dataclass
@@ -712,13 +710,13 @@ class OrderPlaceParams:
     quantity: float
     side: Side
     orderType: OrderType
-    price: Optional[str]
-    trigger_price: Optional[float]
-    twap_config: Optional[TWAPConfig]
+    price: str | None
+    trigger_price: float | None
+    twap_config: TWAPConfig | None
     maxFeesPercent: float
-    orderFlags: Optional[str] = None
-    creation_deadline: Optional[int] = None
-    trigger_direction: Optional[TriggerDirection] = (None,)
+    orderFlags: str | None = None
+    creation_deadline: int | None = None
+    trigger_direction: TriggerDirection | None = None
 
 
 @dataclass
@@ -737,7 +735,7 @@ class OrderModifyParams:
     price: str
     side: Side
     maxFeesPercent: str
-    nonce: Optional[int]
+    nonce: int | None
 
 
 @dataclass
@@ -755,23 +753,23 @@ class OrdersStatusParams:
 class OrdersCancelParams:
     accountId: str
     nonce: str
-    contractId: Optional[int] = None
+    contractId: int | None = None
 
 
 @dataclass
 class BatchOrder:
     action: str
     nonce: int
-    symbol: Optional[str] = None
-    orderType: Optional[OrderType] = None
-    side: Optional[Side] = None
-    quantity: Optional[str] = None
-    price: Optional[str] = None
-    maxFeesPercent: Optional[str] = None
-    orderId: Optional[str] = None
-    updatedQuantity: Optional[str] = None
-    updatedPrice: Optional[str] = None
-    signature: Optional[str] = None
+    symbol: str | None = None
+    orderType: OrderType | None = None
+    side: Side | None = None
+    quantity: str | None = None
+    price: str | None = None
+    maxFeesPercent: str | None = None
+    orderId: str | None = None
+    updatedQuantity: str | None = None
+    updatedPrice: str | None = None
+    signature: str | None = None
 
 
 @dataclass
@@ -814,14 +812,14 @@ class OrderPlaceResponse:
 class OrdersStatusResponse:
     id: int
     result: List[Order]
-    status: Optional[int]
+    status: int | None
 
 
 @dataclass
 class OrderStatusResponse:
     id: int
     result: Order
-    status: Optional[int]
+    status: int | None
 
 
 @dataclass
@@ -871,13 +869,13 @@ class CreateOrder:
     side: Side
     quantity: float
     max_fees_percent: float
-    price: Optional[float]
-    trigger_price: Optional[float]
-    trigger_direction: Optional[TriggerDirection]
-    twap_config: Optional[TWAPConfig]
-    creation_deadline: Optional[float]
-    parent_order: Optional[OrderIdVariant]
-    order_flags: Optional[OrderFlags]
+    price: float | None
+    trigger_price: float | None
+    trigger_direction: TriggerDirection | None
+    twap_config: TWAPConfig | None
+    creation_deadline: float | None
+    parent_order: OrderIdVariant | None
+    order_flags: OrderFlags | None
 
     def __init__(
         self,
@@ -885,13 +883,13 @@ class CreateOrder:
         side: Side,
         quantity: float,
         max_fees_percent: float,
-        price: Optional[float] = None,
-        trigger_price: Optional[float] = None,
-        twap_config: Optional[TWAPConfig] = None,
-        creation_deadline: Optional[float] = None,
-        parent_order: Optional[OrderIdVariant] = None,
-        order_flags: Optional[OrderFlags] = None,
-        trigger_direction: Optional[TriggerDirection] = None,
+        price: float | None = None,
+        trigger_price: float | None = None,
+        twap_config: TWAPConfig | None = None,
+        creation_deadline: float | None = None,
+        parent_order: OrderIdVariant | None = None,
+        order_flags: OrderFlags | None = None,
+        trigger_direction: TriggerDirection | None = None,
     ):
         if side == Side.BUY:
             side = Side.BID
@@ -921,10 +919,10 @@ class UpdateOrder:
     side: Side
     quantity: float
     max_fees_percent: float
-    price: Optional[float]
-    trigger_price: Optional[float]
-    parent_order: Optional[OrderIdVariant]
-    order_flags: Optional[OrderFlags]
+    price: float | None
+    trigger_price: float | None
+    parent_order: OrderIdVariant | None
+    order_flags: OrderFlags | None
 
     def __init__(
         self,
@@ -933,11 +931,11 @@ class UpdateOrder:
         side: Side,
         quantity: float,
         max_fees_percent: float,
-        price: Optional[float] = None,
-        trigger_price: Optional[float] = None,
-        creation_deadline: Optional[float] = None,
-        parent_order: Optional[OrderIdVariant] = None,
-        order_flags: Optional[OrderFlags] = None,
+        price: float | None = None,
+        trigger_price: float | None = None,
+        creation_deadline: float | None = None,
+        parent_order: OrderIdVariant | None = None,
+        order_flags: OrderFlags | None = None,
     ):
         if side == Side.BUY:
             side = Side.BID
@@ -958,9 +956,9 @@ class UpdateOrder:
 
 class CancelOrder:
     action: str = "cancel"
-    order_id: Optional[int]
-    nonce: Optional[int]
+    order_id: int | None
+    nonce: int | None
 
-    def __init__(self, order_id: Optional[int] = None, nonce: Optional[int] = None):
+    def __init__(self, order_id: int | None = None, nonce: int | None = None):
         self.order_id = order_id
         self.nonce = nonce

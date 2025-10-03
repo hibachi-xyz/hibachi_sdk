@@ -1,6 +1,7 @@
+from typing import override
 import websockets
 from websockets.client import WebSocketClientProtocol
-from hibachi_xyz.executors import WsConnection, WsExecutor
+from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 from hibachi_xyz.errors import (
     WebSocketConnectionError,
     WebSocketMessageError,
@@ -13,6 +14,7 @@ class WebsocketsWsConnection(WsConnection):
     def __init__(self, ws: WebSocketClientProtocol):
         self._ws = ws
 
+    @override
     async def send(self, serialized_body: str) -> None:
         try:
             await self._ws.send(serialized_body)
@@ -23,6 +25,7 @@ class WebsocketsWsConnection(WsConnection):
         except Exception as e:
             raise WebSocketMessageError(f"Failed to send WebSocket message: {e}") from e
 
+    @override
     async def recv(self) -> str:
         try:
             msg = await self._ws.recv()
@@ -42,11 +45,13 @@ class WebsocketsWsConnection(WsConnection):
                 f"Failed to receive WebSocket message: {e}"
             ) from e
 
+    @override
     async def close(self) -> None:
         await self._ws.close()
 
 
 class WebsocketsWsExecutor(WsExecutor):
+    @override
     async def connect(
         self, web_url: str, headers: dict[str, str] | None = None
     ) -> WsConnection:

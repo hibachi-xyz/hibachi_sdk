@@ -4,10 +4,11 @@ from hashlib import sha256
 import hmac
 from math import floor
 from time import time, time_ns
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from eth_keys import keys
 from hibachi_xyz.executors import RequestsHttpExecutor, HttpExecutor
+from hibachi_xyz.errors import ValidationError
 
 from hibachi_xyz.types import (
     BatchResponse,
@@ -112,13 +113,13 @@ class HibachiApiClient:
 
     """
 
-    account_id: Optional[int] = None
-    api_key: Optional[str] = None
+    account_id: int | None = None
+    api_key: str | None = None
 
-    _private_key: Optional[keys.PrivateKey] = None  # ECDSA for wallet account
-    _private_key_hmac: Optional[str] = None  # HMAC for web account
+    _private_key: keys.PrivateKey | None = None  # ECDSA for wallet account
+    _private_key_hmac: str | None = None  # HMAC for web account
 
-    future_contracts: Optional[Dict[str, FutureContract]] = None
+    future_contracts: Dict[str, FutureContract] | None = None
 
     _rest_executor: HttpExecutor
 
@@ -126,9 +127,9 @@ class HibachiApiClient:
         self,
         api_url: str = DEFAULT_API_URL,
         data_api_url: str = DEFAULT_DATA_API_URL,
-        account_id: Optional[int] = None,
-        api_key: Optional[str] = None,
-        private_key: Optional[str] = None,
+        account_id: int | None = None,
+        api_key: str | None = None,
+        private_key: str | None = None,
         executor: HttpExecutor | None = None,
     ):
         self.account_id = (
@@ -257,8 +258,8 @@ class HibachiApiClient:
                 contract: {
                     displayName: str
                     id: int
-                    marketCloseTimestamp: Optional[str]
-                    marketOpenTimestamp: Optional[str]
+                    marketCloseTimestamp: str | None
+                    marketOpenTimestamp: str | None
                     minNotional: str
                     minOrderSize: str
                     orderbookGranularities: List[str]
@@ -475,13 +476,13 @@ class HibachiApiClient:
         Transaction {
             assetId: int
             blockNumber: int
-            chain: Optional[str]
+            chain: str | None
             etaTsSec: int
             id: int
             quantity: str
             status: str
             timestampSec: int
-            token: Optional[str]
+            token: str | None
             transactionHash: Union[str,str]
             transactionType: str
         }
@@ -853,20 +854,20 @@ class HibachiApiClient:
             orders: {
                 accountId: int
                 availableQuantity: str
-                contractId: Optional[int]
-                creationTime: Optional[int]
-                finishTime: Optional[int]
-                numOrdersRemaining: Optional[int]
-                numOrdersTotal: Optional[int]
+                contractId: int | None
+                creationTime: int | None
+                finishTime: int | None
+                numOrdersRemaining: int | None
+                numOrdersTotal: int | None
                 orderId: str
                 orderType: OrderType
-                price: Optional[str]
-                quantityMode: Optional[str]
+                price: str | None
+                quantityMode: str | None
                 side: Side
                 status: OrderStatus
                 symbol: str
-                totalQuantity: Optional[str]
-                triggerPrice: Optional[str]
+                totalQuantity: str | None
+                triggerPrice: str | None
             }[]
         }
         ```
@@ -880,7 +881,7 @@ class HibachiApiClient:
         return PendingOrdersResponse(orders=orders)
 
     def get_order_details(
-        self, order_id: Optional[int] = None, nonce: Optional[int] = None
+        self, order_id: int | None = None, nonce: int | None = None
     ) -> Order:
         """
         Get order details
@@ -900,20 +901,20 @@ class HibachiApiClient:
         Order {
             accountId: int
             availableQuantity: str
-            contractId: Optional[int]
-            creationTime: Optional[int]
-            finishTime: Optional[int]
-            numOrdersRemaining: Optional[int]
-            numOrdersTotal: Optional[int]
+            contractId: int | None
+            creationTime: int | None
+            finishTime: int | None
+            numOrdersRemaining: int | None
+            numOrdersTotal: int | None
             orderId: str
             orderType: OrderType
-            price: Optional[str]
-            quantityMode: Optional[str]
+            price: str | None
+            quantityMode: str | None
             side: Side
             status: OrderStatus
             symbol: str
-            totalQuantity: Optional[str]
-            triggerPrice: Optional[str]
+            totalQuantity: str | None
+            triggerPrice: str | None
         }
         ```
         -----------------------------------------------------------------------
@@ -947,11 +948,11 @@ class HibachiApiClient:
         quantity: float,
         side: Side,
         max_fees_percent: float,
-        trigger_price: Optional[float] = None,
-        twap_config: Optional[TWAPConfig] = None,
-        creation_deadline: Optional[int] = None,
-        order_flags: Optional[OrderFlags] = None,
-        tpsl: Optional[TPSLConfig] = None,
+        trigger_price: float | None = None,
+        twap_config: TWAPConfig | None = None,
+        creation_deadline: int | None = None,
+        order_flags: OrderFlags | None = None,
+        tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
         """
         Place a market order
@@ -1021,10 +1022,10 @@ class HibachiApiClient:
         price: float,
         side: Side,
         max_fees_percent: float,
-        trigger_price: Optional[float] = None,
-        creation_deadline: Optional[int] = None,
-        order_flags: Optional[OrderFlags] = None,
-        tpsl: Optional[TPSLConfig] = None,
+        trigger_price: float | None = None,
+        creation_deadline: int | None = None,
+        order_flags: OrderFlags | None = None,
+        tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
         """
         Place a limit order
@@ -1084,13 +1085,13 @@ class HibachiApiClient:
         self,
         symbol: str,
         quantity: float,
-        price: Optional[float],
+        price: float | None,
         side: Side,
         max_fees_percent: float,
-        trigger_price: Optional[float] = None,
-        creation_deadline: Optional[int] = None,
-        order_flags: Optional[OrderFlags] = None,
-        tpsl: Optional[TPSLConfig] = None,
+        trigger_price: float | None = None,
+        creation_deadline: int | None = None,
+        order_flags: OrderFlags | None = None,
+        tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
         parent_order_request = CreateOrder(
             symbol=symbol,
@@ -1135,10 +1136,10 @@ class HibachiApiClient:
         self,
         order_id: int,
         max_fees_percent: float,
-        quantity: Optional[float] = None,
-        price: Optional[float] = None,
-        trigger_price: Optional[float] = None,
-        creation_deadline: Optional[int] = None,
+        quantity: float | None = None,
+        price: float | None = None,
+        trigger_price: float | None = None,
+        creation_deadline: int | None = None,
     ) -> Dict[str, Any]:
         """
         Update an order
@@ -1175,11 +1176,11 @@ class HibachiApiClient:
         order: Order,
         side: Side,
         max_fees_percent: float,
-        price: Optional[float] = None,
-        trigger_price: Optional[float] = None,
-        quantity: Optional[float] = None,
-        creation_deadline: Optional[int] = None,
-        nonce: Optional[Nonce] = None,
+        price: float | None = None,
+        trigger_price: float | None = None,
+        quantity: float | None = None,
+        creation_deadline: int | None = None,
+        nonce: Nonce | None = None,
     ) -> Dict[str, Any]:
         """used to generate the signature for the update order request"""
         symbol = order.symbol
@@ -1223,7 +1224,7 @@ class HibachiApiClient:
         return request_data
 
     def cancel_order(
-        self, order_id: Optional[int] = None, nonce: Optional[int] = None
+        self, order_id: int | None = None, nonce: int | None = None
     ) -> Dict[str, Any]:
         """
         Cancel an order
@@ -1244,7 +1245,7 @@ class HibachiApiClient:
             "DELETE", "/trade/order", json=request_data
         )
 
-    def cancel_all_orders(self, contractId: Optional[int] = None) -> Dict[str, Any]:
+    def cancel_all_orders(self, contractId: int | None = None) -> Dict[str, Any]:
         """
         Cancel all orders
 
@@ -1342,7 +1343,7 @@ class HibachiApiClient:
 
     def __check_auth_data(self):
         if self.account_id is None:
-            raise RuntimeError("Account ID is not set")
+            raise ValidationError("Account ID is not set")
         return self._rest_executor.check_auth_data()
 
     def __send_authorized_request(
@@ -1362,7 +1363,7 @@ class HibachiApiClient:
         if self.future_contracts.get(symbol) is None:
             raise ValueError(f"Unknown symbol: {symbol}")
 
-    def __check_order_selector(self, order_id: Optional[int], nonce: Optional[int]):
+    def __check_order_selector(self, order_id: int | None, nonce: int | None):
         if order_id is None and nonce is None:
             raise ValueError("Either order_id or nonce must be provided")
         # if order_id is not None and nonce is not None:
@@ -1400,7 +1401,7 @@ class HibachiApiClient:
         quantity: float,
         side: Side,
         max_fees_percent: float,
-        price: Optional[float],
+        price: float | None,
     ) -> bytes:
         contract_id = contract.id
 
@@ -1434,13 +1435,13 @@ class HibachiApiClient:
         quantity: float,
         side: Side,
         max_fees_percent: float,
-        trigger_price: Optional[float],
-        price: Optional[float],
-        creation_deadline: Optional[int],
-        twap_config: Optional[TWAPConfig] = None,
-        parent_order: Optional[OrderIdVariant] = None,
-        order_flags: Optional[OrderFlags] = None,
-        trigger_direction: Optional[TriggerDirection] = None,
+        trigger_price: float | None,
+        price: float | None,
+        creation_deadline: int | None,
+        twap_config: TWAPConfig | None = None,
+        parent_order: OrderIdVariant | None = None,
+        order_flags: OrderFlags | None = None,
+        trigger_direction: TriggerDirection | None = None,
     ) -> Dict[str, Any]:
         self.__check_auth_data()
         self.__check_symbol(symbol)
@@ -1491,10 +1492,10 @@ class HibachiApiClient:
         quantity: float,
         side: Side,
         max_fees_percent: float,
-        price: Optional[float],
-        trigger_price: Optional[float],
-        creation_deadline: Optional[int],
-        order_flags: Optional[OrderFlags] = None,
+        price: float | None,
+        trigger_price: float | None,
+        creation_deadline: int | None,
+        order_flags: OrderFlags | None = None,
     ) -> Dict[str, Any]:
         contract = self.future_contracts.get(symbol)
         payload = self.__create_or_update_order_payload(
@@ -1523,15 +1524,13 @@ class HibachiApiClient:
             request["orderFlags"] = order_flags.value
         return request
 
-    def __cancel_order_payload(
-        self, order_id: Optional[int], nonce: Optional[int]
-    ) -> bytes:
+    def __cancel_order_payload(self, order_id: int | None, nonce: int | None) -> bytes:
         if order_id is not None:
             return order_id.to_bytes(8, "big")
         return nonce.to_bytes(8, "big")
 
     def _cancel_order_request_data(
-        self, order_id: Optional[int], nonce: Optional[int], nonce_as_str: bool
+        self, order_id: int | None, nonce: int | None, nonce_as_str: bool
     ) -> Dict[str, Any]:
         payload = self.__cancel_order_payload(order_id, nonce)
         signature = self.__sign_payload(payload)

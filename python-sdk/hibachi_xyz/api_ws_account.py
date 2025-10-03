@@ -1,7 +1,7 @@
 import asyncio
 import json
 import time
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.helpers import connect_with_retry, DEFAULT_API_URL, get_hibachi_client
@@ -11,14 +11,17 @@ from hibachi_xyz.errors import WebSocketConnectionError
 
 class HibachiWSAccountClient:
     def __init__(
-        self, api_key: str, account_id: str, api_endpoint: str = DEFAULT_API_URL
+        self,
+        api_key: str,
+        account_id: str,
+        api_endpoint: str = DEFAULT_API_URL,
     ):
         self.api_endpoint = api_endpoint.replace("https://", "wss://") + "/ws/account"
-        self.websocket: WsConnection = None
+        self.websocket: WsConnection | None = None
         self.message_id = 0
         self.api_key = api_key
         self.account_id = int(account_id)
-        self.listenKey: Optional[str] = None
+        self.listenKey: str | None = None
         self._event_handlers: Dict[str, List[Callable[[dict], None]]] = {}
 
     def on(self, topic: str, handler: Callable[[dict], None]):
@@ -79,7 +82,7 @@ class HibachiWSAccountClient:
         if parsed.get("status") == 200:
             print("pong!")
 
-    async def listen(self) -> Optional[dict]:
+    async def listen(self) -> dict | None:
         try:
             response = await asyncio.wait_for(self.websocket.recv(), timeout=15)
             message = json.loads(response)

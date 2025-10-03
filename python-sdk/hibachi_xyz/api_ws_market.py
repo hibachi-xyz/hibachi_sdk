@@ -1,7 +1,7 @@
 import asyncio
 import json
 from dataclasses import asdict
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from hibachi_xyz.errors import WebSocketConnectionError
 from hibachi_xyz.executors import WsConnection
@@ -16,9 +16,9 @@ from hibachi_xyz.types import WebSocketSubscription
 class HibachiWSMarketClient:
     def __init__(self, api_endpoint: str = DEFAULT_DATA_API_URL):
         self.api_endpoint = api_endpoint.replace("https://", "wss://") + "/ws/market"
-        self.websocket: Optional[WsConnection] = None
+        self.websocket: WsConnection | None = None
         self._event_handlers: Dict[str, List[Callable[[dict], None]]] = {}
-        self._receive_task: Optional[asyncio.Task] = None
+        self._receive_task: asyncio.Task | None = None
 
     async def connect(self):
         self.websocket = await connect_with_retry(

@@ -1,6 +1,6 @@
-from typing import Optional
+from typing import override
 from hibachi_xyz.types import Json
-from hibachi_xyz.executors import HttpExecutor
+from hibachi_xyz.executors.interface import HttpExecutor
 import httpx
 
 from hibachi_xyz.helpers import (
@@ -15,10 +15,11 @@ from hibachi_xyz.errors import (
     DeserializationError,
     HttpConnectionError,
     TimeoutError,
+    BaseError,
 )
 
 
-def _get_httpx_error(response: httpx.Response) -> Optional[ExchangeError]:
+def _get_httpx_error(response: httpx.Response) -> ExchangeError | None:
     """Check if the response is an error and return an exception if it is
     The builtin response.raise_for_status() does not show the server's response
     """
@@ -40,6 +41,7 @@ class HttpxHttpExecutor(HttpExecutor):
         self.api_key = api_key
         self.client = httpx.Client()
 
+    @override
     def send_simple_request(self, path: str) -> Json:
         url = f"{self.data_api_url}{path}"
         try:
@@ -51,7 +53,7 @@ class HttpxHttpExecutor(HttpExecutor):
             if error is not None:
                 raise error
             return response.json()
-        except ExchangeError:
+        except BaseError:
             raise
         except httpx.TimeoutException as e:
             raise TimeoutError(
@@ -70,10 +72,12 @@ class HttpxHttpExecutor(HttpExecutor):
         except Exception as e:
             raise TransportError(f"Request to {url} failed: {e}") from e
 
+    @override
     def check_auth_data(self) -> None:
         if self.api_key is None:
             raise MissingCredentialsError("API key")
 
+    @override
     def send_authorized_request(
         self,
         method: str,

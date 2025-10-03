@@ -1,6 +1,6 @@
-from typing import Optional, Any, override
+from typing import Any, override
 from hibachi_xyz.types import Json
-from hibachi_xyz.executors import HttpExecutor
+from hibachi_xyz.executors.interface import HttpExecutor
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
@@ -18,7 +18,7 @@ from hibachi_xyz.errors import (
 )
 
 
-def _get_http_error(response: requests.Response) -> Optional[ExchangeError]:
+def _get_http_error(response: requests.Response) -> ExchangeError | None:
     """Check if the response is an error and return an exception if it is
     The builtin response.raise_for_status() does not show the server's response
     """
@@ -68,7 +68,7 @@ class RequestsHttpExecutor(HttpExecutor):
 
     @override
     def send_authorized_request(
-        self, method: str, path: str, json: Optional[Json] = None
+        self, method: str, path: str, json: Json | None = None
     ) -> Any:
         url = f"{self.api_url}{path}"
         try:

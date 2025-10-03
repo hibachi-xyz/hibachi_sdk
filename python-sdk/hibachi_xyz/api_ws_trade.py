@@ -2,7 +2,7 @@ import json
 import random
 import time
 from dataclasses import asdict
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List
 
 from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.api import HibachiApiClient
@@ -83,7 +83,7 @@ class HibachiWSTradeClient:
         account_public_key: str,
         api_url: str = DEFAULT_API_URL,
         data_api_url: str = DEFAULT_DATA_API_URL,
-        private_key: Optional[str] = None,
+        private_key: str | None = None,
     ):
         self.api_endpoint = api_url
         self.api_endpoint = (
@@ -117,7 +117,7 @@ class HibachiWSTradeClient:
 
         return self
 
-    async def place_order(self, params: OrderPlaceParams) -> tuple[Nonce, int]:
+    async def place_order(self, params: OrderPlaceParams) -> tuple[Nonce, int | None]:
         """Place a new order"""
         self.message_id += 1
 
@@ -195,7 +195,7 @@ class HibachiWSTradeClient:
         price: str,
         side: Side,
         maxFeesPercent: float,
-        nonce: Optional[Nonce] = None,
+        nonce: Nonce | None = None,
     ) -> WebSocketResponse:
         """Modify an existing order"""
         self.message_id += 1

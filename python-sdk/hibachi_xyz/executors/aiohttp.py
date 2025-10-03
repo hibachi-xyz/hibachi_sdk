@@ -1,6 +1,7 @@
 import asyncio
+from typing import override
 import aiohttp
-from hibachi_xyz.executors import WsConnection, WsExecutor
+from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 from hibachi_xyz.errors import (
     TransportError,
     WebSocketConnectionError,
@@ -13,6 +14,7 @@ class AiohttpWsConnection(WsConnection):
     def __init__(self, ws: aiohttp.ClientWebSocketResponse):
         self._ws = ws
 
+    @override
     async def send(self, serialized_body: str) -> None:
         try:
             await self._ws.send_str(serialized_body)
@@ -23,6 +25,7 @@ class AiohttpWsConnection(WsConnection):
         except Exception as e:
             raise WebSocketMessageError(f"Failed to send WebSocket message: {e}") from e
 
+    @override
     async def recv(self) -> str:
         try:
             msg = await self._ws.receive()
@@ -49,6 +52,7 @@ class AiohttpWsConnection(WsConnection):
         except Exception as e:
             raise TransportError(f"Failed to receive WebSocket message: {e}") from e
 
+    @override
     async def close(self) -> None:
         await self._ws.close()
 
@@ -57,6 +61,7 @@ class AiohttpWsExecutor(WsExecutor):
     def __init__(self):
         self._session: aiohttp.ClientSession | None = None
 
+    @override
     async def connect(
         self, web_url: str, headers: dict[str, str] | None = None
     ) -> WsConnection:
