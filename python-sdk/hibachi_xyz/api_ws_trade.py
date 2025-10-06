@@ -117,7 +117,7 @@ class HibachiWSTradeClient:
 
         return self
 
-    async def place_order(self, params: OrderPlaceParams) -> tuple[Nonce, int | None]:
+    async def place_order(self, params: OrderPlaceParams) -> tuple[Nonce, int]:
         """Place a new order"""
         self.message_id += 1
 
