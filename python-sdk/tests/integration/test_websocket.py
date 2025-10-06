@@ -2,6 +2,7 @@ import asyncio
 import json
 
 import pytest
+
 from hibachi_xyz.api_ws_account import HibachiWSAccountClient
 from hibachi_xyz.api_ws_market import HibachiWSMarketClient
 from hibachi_xyz.api_ws_trade import HibachiWSTradeClient
@@ -214,9 +215,9 @@ async def test_account_websocket():
         result = await client.stream_start()
 
         assert isinstance(result.listenKey, str), "listenKey should be a string"
-        assert isinstance(
-            result.accountSnapshot, AccountSnapshot
-        ), "accountSnapshot missing"
+        assert isinstance(result.accountSnapshot, AccountSnapshot), (
+            "accountSnapshot missing"
+        )
         assert isinstance(result.accountSnapshot.positions, list)
         for position in result.accountSnapshot.positions:
             assert isinstance(position, Position), "Invalid Position object"

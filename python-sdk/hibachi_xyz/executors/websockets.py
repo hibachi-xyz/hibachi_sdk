@@ -1,13 +1,15 @@
 from typing import override
+
 import websockets
 from websockets.client import WebSocketClientProtocol
-from hibachi_xyz.executors.interface import WsConnection, WsExecutor
+
 from hibachi_xyz.errors import (
-    WebSocketConnectionError,
-    WebSocketMessageError,
     DeserializationError,
     TransportError,
+    WebSocketConnectionError,
+    WebSocketMessageError,
 )
+from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 
 
 class WebsocketsWsConnection(WsConnection):

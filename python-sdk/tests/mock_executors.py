@@ -1,3 +1,5 @@
+import inspect
+from collections import deque
 from dataclasses import dataclass
 from typing import (
     Any,
@@ -8,10 +10,9 @@ from typing import (
     Tuple,
     TypeAlias,
 )
-from collections import deque
+
 from hibachi_xyz.executors import HttpExecutor
 from hibachi_xyz.types import Json
-import inspect
 
 
 class MockExecutorException(Exception):

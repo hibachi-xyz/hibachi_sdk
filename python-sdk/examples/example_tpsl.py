@@ -1,15 +1,15 @@
+import asyncio
+
 from hibachi_xyz import (
-    TPSLConfig,
     HibachiApiClient,
+    HibachiWSTradeClient,
+    TPSLConfig,
 )
+from hibachi_xyz.env_setup import setup_environment
 from hibachi_xyz.types import (
     OrderFlags,
     Side,
 )
-
-import asyncio
-from hibachi_xyz import HibachiWSTradeClient
-from hibachi_xyz.env_setup import setup_environment
 
 
 def example_tpsl_rest():

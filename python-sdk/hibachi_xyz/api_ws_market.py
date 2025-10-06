@@ -7,8 +7,8 @@ from typing import Callable, Dict, List
 from hibachi_xyz.errors import WebSocketConnectionError
 from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.helpers import (
-    connect_with_retry,
     DEFAULT_DATA_API_URL,
+    connect_with_retry,
     get_hibachi_client,
 )
 from hibachi_xyz.types import WebSocketSubscription

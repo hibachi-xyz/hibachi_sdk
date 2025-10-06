@@ -1,22 +1,23 @@
 from typing import override
-from hibachi_xyz.types import Json
-from hibachi_xyz.executors.interface import HttpExecutor
+
 import httpx
 
+from hibachi_xyz.errors import (
+    BaseError,
+    DeserializationError,
+    ExchangeError,
+    HttpConnectionError,
+    MissingCredentialsError,
+    TransportError,
+    TransportTimeoutError,
+)
+from hibachi_xyz.executors.interface import HttpExecutor
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
     get_hibachi_client,
 )
-from hibachi_xyz.errors import (
-    MissingCredentialsError,
-    TransportError,
-    ExchangeError,
-    DeserializationError,
-    HttpConnectionError,
-    TimeoutError,
-    BaseError,
-)
+from hibachi_xyz.types import Json
 
 
 def _get_httpx_error(response: httpx.Response) -> ExchangeError | None:
@@ -56,7 +57,7 @@ class HttpxHttpExecutor(HttpExecutor):
         except BaseError:
             raise
         except httpx.TimeoutException as e:
-            raise TimeoutError(
+            raise TransportTimeoutError(
                 f"Request to {url} timed out", timeout_seconds=None
             ) from e
         except (httpx.ConnectError, httpx.ConnectTimeout) as e:
@@ -102,7 +103,7 @@ class HttpxHttpExecutor(HttpExecutor):
         except ExchangeError:
             raise
         except httpx.TimeoutException as e:
-            raise TimeoutError(
+            raise TransportTimeoutError(
                 f"{method} request to {url} timed out", timeout_seconds=None
             ) from e
         except (httpx.ConnectError, httpx.ConnectTimeout) as e:

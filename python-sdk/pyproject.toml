@@ -21,7 +21,7 @@ dependencies = [
   "python-dotenv >= 1.0.0",
   "prettyprinter >= 0.18.0",
   "pip-system-certs",
-  "aiohttp (>=3.12.15,<4.0.0)"
+  "aiohttp>=3.12.15,<4.0.0"
 ]
 
 [project.optional-dependencies]
@@ -30,6 +30,7 @@ dev = [
   "pytest-asyncio",
   "pytest-timeout",
   "mypy",
+  "ruff",
 ]
 
 [tool.poetry.group.dev.dependencies]
@@ -37,7 +38,29 @@ pytest = "*"
 pytest-asyncio = "*"
 pytest-timeout = "*"
 mypy = "*"
+ruff = "*"
 
 [project.urls]
 Homepage = "https://github.com/hibachi-xyz/yule-os"
 Issues = "https://github.com/hibachi-xyz/yule-os/issues"
+
+[tool.ruff]
+# Target Python 3.13+
+target-version = "py313"
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+# Use spaces for indentation
+indent-style = "space"
+# Respect magic trailing commas
+skip-magic-trailing-comma = false
+# Unix-style line endings
+line-ending = "lf"
+# Enable auto-detection of the appropriate line ending
+docstring-code-format = false
+
+[tool.ruff.lint]
+# Enable pycodestyle (E), Pyflakes (F), and isort (I) rules
+select = ["E", "F", "I"]
+ignore = ["E501"]  # Ignore line too long

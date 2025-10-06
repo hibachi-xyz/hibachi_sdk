@@ -1,13 +1,15 @@
 import asyncio
 from typing import override
+
 import aiohttp
-from hibachi_xyz.executors.interface import WsConnection, WsExecutor
+
 from hibachi_xyz.errors import (
+    DeserializationError,
     TransportError,
     WebSocketConnectionError,
     WebSocketMessageError,
-    DeserializationError,
 )
+from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 
 
 class AiohttpWsConnection(WsConnection):

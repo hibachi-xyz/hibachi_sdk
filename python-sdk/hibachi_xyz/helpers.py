@@ -1,16 +1,17 @@
 import asyncio
+import inspect
 import logging
-from typing import Dict, TypeVar, Union, Any, Callable
+from dataclasses import asdict, is_dataclass
+from datetime import datetime
+from decimal import Decimal
+from functools import lru_cache
+from typing import Any, Callable, Dict, TypeVar, Union
+
+from prettyprinter import cpprint
 
 from hibachi_xyz.executors.interface import WsConnection
 from hibachi_xyz.executors.websockets import WebsocketsWsExecutor
 from hibachi_xyz.types import ExchangeInfo, MaintenanceWindow
-from datetime import datetime
-from prettyprinter import cpprint
-from dataclasses import asdict
-from decimal import Decimal
-from functools import lru_cache
-import inspect
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +70,9 @@ async def connect_with_retry(
 
             log.warning(
                 "Connection attempt %d failed: %s. Retrying in %d seconds...",
-                retry_count, str(e), retry_delay
+                retry_count,
+                str(e),
+                retry_delay,
             )
             await asyncio.sleep(retry_delay)
             retry_delay *= 2  # Exponential backoff
@@ -79,9 +82,9 @@ async def connect_with_retry(
 
 
 def print_data(response):
-    try:
+    if is_dataclass(response):
         cpprint(asdict(response))
-    except:
+    else:
         cpprint(response)
 
 

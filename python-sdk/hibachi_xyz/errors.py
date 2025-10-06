@@ -124,7 +124,7 @@ class HttpConnectionError(TransportError):
             super().__init__(message)
 
 
-class TimeoutError(TransportError):
+class TransportTimeoutError(TransportError):
     """Raised when a request or connection times out."""
 
     def __init__(self, message: str, timeout_seconds: float | None = None):

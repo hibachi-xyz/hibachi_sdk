@@ -21,6 +21,88 @@ executors:
       - image: cimg/python:3.13
 
 jobs:
+  pre-build:
+    working_directory: /home/circleci/project/
+    executor: python-executor
+    steps:
+      - checkout
+      - run:
+          name: Install ruff from project dependencies
+          command: |
+            pip install --upgrade pip
+            pip install -e python-sdk/[dev]
+      - run:
+          name: Run ruff format check
+          command: |
+            ruff format --check python-sdk/
+      - run:
+          name: Run ruff check
+          command: |
+            ruff check python-sdk/
+      - slack/notify:
+          event: fail
+          branch_pattern: ^(main|release)$
+          channel: python-sdk-tests
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "plain_text",
+                      "text": "Pre-build Validation Failed on Protected Branch",
+                      "emoji": true
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Pipeline URL:* <$CIRCLE_BUILD_URL|View on CircleCI>"
+                    }
+                  ]
+                }
+              ]
+            }
+
+  deterministic-tests:
+    working_directory: /home/circleci/project/
+    executor: python-executor
+    circleci_ip_ranges: true
+    environment:
+      ENVIRONMENT: << pipeline.parameters.environment >>
+    steps:
+      - checkout
+      - run:
+          name: Install SDK and dependencies and run deterministic tests
+          command: |
+            python3 -m venv myapp
+            source myapp/bin/activate
+            pip install --upgrade pip
+            pip install -e 'python-sdk/[dev]'
+            ENVIRONMENT=$ENVIRONMENT pytest python-sdk/tests/unit
+      - slack/notify:
+          event: fail
+          branch_pattern: ^(main|release)$
+          channel: python-sdk-tests
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "plain_text",
+                      "text": "SDK Deterministic Tests Failed",
+                      "emoji": true
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "@engineering-oncall *Pipeline URL:* <$CIRCLE_BUILD_URL|View on CircleCI>"
+                    }
+                  ]
+                }
+              ]
+            }
+
   integration-tests:
     working_directory: /home/circleci/project/
     executor: python-executor
@@ -30,19 +112,20 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install SDK and dependencies and Run PyTest
+          name: Install SDK and dependencies and run integration tests
           command: |
             if [ "<< pipeline.parameters.run_integration_tests >>" = "true" ]; then
               python3 -m venv myapp
               source myapp/bin/activate
               pip install --upgrade pip
               pip install 'hibachi-xyz[dev]'
-              ENVIRONMENT=$ENVIRONMENT pytest python-sdk/ -k "not example"
+              ENVIRONMENT=$ENVIRONMENT pytest python-sdk/tests/integration -k "not example"
             else
               echo "Integration tests disabled. Set run_integration_tests parameter to true to enable."
             fi
       - slack/notify:
           event: fail
+          branch_pattern: ^(main|release)$
           channel: python-sdk-tests
           custom: |
             {
@@ -89,16 +172,25 @@ jobs:
 workflows:
   sdk-tests-and-deploy:
     jobs:
+      - pre-build:
+          context:
+            - slack-secrets
+      - deterministic-tests:
+          context:
+            - slack-secrets
+          requires:
+            - pre-build
       - integration-tests:
           context:
             - slack-secrets
+          requires:
+            - pre-build
       - deploy-to-pypi:
           requires:
+            - pre-build
             - integration-tests
+            - deterministic-tests
           filters:
             branches:
               only:
                 - release
-
-
-  

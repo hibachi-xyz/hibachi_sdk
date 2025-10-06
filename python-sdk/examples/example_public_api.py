@@ -1,7 +1,7 @@
 from hibachi_xyz import (
-    get_version,
     HibachiApiClient,
     Interval,
+    get_version,
 )
 from hibachi_xyz.helpers import (
     format_maintenance_window,

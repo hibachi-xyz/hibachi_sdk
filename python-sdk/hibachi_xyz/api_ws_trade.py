@@ -5,19 +5,15 @@ import time
 from dataclasses import asdict
 from typing import Callable, Dict, List
 
-from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.api import HibachiApiClient
+from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.helpers import (
-    get_hibachi_client,
-    connect_with_retry,
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
-    print_data,
+    connect_with_retry,
+    get_hibachi_client,
 )
-
-log = logging.getLogger(__name__)
-
-from .types import (
+from hibachi_xyz.types import (
     EnableCancelOnDisconnectParams,
     Nonce,
     Order,
@@ -28,6 +24,8 @@ from .types import (
     Side,
     WebSocketResponse,
 )
+
+log = logging.getLogger(__name__)
 
 
 class HibachiWSTradeClient:
@@ -231,7 +229,7 @@ class HibachiWSTradeClient:
 
         if "error" in response_data and response_data["error"]:
             raise Exception(
-                f"Error modifying order: {response_data["error"]["message"]}"
+                f"Error modifying order: {response_data['error']['message']}"
             )
 
         return response_data

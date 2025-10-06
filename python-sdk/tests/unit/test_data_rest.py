@@ -1,6 +1,6 @@
 from hibachi_xyz.api import HibachiApiClient
-from ..mock_executors import MockHttpExecutor, MockSuccessfulOutput
 
+from ..mock_executors import MockHttpExecutor, MockSuccessfulOutput
 
 payload = {
     "feeConfig": {
