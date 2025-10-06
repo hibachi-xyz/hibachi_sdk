@@ -29,14 +29,14 @@ dev = [
   "pytest",
   "pytest-asyncio",
   "pytest-timeout",
+  "mypy",
 ]
 
-[tool.poetry.extras]
-dev = [
-  "pytest",
-  "pytest-asyncio",
-  "pytest-timeout",
-]
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+pytest-timeout = "*"
+mypy = "*"
 
 [project.urls]
 Homepage = "https://github.com/hibachi-xyz/yule-os"

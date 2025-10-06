@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 from dataclasses import asdict
 from typing import Callable, Dict, List
 
@@ -11,6 +12,8 @@ from hibachi_xyz.helpers import (
     get_hibachi_client,
 )
 from hibachi_xyz.types import WebSocketSubscription
+
+log = logging.getLogger(__name__)
 
 
 class HibachiWSMarketClient:
@@ -67,9 +70,9 @@ class HibachiWSMarketClient:
         except asyncio.CancelledError:
             pass
         except WebSocketConnectionError as e:
-            print(f"[MarketClient] WebSocket closed: {e}")
+            log.warning("WebSocket closed: %s", e)
         except Exception as e:
-            print(f"[MarketClient] Receive loop error: {e}")
+            log.error("Receive loop error: %s", e)
 
     async def disconnect(self):
         if self._receive_task:

@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from typing import Dict, TypeVar, Union, Any, Callable
 
 from hibachi_xyz.executors.interface import WsConnection
@@ -10,6 +11,8 @@ from dataclasses import asdict
 from decimal import Decimal
 from functools import lru_cache
 import inspect
+
+log = logging.getLogger(__name__)
 
 
 DEFAULT_API_URL: str = "https://api.hibachi.xyz"
@@ -64,8 +67,9 @@ async def connect_with_retry(
                     f"Failed to connect after {max_retries} attempts: {str(e)}"
                 )
 
-            print(
-                f"Connection attempt {retry_count} failed: {str(e)}. Retrying in {retry_delay} seconds..."
+            log.warning(
+                "Connection attempt %d failed: %s. Retrying in %d seconds...",
+                retry_count, str(e), retry_delay
             )
             await asyncio.sleep(retry_delay)
             retry_delay *= 2  # Exponential backoff

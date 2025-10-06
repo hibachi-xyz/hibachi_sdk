@@ -1,17 +1,20 @@
+import logging
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+log = logging.getLogger(__name__)
 
 
 def setup_environment():
     # Load the .env file if it exists
     env_file_path = Path(".env")
     if env_file_path.exists():
-        print("Loading environment variables from .env file")
+        log.info("Loading environment variables from .env file")
         load_dotenv()  # This loads variables from .env file (if it exists)
     else:
-        print(".env file not found. Falling back to Bash Environment variables.")
+        log.info(".env file not found. Falling back to Bash Environment variables.")
 
     # Use a default environment if no environment is passed
     environment = os.getenv(
@@ -19,7 +22,7 @@ def setup_environment():
     ).lower()  # Default to 'production' if not passed
 
     # Print out the environment for debugging purposes
-    print(f"Using {environment} environment")
+    log.info("Using %s environment", environment)
 
     # Dynamically load environment variables based on the environment
     api_endpoint = os.environ.get(

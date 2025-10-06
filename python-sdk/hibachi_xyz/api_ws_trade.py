@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 import time
 from dataclasses import asdict
@@ -13,6 +14,8 @@ from hibachi_xyz.helpers import (
     DEFAULT_DATA_API_URL,
     print_data,
 )
+
+log = logging.getLogger(__name__)
 
 from .types import (
     EnableCancelOnDisconnectParams,
@@ -153,8 +156,8 @@ class HibachiWSTradeClient:
         response = await self.websocket.recv()
         response_data = json.loads(response)
 
-        print("ws place_order -------------------------------------------")
-        print_data(response_data)
+        log.debug("ws place_order -------------------------------------------")
+        log.debug("Response data: %s", response_data)
 
         # response_data["result"] = OrderPlaceResponseResult(**response_data["result"])
         # nonce: Nonce = prepare_packet.get("nonce")
@@ -166,8 +169,8 @@ class HibachiWSTradeClient:
 
         prepare_packet = self.api._cancel_order_request_data(orderId, nonce, False)
 
-        print("prepare_packet -------------------------------------------")
-        print_data(prepare_packet)
+        log.debug("prepare_packet -------------------------------------------")
+        log.debug("Prepare packet: %s", prepare_packet)
 
         message = {
             "id": self.message_id,
@@ -183,7 +186,7 @@ class HibachiWSTradeClient:
         response = await self.websocket.recv()
         response_data = json.loads(response)
 
-        print_data(response_data)
+        log.debug("Response data: %s", response_data)
 
         # return WebSocketResponse(**response_data)
         return response_data
@@ -247,7 +250,7 @@ class HibachiWSTradeClient:
         response = await self.websocket.recv()
         response_data = json.loads(response)
 
-        print_data(response_data)
+        log.debug("Response data: %s", response_data)
 
         response_data["result"] = Order(**response_data["result"])
         return OrderStatusResponse(**response_data)
@@ -290,7 +293,7 @@ class HibachiWSTradeClient:
         response = await self.websocket.recv()
         response_data = json.loads(response)
 
-        print_data(response_data)
+        log.debug("Response data: %s", response_data)
 
         if response_data.get("id") == self.message_id:
             return response_data.get("status") == 200

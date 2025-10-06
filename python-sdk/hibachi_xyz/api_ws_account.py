@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import time
 from typing import Callable, Dict, List
 
@@ -7,6 +8,8 @@ from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.helpers import connect_with_retry, DEFAULT_API_URL, get_hibachi_client
 from hibachi_xyz.types import AccountSnapshot, AccountStreamStartResult, Position
 from hibachi_xyz.errors import WebSocketConnectionError
+
+log = logging.getLogger(__name__)
 
 
 class HibachiWSAccountClient:
@@ -80,7 +83,7 @@ class HibachiWSAccountClient:
         response = await self.websocket.recv()
         parsed = json.loads(response)
         if parsed.get("status") == 200:
-            print("pong!")
+            log.debug("pong!")
 
     async def listen(self) -> dict | None:
         try:
@@ -97,9 +100,9 @@ class HibachiWSAccountClient:
             await self.ping()
             return None
         except WebSocketConnectionError as e:
-            print(f"[MarketClient] WebSocket closed: {e}")
+            log.warning("WebSocket closed: %s", e)
         except Exception as e:
-            print(f"[listen] WebSocket closed: {e}")
+            log.error("WebSocket closed: %s", e)
             raise
 
     async def disconnect(self):
