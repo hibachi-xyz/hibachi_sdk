@@ -1,0 +1,14 @@
+{
+    "askPrice": "95432.10",
+    "bidPrice": "95430.50",
+    "fundingRateEstimation": {
+        "estimatedFundingRate": "-0.00005000",
+        "nextFundingTimestamp": 1728100000
+    },
+    "markPrice": "95431.25",
+    "spotPrice": "95431.00",
+    "symbol": "BTC/USDT-P",
+    "tradePrice": "95431.80",
+    "extra_field_timestamp": 1728000100,
+    "extra_field_priceChange24h": "3.62"
+}

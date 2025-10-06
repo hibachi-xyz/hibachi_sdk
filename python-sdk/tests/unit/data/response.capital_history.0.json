@@ -1,0 +1,25 @@
+{
+    "transactions": [
+        {
+            "id": 1,
+            "assetId": 1,
+            "quantity": "100.50",
+            "status": "COMPLETED",
+            "timestampSec": 1728000000,
+            "transactionType": "DEPOSIT",
+            "transactionHash": "0xabcdef1234567890",
+            "token": "USDT",
+            "etaTsSec": 1728000300,
+            "blockNumber": 12345678,
+            "chain": "arbitrum",
+            "instantWithdrawalChain": null,
+            "instantWithdrawalToken": null,
+            "isInstantWithdrawal": false,
+            "withdrawalAddress": null,
+            "extra_field_confirmations": 25,
+            "extra_field_networkFee": "0.0015"
+        }
+    ],
+    "extra_field_totalCount": 1,
+    "extra_field_hasMore": false
+}

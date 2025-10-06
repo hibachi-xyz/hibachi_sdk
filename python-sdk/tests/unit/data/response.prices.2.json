@@ -1,0 +1,14 @@
+{
+    "askPrice": "142.567",
+    "bidPrice": "142.345",
+    "fundingRateEstimation": {
+        "estimatedFundingRate": "0.00015000",
+        "nextFundingTimestamp": 1728200000
+    },
+    "markPrice": "142.456",
+    "spotPrice": "142.450",
+    "symbol": "SOL/USDT-P",
+    "tradePrice": "142.500",
+    "extra_field_timestamp": 1728000200,
+    "extra_field_priceChange24h": "3.09"
+}

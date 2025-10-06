@@ -1,0 +1,36 @@
+{
+    "ask": {
+        "levels": [
+            {
+                "price": "3245.50",
+                "quantity": "10.5"
+            },
+            {
+                "price": "3245.60",
+                "quantity": "8.2"
+            },
+            {
+                "price": "3245.70",
+                "quantity": "15.7"
+            }
+        ]
+    },
+    "bid": {
+        "levels": [
+            {
+                "price": "3245.40",
+                "quantity": "12.3"
+            },
+            {
+                "price": "3245.30",
+                "quantity": "9.8"
+            },
+            {
+                "price": "3245.20",
+                "quantity": "11.4"
+            }
+        ]
+    },
+    "extra_field_timestamp": 1728000000,
+    "extra_field_symbol": "ETH/USDT-P"
+}

@@ -1,0 +1,15 @@
+{
+    "klines": [
+        {
+            "close": "95431.00",
+            "high": "95500.00",
+            "low": "95400.00",
+            "open": "95420.00",
+            "interval": "1h",
+            "timestamp": 1728100000,
+            "volumeNotional": "5500000.00",
+            "extra_field_numberOfTrades": 1234
+        }
+    ],
+    "extra_field_symbol": "BTC/USDT-P"
+}

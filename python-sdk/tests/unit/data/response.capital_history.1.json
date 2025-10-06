@@ -1,0 +1,44 @@
+{
+    "transactions": [
+        {
+            "id": 2,
+            "assetId": 1,
+            "quantity": "50.25",
+            "status": "PENDING",
+            "timestampSec": 1728100000,
+            "transactionType": "WITHDRAWAL",
+            "transactionHash": null,
+            "token": "USDT",
+            "etaTsSec": 1728100600,
+            "blockNumber": null,
+            "chain": "ethereum",
+            "instantWithdrawalChain": null,
+            "instantWithdrawalToken": null,
+            "isInstantWithdrawal": false,
+            "withdrawalAddress": "0x1234567890abcdef",
+            "extra_field_confirmations": 0,
+            "extra_field_networkFee": "0.002"
+        },
+        {
+            "id": 3,
+            "assetId": 1,
+            "quantity": "200.00",
+            "status": "COMPLETED",
+            "timestampSec": 1728110000,
+            "transactionType": "DEPOSIT",
+            "transactionHash": "0xfedcba0987654321",
+            "token": "USDT",
+            "etaTsSec": 1728110300,
+            "blockNumber": 12345789,
+            "chain": "arbitrum",
+            "instantWithdrawalChain": null,
+            "instantWithdrawalToken": null,
+            "isInstantWithdrawal": false,
+            "withdrawalAddress": null,
+            "extra_field_confirmations": 30,
+            "extra_field_networkFee": "0.0012"
+        }
+    ],
+    "extra_field_totalCount": 2,
+    "extra_field_hasMore": true
+}

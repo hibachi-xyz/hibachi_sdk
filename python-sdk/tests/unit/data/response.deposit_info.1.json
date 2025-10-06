@@ -1,0 +1,5 @@
+{
+    "depositAddressEvm": "0x1234567890abcdef1234567890abcdef12345678",
+    "extra_field_network": "ethereum",
+    "extra_field_isActive": true
+}

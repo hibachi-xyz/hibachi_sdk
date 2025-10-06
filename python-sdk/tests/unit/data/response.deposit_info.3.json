@@ -1,0 +1,5 @@
+{
+    "depositAddressEvm": "0x1234567890123456789012345678901234567890",
+    "extra_field_network": "optimism",
+    "extra_field_isActive": true
+}

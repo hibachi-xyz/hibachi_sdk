@@ -1,0 +1,85 @@
+{
+    "response.exchange_info": {
+        "feeConfig": {
+            "depositFees": "0.006769",
+            "instantWithdrawDstPublicKey": "a4fff986badd3b58ead09cc617a82ff1b5b77b98d560baa27fbcffa4c08610b6372f362f3e8e530291f24251f2c332d958bf776c88ae4370380eee943cddf859",
+            "instantWithdrawalFees": [
+                [
+                    1000,
+                    0.002
+                ],
+                [
+                    100,
+                    0.004
+                ],
+                [
+                    50,
+                    0.005
+                ],
+                [
+                    20,
+                    0.01
+                ],
+                [
+                    5,
+                    0.02
+                ]
+            ],
+            "tradeMakerFeeRate": "0.00000000",
+            "tradeTakerFeeRate": "0.00045000",
+            "transferFeeRate": "0.00010000",
+            "withdrawalFees": "0.018052"
+        },
+        "futureContracts": [
+            {
+                "displayName": "ETH/USDT Perps",
+                "id": 1,
+                "initialMarginRate": "0.066667",
+                "maintenanceMarginRate": "0.046667",
+                "marketCloseTimestamp": null,
+                "marketCreationTimestamp": "1727701319.73488",
+                "marketOpenTimestamp": null,
+                "minNotional": "1",
+                "minOrderSize": "0.000000001",
+                "orderbookGranularities": [
+                    "0.01",
+                    "0.1",
+                    "1",
+                    "10"
+                ],
+                "settlementDecimals": 6,
+                "settlementSymbol": "USDT",
+                "status": "LIVE",
+                "stepSize": "0.000000001",
+                "symbol": "ETH/USDT-P",
+                "tickSize": "0.000001",
+                "underlyingDecimals": 9,
+                "underlyingSymbol": "ETH"
+            }
+        ],
+        "maintenanceWindow": [
+            {
+                "begin": 1760018400.0,
+                "end": 1760025600.0,
+                "note": "Updating system"
+            }
+        ],
+        "instantWithdrawalLimit": {
+            "lowerLimit": "0.1805267728796",
+            "upperLimit": "35154.4178512"
+        },
+        "status": "NORMAL",
+        "extra_field_serverTimestamp": 1728000400,
+        "extra_field_apiVersion": "v2.1.0",
+        "extra_field_exchangeId": "yule-exchange-01"
+    },
+    "response.order": {
+        "symbol": "ETH/USDT-P",
+        "quantity": 0.001,
+        "side": "BID",
+        "maxFeesPercent": 0.25,
+        "orderId": 11111,
+        "extra_field_orderStatus": "NEW",
+        "extra_field_timestamp": 1728000400
+    }
+}

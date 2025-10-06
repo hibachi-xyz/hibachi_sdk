@@ -1,0 +1,94 @@
+{
+    "feeConfig": {
+        "depositFees": "0.005000",
+        "instantWithdrawDstPublicKey": "b5aaa997caee4c69fbe1add728c93aa2c6c88c09e671cbb38agdgga5d19721c7483g473g4f9f641402g35362g3d443e069dg887d99bff5481491fff054deef960",
+        "instantWithdrawalFees": [
+            [
+                2000,
+                0.001
+            ],
+            [
+                500,
+                0.003
+            ],
+            [
+                100,
+                0.006
+            ]
+        ],
+        "tradeMakerFeeRate": "0.00010000",
+        "tradeTakerFeeRate": "0.00050000",
+        "transferFeeRate": "0.00015000",
+        "withdrawalFees": "0.020000"
+    },
+    "futureContracts": [
+        {
+            "displayName": "BTC/USDT Perps",
+            "id": 2,
+            "initialMarginRate": "0.100000",
+            "maintenanceMarginRate": "0.050000",
+            "marketCloseTimestamp": null,
+            "marketCreationTimestamp": "1727800000.00000",
+            "marketOpenTimestamp": null,
+            "minNotional": "10",
+            "minOrderSize": "0.0001",
+            "orderbookGranularities": [
+                "1",
+                "10",
+                "100"
+            ],
+            "settlementDecimals": 6,
+            "settlementSymbol": "USDT",
+            "status": "LIVE",
+            "stepSize": "0.0001",
+            "symbol": "BTC/USDT-P",
+            "tickSize": "0.01",
+            "underlyingDecimals": 8,
+            "underlyingSymbol": "BTC"
+        },
+        {
+            "displayName": "SOL/USDT Perps",
+            "id": 3,
+            "initialMarginRate": "0.080000",
+            "maintenanceMarginRate": "0.040000",
+            "marketCloseTimestamp": null,
+            "marketCreationTimestamp": "1727900000.00000",
+            "marketOpenTimestamp": null,
+            "minNotional": "5",
+            "minOrderSize": "0.01",
+            "orderbookGranularities": [
+                "0.001",
+                "0.01",
+                "0.1"
+            ],
+            "settlementDecimals": 6,
+            "settlementSymbol": "USDT",
+            "status": "LIVE",
+            "stepSize": "0.01",
+            "symbol": "SOL/USDT-P",
+            "tickSize": "0.001",
+            "underlyingDecimals": 9,
+            "underlyingSymbol": "SOL"
+        }
+    ],
+    "maintenanceWindow": [
+        {
+            "begin": 1760100000.0,
+            "end": 1760110000.0,
+            "note": "Scheduled maintenance"
+        },
+        {
+            "begin": 1760200000.0,
+            "end": 1760203600.0,
+            "note": "Database upgrade"
+        }
+    ],
+    "instantWithdrawalLimit": {
+        "lowerLimit": "0.5",
+        "upperLimit": "50000.0"
+    },
+    "status": "NORMAL",
+    "extra_field_serverTimestamp": 1728000100,
+    "extra_field_apiVersion": "v2.1.0",
+    "extra_field_exchangeId": "yule-exchange-01"
+}

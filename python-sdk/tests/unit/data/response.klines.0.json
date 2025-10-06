@@ -1,0 +1,25 @@
+{
+    "klines": [
+        {
+            "close": "3245.50",
+            "high": "3250.00",
+            "low": "3240.00",
+            "open": "3242.00",
+            "interval": "1h",
+            "timestamp": 1728000000,
+            "volumeNotional": "1250000.50",
+            "extra_field_numberOfTrades": 543
+        },
+        {
+            "close": "3248.75",
+            "high": "3255.00",
+            "low": "3244.50",
+            "open": "3245.50",
+            "interval": "1h",
+            "timestamp": 1728003600,
+            "volumeNotional": "1350000.75",
+            "extra_field_numberOfTrades": 621
+        }
+    ],
+    "extra_field_symbol": "ETH/USDT-P"
+}

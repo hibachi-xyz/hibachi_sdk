@@ -1,0 +1,28 @@
+{
+    "ask": {
+        "levels": [
+            {
+                "price": "95432.00",
+                "quantity": "0.5"
+            },
+            {
+                "price": "95433.00",
+                "quantity": "0.3"
+            }
+        ]
+    },
+    "bid": {
+        "levels": [
+            {
+                "price": "95431.00",
+                "quantity": "0.6"
+            },
+            {
+                "price": "95430.00",
+                "quantity": "0.4"
+            }
+        ]
+    },
+    "extra_field_timestamp": 1728000100,
+    "extra_field_symbol": "BTC/USDT-P"
+}

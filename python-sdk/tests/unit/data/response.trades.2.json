@@ -1,0 +1,33 @@
+{
+    "trades": [
+        {
+            "price": "142.45",
+            "quantity": "10.5",
+            "takerSide": "Buy",
+            "timestamp": 1728200001,
+            "extra_field_tradeId": "trade_201"
+        },
+        {
+            "price": "142.50",
+            "quantity": "8.2",
+            "takerSide": "Buy",
+            "timestamp": 1728200002,
+            "extra_field_tradeId": "trade_202"
+        },
+        {
+            "price": "142.48",
+            "quantity": "15.7",
+            "takerSide": "Sell",
+            "timestamp": 1728200003,
+            "extra_field_tradeId": "trade_203"
+        },
+        {
+            "price": "142.46",
+            "quantity": "5.0",
+            "takerSide": "Sell",
+            "timestamp": 1728200004,
+            "extra_field_tradeId": "trade_204"
+        }
+    ],
+    "extra_field_symbol": "SOL/USDT-P"
+}

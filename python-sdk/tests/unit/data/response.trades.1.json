@@ -1,0 +1,19 @@
+{
+    "trades": [
+        {
+            "price": "95431.25",
+            "quantity": "0.05",
+            "takerSide": "Sell",
+            "timestamp": 1728100001,
+            "extra_field_tradeId": "trade_101"
+        },
+        {
+            "price": "95430.00",
+            "quantity": "0.12",
+            "takerSide": "Buy",
+            "timestamp": 1728100002,
+            "extra_field_tradeId": "trade_102"
+        }
+    ],
+    "extra_field_symbol": "BTC/USDT-P"
+}

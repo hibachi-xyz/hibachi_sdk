@@ -1,0 +1,14 @@
+{
+    "askPrice": "3245.678",
+    "bidPrice": "3245.123",
+    "fundingRateEstimation": {
+        "estimatedFundingRate": "0.00010000",
+        "nextFundingTimestamp": 1728000000
+    },
+    "markPrice": "3245.400",
+    "spotPrice": "3245.350",
+    "symbol": "ETH/USDT-P",
+    "tradePrice": "3245.500",
+    "extra_field_timestamp": 1728000000,
+    "extra_field_priceChange24h": "2.15"
+}

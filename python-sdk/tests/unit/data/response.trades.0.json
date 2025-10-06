@@ -1,0 +1,26 @@
+{
+    "trades": [
+        {
+            "price": "3245.50",
+            "quantity": "1.5",
+            "takerSide": "Buy",
+            "timestamp": 1728000001,
+            "extra_field_tradeId": "trade_001"
+        },
+        {
+            "price": "3245.75",
+            "quantity": "0.8",
+            "takerSide": "Sell",
+            "timestamp": 1728000002,
+            "extra_field_tradeId": "trade_002"
+        },
+        {
+            "price": "3245.60",
+            "quantity": "2.3",
+            "takerSide": "Buy",
+            "timestamp": 1728000003,
+            "extra_field_tradeId": "trade_003"
+        }
+    ],
+    "extra_field_symbol": "ETH/USDT-P"
+}

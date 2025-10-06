@@ -1,0 +1,6 @@
+{
+    "nonce": 1234567890,
+    "status": "cancelled",
+    "extra_field_timestamp": 1728000200,
+    "extra_field_reason": "user_request"
+}

@@ -1,0 +1,44 @@
+{
+    "ask": {
+        "levels": [
+            {
+                "price": "142.46",
+                "quantity": "25.0"
+            },
+            {
+                "price": "142.47",
+                "quantity": "18.5"
+            },
+            {
+                "price": "142.48",
+                "quantity": "22.3"
+            },
+            {
+                "price": "142.49",
+                "quantity": "30.1"
+            }
+        ]
+    },
+    "bid": {
+        "levels": [
+            {
+                "price": "142.45",
+                "quantity": "20.0"
+            },
+            {
+                "price": "142.44",
+                "quantity": "15.5"
+            },
+            {
+                "price": "142.43",
+                "quantity": "19.2"
+            },
+            {
+                "price": "142.42",
+                "quantity": "28.7"
+            }
+        ]
+    },
+    "extra_field_timestamp": 1728000200,
+    "extra_field_symbol": "SOL/USDT-P"
+}

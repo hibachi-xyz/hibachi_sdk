@@ -1,0 +1,35 @@
+{
+    "klines": [
+        {
+            "close": "142.45",
+            "high": "142.50",
+            "low": "142.20",
+            "open": "142.30",
+            "interval": "1h",
+            "timestamp": 1728200000,
+            "volumeNotional": "850000.25",
+            "extra_field_numberOfTrades": 432
+        },
+        {
+            "close": "142.55",
+            "high": "142.60",
+            "low": "142.40",
+            "open": "142.45",
+            "interval": "1h",
+            "timestamp": 1728203600,
+            "volumeNotional": "920000.50",
+            "extra_field_numberOfTrades": 489
+        },
+        {
+            "close": "142.50",
+            "high": "142.58",
+            "low": "142.48",
+            "open": "142.55",
+            "interval": "1h",
+            "timestamp": 1728207200,
+            "volumeNotional": "780000.00",
+            "extra_field_numberOfTrades": 371
+        }
+    ],
+    "extra_field_symbol": "SOL/USDT-P"
+}

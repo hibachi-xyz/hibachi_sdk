@@ -24,6 +24,10 @@ class InputPack(NamedTuple):
     arg_pack: Tuple
 
 
+class MockOutput:
+    pass
+
+
 class MockValidationFailure(MockExecutorException):
     input_pack: InputPack
     message: str
@@ -33,8 +37,8 @@ class MockOutputExhausted(MockExecutorException):
     input_pack: InputPack
 
 
-class MockOutput:
-    pass
+class MockOutputNotExhausted(MockExecutorException):
+    remaining_staged_outputs: deque[MockOutput]
 
 
 # returns false or raises MockValidationFailure on error
@@ -55,8 +59,8 @@ class MockSuccessfulOutput(MockOutput):
 
 class MockHttpExecutor(HttpExecutor):
     def __init__(self):
-        self.call_log = []
-        self.staged_outputs = deque()
+        self.call_log: list[InputPack] = []
+        self.staged_outputs: deque[MockOutput] = deque()
 
     def stage_output(self, output: MockOutput | Iterable[MockOutput]) -> None:
         """Stage an output to be returned by the next request."""
@@ -71,7 +75,7 @@ class MockHttpExecutor(HttpExecutor):
         if not self.staged_outputs:
             raise MockOutputExhausted(input_pack)
         output = self.staged_outputs.popleft()
-        if not output.call_validation(input_pack):
+        if output.call_validation and not output.call_validation(input_pack):
             raise MockValidationFailure(input_pack, "Validation failed")
         if isinstance(output, MockExceptionOutput):
             raise output.exception

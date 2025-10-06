@@ -1,0 +1,84 @@
+{
+    "crossChainAssets": [
+        {
+            "chain": "arbitrum",
+            "exchangeRateFromUSDT": "1.0",
+            "exchangeRateToUSDT": "1.0",
+            "instantWithdrawalLowerLimitInUSDT": "0.1",
+            "instantWithdrawalUpperLimitInUSDT": "10000.0",
+            "token": "USDT"
+        }
+    ],
+    "feeConfig": {
+        "depositFees": "0.006769",
+        "instantWithdrawDstPublicKey": "a4fff986badd3b58ead09cc617a82ff1b5b77b98d560baa27fbcffa4c08610b6372f362f3e8e530291f24251f2c332d958bf776c88ae4370380eee943cddf859",
+        "instantWithdrawalFees": [
+            [
+                1000,
+                0.002
+            ],
+            [
+                100,
+                0.004
+            ]
+        ],
+        "tradeMakerFeeRate": "0.00000000",
+        "tradeTakerFeeRate": "0.00045000",
+        "transferFeeRate": "0.00010000",
+        "withdrawalFees": "0.018052"
+    },
+    "markets": [
+        {
+            "contract": {
+                "displayName": "ETH/USDT Perps",
+                "id": 1,
+                "initialMarginRate": "0.066667",
+                "maintenanceMarginRate": "0.046667",
+                "marketCloseTimestamp": null,
+                "marketCreationTimestamp": "1727701319.73488",
+                "marketOpenTimestamp": null,
+                "minNotional": "1",
+                "minOrderSize": "0.000000001",
+                "orderbookGranularities": [
+                    "0.01",
+                    "0.1",
+                    "1"
+                ],
+                "settlementDecimals": 6,
+                "settlementSymbol": "USDT",
+                "status": "LIVE",
+                "stepSize": "0.000000001",
+                "symbol": "ETH/USDT-P",
+                "tickSize": "0.000001",
+                "underlyingDecimals": 9,
+                "underlyingSymbol": "ETH"
+            },
+            "info": {
+                "category": "crypto",
+                "markPrice": "3245.50",
+                "price24hAgo": "3180.00",
+                "priceLatest": "3245.50",
+                "tags": [
+                    "popular",
+                    "defi"
+                ]
+            }
+        }
+    ],
+    "tradingTiers": [
+        {
+            "level": 1,
+            "lowerThreshold": "0",
+            "title": "Beginner",
+            "upperThreshold": "10000"
+        },
+        {
+            "level": 2,
+            "lowerThreshold": "10000",
+            "title": "Intermediate",
+            "upperThreshold": "100000"
+        }
+    ],
+    "extra_field_lastSyncTimestamp": 1728000000,
+    "extra_field_dataVersion": "1.2.3"
+}

@@ -1,0 +1,82 @@
+{
+    "crossChainAssets": [
+        {
+            "chain": "base",
+            "exchangeRateFromUSDT": "0.99",
+            "exchangeRateToUSDT": "1.01",
+            "instantWithdrawalLowerLimitInUSDT": "0.2",
+            "instantWithdrawalUpperLimitInUSDT": "15000.0",
+            "token": "USDC"
+        }
+    ],
+    "feeConfig": {
+        "depositFees": "0.007500",
+        "instantWithdrawDstPublicKey": "c6bbb008dbff4d7agcf2bee839da4bb3d7d99d1af782dcc49bhdhhb6e20832d8594h584h5g0g752513h46473h4e554f170eh998e00cgg6592602ggg165effg071",
+        "instantWithdrawalFees": [
+            [
+                5000,
+                0.0015
+            ],
+            [
+                1000,
+                0.0025
+            ],
+            [
+                100,
+                0.005
+            ]
+        ],
+        "tradeMakerFeeRate": "0.00005000",
+        "tradeTakerFeeRate": "0.00040000",
+        "transferFeeRate": "0.00012000",
+        "withdrawalFees": "0.015000"
+    },
+    "markets": [
+        {
+            "contract": {
+                "displayName": "SOL/USDT Perps",
+                "id": 3,
+                "initialMarginRate": "0.080000",
+                "maintenanceMarginRate": "0.040000",
+                "marketCloseTimestamp": null,
+                "marketCreationTimestamp": "1727900000.00000",
+                "marketOpenTimestamp": null,
+                "minNotional": "5",
+                "minOrderSize": "0.01",
+                "orderbookGranularities": [
+                    "0.001",
+                    "0.01",
+                    "0.1"
+                ],
+                "settlementDecimals": 6,
+                "settlementSymbol": "USDT",
+                "status": "LIVE",
+                "stepSize": "0.01",
+                "symbol": "SOL/USDT-P",
+                "tickSize": "0.001",
+                "underlyingDecimals": 9,
+                "underlyingSymbol": "SOL"
+            },
+            "info": {
+                "category": "crypto",
+                "markPrice": "142.456",
+                "price24hAgo": "138.200",
+                "priceLatest": "142.500",
+                "tags": [
+                    "layer1",
+                    "sol"
+                ]
+            }
+        }
+    ],
+    "tradingTiers": [
+        {
+            "level": 1,
+            "lowerThreshold": "0",
+            "title": "Starter",
+            "upperThreshold": "1000"
+        }
+    ],
+    "extra_field_lastSyncTimestamp": 1728000200,
+    "extra_field_dataVersion": "1.2.5"
+}
