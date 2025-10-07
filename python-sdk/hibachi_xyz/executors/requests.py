@@ -1,13 +1,11 @@
-from typing import Any, override
+from typing import override
 
 import requests
 
 from hibachi_xyz.errors import (
     BaseError,
-    DeserializationError,
     ExchangeError,
     HttpConnectionError,
-    MissingCredentialsError,
     TransportError,
     TransportTimeoutError,
 )
@@ -15,7 +13,9 @@ from hibachi_xyz.executors.interface import HttpExecutor
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
+    deserialize_response,
     get_hibachi_client,
+    serialize_request,
 )
 from hibachi_xyz.types import Json
 
@@ -52,7 +52,6 @@ class RequestsHttpExecutor(HttpExecutor):
             error = _get_http_error(response)
             if error is not None:
                 raise error
-            return response.json()
         except BaseError:
             raise
         except requests.Timeout as e:
@@ -61,18 +60,16 @@ class RequestsHttpExecutor(HttpExecutor):
             ) from e
         except requests.ConnectionError as e:
             raise HttpConnectionError(f"Failed to connect to {url}", url=url) from e
-        except (ValueError, TypeError) as e:
-            raise DeserializationError(
-                f"Failed to parse JSON response from {url}: {e}"
-            ) from e
         except Exception as e:
             raise TransportError(f"Request to {url} failed: {e}") from e
+        return deserialize_response(response.content, url)
 
     @override
     def send_authorized_request(
         self, method: str, path: str, json: Json | None = None
-    ) -> Any:
+    ) -> Json:
         url = f"{self.api_url}{path}"
+        request_body = serialize_request(json)
         try:
             headers = {
                 "Authorization": self.api_key,
@@ -81,12 +78,10 @@ class RequestsHttpExecutor(HttpExecutor):
                 "Hibachi-Client": get_hibachi_client(),
             }
 
-            response = requests.request(method, url, headers=headers, json=json)
+            response = requests.request(method, url, headers=headers, data=request_body)
             error = _get_http_error(response)
             if error is not None:
                 raise error
-
-            return response.json()
         except BaseError:
             raise
         except requests.Timeout as e:
@@ -95,14 +90,6 @@ class RequestsHttpExecutor(HttpExecutor):
             ) from e
         except requests.ConnectionError as e:
             raise HttpConnectionError(f"Failed to connect to {url}", url=url) from e
-        except (ValueError, TypeError) as e:
-            raise DeserializationError(
-                f"Failed to parse JSON response from {url}: {e}"
-            ) from e
         except Exception as e:
             raise TransportError(f"{method} request to {url} failed: {e}") from e
-
-    @override
-    def check_auth_data(self) -> None:
-        if self.api_key is None:
-            raise MissingCredentialsError("API key")
+        return deserialize_response(response.content, url)

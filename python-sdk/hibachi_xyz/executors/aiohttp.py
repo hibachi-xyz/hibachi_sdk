@@ -32,9 +32,9 @@ class AiohttpWsConnection(WsConnection):
         try:
             msg = await self._ws.receive()
             if msg.type == aiohttp.WSMsgType.TEXT:
-                return msg.data
+                return msg.data  # type: ignore
             elif msg.type == aiohttp.WSMsgType.BINARY:
-                return msg.data.decode("utf-8")
+                return msg.data.decode("utf-8")  # type: ignore
             elif msg.type == aiohttp.WSMsgType.CLOSE:
                 raise WebSocketConnectionError("WebSocket closed")
             elif msg.type == aiohttp.WSMsgType.ERROR:
@@ -60,7 +60,7 @@ class AiohttpWsConnection(WsConnection):
 
 
 class AiohttpWsExecutor(WsExecutor):
-    def __init__(self):
+    def __init__(self) -> None:
         self._session: aiohttp.ClientSession | None = None
 
     @override

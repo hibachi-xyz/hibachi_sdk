@@ -8,7 +8,11 @@ from hibachi_xyz import (
 )
 from hibachi_xyz.env_setup import setup_environment
 from hibachi_xyz.types import (
+    CancelOrderBatchResponse,
+    CreateOrderBatchResponse,
+    ErrorBatchResponse,
     Side,
+    UpdateOrderBatchResponse,
 )
 
 
@@ -442,9 +446,20 @@ def example_auth_rest_api():
     )
 
     print("\nBatch Order Response:\n-------------------")
-    # assert all batch orders were successful
     for order in response.orders:
-        print(f"Batch Order result: nonce({order.nonce}) orderId({order.orderId})")
+        if isinstance(order, CreateOrderBatchResponse):
+            assert order.orderId is not None
+            assert order.nonce is not None
+            assert order.creationTime is not None
+            assert order.creationTimeNsPartial
+            # Handle error code / messages
+            continue
+        elif isinstance(order, UpdateOrderBatchResponse):
+            assert order.orderId is not None
+        elif isinstance(order, CancelOrderBatchResponse):
+            assert order.nonce is not None
+        else:
+            assert isinstance(order, ErrorBatchResponse)
 
     # Test withdraw request
     # uncomment the following lines to test withdrawal

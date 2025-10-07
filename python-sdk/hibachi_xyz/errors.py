@@ -104,6 +104,13 @@ class ValidationError(BaseError):
     pass
 
 
+class MaintanenceOutage(ExchangeError):
+    """Raised when exchange cannot handle response due to maintanence"""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
 class MissingCredentialsError(ValidationError):
     """Raised when required authentication credentials are missing."""
 

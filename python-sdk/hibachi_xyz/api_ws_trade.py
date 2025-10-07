@@ -1,16 +1,19 @@
-import json
 import logging
 import random
 import time
 from dataclasses import asdict
-from typing import Callable, Dict, List
+from typing import Self
+
+import orjson
 
 from hibachi_xyz.api import HibachiApiClient
+from hibachi_xyz.errors import ValidationError
 from hibachi_xyz.executors import WsConnection
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
     connect_with_retry,
+    create_with,
     get_hibachi_client,
 )
 from hibachi_xyz.types import (
@@ -80,7 +83,7 @@ class HibachiWSTradeClient:
     def __init__(
         self,
         api_key: str,
-        account_id: int,
+        account_id: int | str,
         account_public_key: str,
         api_url: str = DEFAULT_API_URL,
         data_api_url: str = DEFAULT_DATA_API_URL,
@@ -90,27 +93,35 @@ class HibachiWSTradeClient:
         self.api_endpoint = (
             self.api_endpoint.replace("https://", "wss://") + "/ws/trade"
         )
-        self.websocket: WsConnection | None = None
+        self._websocket: WsConnection | None = None
 
         # random id start
         self.message_id = random.randint(1, 1000000)
-        self._event_handlers: Dict[str, List[Callable]] = {}
-        self._response_handlers: Dict[int, Callable] = {}
         self.api_key = api_key
-        self.account_id = int(account_id) if isinstance(account_id, str) else account_id
+        self.account_id: int = (
+            int(account_id) if isinstance(account_id, str) else account_id
+        )
         self.account_public_key = account_public_key
 
         self.api = HibachiApiClient(
             api_url=api_url,
             data_api_url=data_api_url,
-            account_id=account_id,
+            account_id=self.account_id,
             api_key=api_key,
             private_key=private_key,
         )
 
-    async def connect(self):
+    @property
+    def websocket(self) -> WsConnection:
+        if self._websocket is None:
+            raise ValidationError from ValueError(
+                "No existing ws connection. Call `connect` first"
+            )
+        return self._websocket
+
+    async def connect(self) -> Self:
         """Establish WebSocket connection with retry logic"""
-        self.websocket = await connect_with_retry(
+        self._websocket = await connect_with_retry(
             web_url=self.api_endpoint
             + f"?accountId={self.account_id}&hibachiClient={get_hibachi_client()}",
             headers=[("Authorization", self.api_key)],
@@ -150,9 +161,9 @@ class HibachiWSTradeClient:
             "signature": prepare_packet.get("signature"),
         }
 
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
 
         log.debug("ws place_order -------------------------------------------")
         log.debug("Response data: %s", response_data)
@@ -165,7 +176,9 @@ class HibachiWSTradeClient:
         """Cancel an existing order"""
         self.message_id += 1
 
-        prepare_packet = self.api._cancel_order_request_data(orderId, nonce, False)
+        prepare_packet = self.api._cancel_order_request_data(
+            order_id=orderId, nonce=nonce
+        )
 
         log.debug("prepare_packet -------------------------------------------")
         log.debug("Prepare packet: %s", prepare_packet)
@@ -180,14 +193,13 @@ class HibachiWSTradeClient:
             },
             "signature": prepare_packet.get("signature"),
         }
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
 
         log.debug("Response data: %s", response_data)
 
-        # return WebSocketResponse(**response_data)
-        return response_data
+        return create_with(WebSocketResponse, response_data)
 
     async def modify_order(
         self,
@@ -223,17 +235,16 @@ class HibachiWSTradeClient:
             "signature": signature,
         }
 
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
 
         if "error" in response_data and response_data["error"]:
             raise Exception(
                 f"Error modifying order: {response_data['error']['message']}"
             )
 
-        return response_data
-        # return WebSocketResponse(**response_data)
+        return create_with(WebSocketResponse, response_data)
 
     async def get_order_status(self, orderId: int) -> OrderStatusResponse:
         """Get status of a specific order"""
@@ -244,9 +255,9 @@ class HibachiWSTradeClient:
             "params": {"orderId": str(orderId), "accountId": int(self.account_id)},
         }
 
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
 
         log.debug("Response data: %s", response_data)
 
@@ -263,9 +274,9 @@ class HibachiWSTradeClient:
             "params": {"accountId": int(self.account_id)},
         }
 
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
         response_data["result"] = [Order(**order) for order in response_data["result"]]
         return OrdersStatusResponse(**response_data)
 
@@ -275,7 +286,7 @@ class HibachiWSTradeClient:
 
         nonce = time.time_ns() // 1_000
 
-        signed_packet = self.api._cancel_order_request_data(None, nonce, False)
+        signed_packet = self.api._cancel_order_request_data(order_id=None, nonce=nonce)
 
         message = {
             "id": self.message_id,
@@ -287,14 +298,14 @@ class HibachiWSTradeClient:
             },
             "signature": signed_packet.get("signature"),
         }
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
 
         log.debug("Response data: %s", response_data)
 
         if response_data.get("id") == self.message_id:
-            return response_data.get("status") == 200
+            return response_data.get("status") == 200  # type: ignore
         else:
             return False
 
@@ -306,9 +317,9 @@ class HibachiWSTradeClient:
             "method": "orders.batch",
             "params": asdict(params),
         }
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
         return WebSocketResponse(**response_data)
 
     async def enable_cancel_on_disconnect(
@@ -321,13 +332,13 @@ class HibachiWSTradeClient:
             "method": "orders.enableCancelOnDisconnect",
             "params": asdict(params),
         }
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
         return WebSocketResponse(**response_data)
 
-    async def disconnect(self):
+    async def disconnect(self) -> None:
         """Close the WebSocket connection"""
-        if self.websocket:
-            await self.websocket.close()
-            self.websocket = None
+        if self._websocket:
+            await self._websocket.close()
+            self._websocket = None

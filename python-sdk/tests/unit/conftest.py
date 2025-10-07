@@ -3,8 +3,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Generator
 
+import orjson
 import pytest
-import ujson
 
 from hibachi_xyz.api import HibachiApiClient
 from tests.mock_executors import MockHttpExecutor, MockOutputNotExhausted
@@ -55,8 +55,8 @@ def json_data_files(name: str) -> list[Path]:
 def load_json(name: str, case: int | None = None) -> dict[str, Any]:
     case_part = f"{case}." if case else ""
     path = Path(__file__).parent / "data" / f"{name}.{case_part}json"
-    with open(path, "r") as fh:
-        return ujson.load(fh)
+    with open(path, "rb") as fh:
+        return orjson.loads(fh.read())
 
 
 def load_json_all_cases(name: str) -> list[tuple[dict[str, Any], Path]]:
@@ -64,7 +64,7 @@ def load_json_all_cases(name: str) -> list[tuple[dict[str, Any], Path]]:
     results = []
     for path in json_data_files(name):
         print("Attempting to load json from", path.as_posix())
-        with open(path, "r") as fh:
-            payload = ujson.load(fh)
+        with open(path, "rb") as fh:
+            payload = orjson.loads(fh.read())
             results.append((payload, path))
     return results

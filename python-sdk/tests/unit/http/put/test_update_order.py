@@ -20,22 +20,6 @@ def test_update_order(mock_http_client, test_data):
     quantity = update_response.get("quantity")
     price = update_response.get("price")
 
-    # Mock check_auth_data call (from update_order)
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
-        )
-    )
-
-    # Mock check_auth_data call (from get_order_details)
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
-        )
-    )
-
     # Mock get_order_details call
     mock_http.stage_output(
         MockSuccessfulOutput(
@@ -46,7 +30,7 @@ def test_update_order(mock_http_client, test_data):
         )
     )
 
-    # Mock exchange_info call (needed for __check_symbol)
+    # Mock exchange_info call (needed for __get_contract)
     mock_http.stage_output(
         MockSuccessfulOutput(
             output=exchange_info,

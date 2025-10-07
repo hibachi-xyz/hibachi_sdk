@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hibachi_xyz"
-version = "0.1.12"
+version = "0.2.0"
 authors = [
  { name = "Hibachi Engineer" }
 ]
@@ -22,7 +22,8 @@ dependencies = [
   "prettyprinter >= 0.18.0",
   "pip-system-certs",
   "aiohttp>=3.12.15,<4.0.0",
-  "ujson>=5.11.0,<6.0.0",
+  "orjson>=3.10.0,<4.0.0",
+  "types-requests>=2.32.4.20250913,<3.0.0.0",
 ]
 
 [project.optional-dependencies]
@@ -40,6 +41,7 @@ pytest-asyncio = "*"
 pytest-timeout = "*"
 mypy = "*"
 ruff = "*"
+ipython = "^9.6.0"
 
 [project.urls]
 Homepage = "https://github.com/hibachi-xyz/yule-os"
@@ -65,3 +67,34 @@ docstring-code-format = false
 # Enable pycodestyle (E), Pyflakes (F), and isort (I) rules
 select = ["E", "F", "I"]
 ignore = ["E501"]  # Ignore line too long
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+disallow_any_generics = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+exclude = [
+    # TODO cleanup
+    "examples/",
+    "tests/", 
+]
+
+[[tool.mypy.overrides]]
+module = [
+    "eth_keys.*",
+    "prettyprinter.*",
+    "toml.*",
+    "pydoc_markdown.*",
+]
+ignore_missing_imports = true

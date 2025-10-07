@@ -20,28 +20,12 @@ def test_place_market_order(mock_http_client, test_data):
     side = Side(order_response["side"])
     max_fees_percent = order_response["maxFeesPercent"]
 
-    # Mock check_auth_data call (first call from place_market_order)
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
-        )
-    )
-
-    # Mock exchange_info call (needed for __check_symbol in place_market_order)
+    # Mock exchange_info call (needed for __get_contract in place_market_order)
     mock_http.stage_output(
         MockSuccessfulOutput(
             output=exchange_info,
             call_validation=lambda call: call.function_name == "send_simple_request"
             and call.arg_pack == ("/market/exchange-info",),
-        )
-    )
-
-    # Mock check_auth_data call (second call from _create_order_request_data)
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
         )
     )
 

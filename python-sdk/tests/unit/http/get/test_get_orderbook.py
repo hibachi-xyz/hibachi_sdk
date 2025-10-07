@@ -21,7 +21,7 @@ def test_get_orderbook(mock_http_client, test_data):
     granularity = 0.1
 
     # Pre-populate future_contracts to avoid get_exchange_info call
-    client.future_contracts = {
+    client._future_contracts = {
         symbol: FutureContract(
             displayName="ETH/USDT Perps",
             id=1,

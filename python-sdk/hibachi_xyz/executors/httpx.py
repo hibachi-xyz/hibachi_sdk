@@ -4,18 +4,19 @@ import httpx
 
 from hibachi_xyz.errors import (
     BaseError,
-    DeserializationError,
     ExchangeError,
     HttpConnectionError,
-    MissingCredentialsError,
     TransportError,
     TransportTimeoutError,
+    ValidationError,
 )
 from hibachi_xyz.executors.interface import HttpExecutor
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
+    deserialize_response,
     get_hibachi_client,
+    serialize_request,
 )
 from hibachi_xyz.types import Json
 
@@ -53,7 +54,6 @@ class HttpxHttpExecutor(HttpExecutor):
             error = _get_httpx_error(response)
             if error is not None:
                 raise error
-            return response.json()
         except BaseError:
             raise
         except httpx.TimeoutException as e:
@@ -66,17 +66,9 @@ class HttpxHttpExecutor(HttpExecutor):
             raise HttpConnectionError(
                 f"Network error during request to {url}", url=url
             ) from e
-        except (ValueError, TypeError) as e:
-            raise DeserializationError(
-                f"Failed to parse JSON response from {url}: {e}"
-            ) from e
         except Exception as e:
             raise TransportError(f"Request to {url} failed: {e}") from e
-
-    @override
-    def check_auth_data(self) -> None:
-        if self.api_key is None:
-            raise MissingCredentialsError("API key")
+        return deserialize_response(response.content, url)
 
     @override
     def send_authorized_request(
@@ -85,7 +77,11 @@ class HttpxHttpExecutor(HttpExecutor):
         path: str,
         json: Json | None = None,
     ) -> Json:
+        if self.api_key is None:
+            raise ValidationError("api_key is not set")
+
         url = f"{self.api_url}{path}"
+        request_body = serialize_request(json)
         try:
             headers = {
                 "Authorization": self.api_key,
@@ -94,12 +90,13 @@ class HttpxHttpExecutor(HttpExecutor):
                 "Hibachi-Client": get_hibachi_client(),
             }
 
-            response = self.client.request(method, url, headers=headers, json=json)
+            response = self.client.request(
+                method, url, headers=headers, content=request_body
+            )
             error = _get_httpx_error(response)
             if error is not None:
                 raise error
 
-            return response.json()
         except ExchangeError:
             raise
         except httpx.TimeoutException as e:
@@ -112,13 +109,10 @@ class HttpxHttpExecutor(HttpExecutor):
             raise HttpConnectionError(
                 f"Network error during {method} request to {url}", url=url
             ) from e
-        except (ValueError, TypeError) as e:
-            raise DeserializationError(
-                f"Failed to parse JSON response from {url}: {e}"
-            ) from e
         except Exception as e:
             raise TransportError(f"{method} request to {url} failed: {e}") from e
+        return deserialize_response(response.content, url)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Cleanup the httpx client when the executor is destroyed"""
         self.client.close()

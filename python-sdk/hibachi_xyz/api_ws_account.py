@@ -1,13 +1,24 @@
 import asyncio
-import json
 import logging
 import time
-from typing import Callable, Dict, List
 
-from hibachi_xyz.errors import WebSocketConnectionError
+import orjson
+
+from hibachi_xyz.errors import ValidationError, WebSocketConnectionError
 from hibachi_xyz.executors import WsConnection
-from hibachi_xyz.helpers import DEFAULT_API_URL, connect_with_retry, get_hibachi_client
-from hibachi_xyz.types import AccountSnapshot, AccountStreamStartResult, Position
+from hibachi_xyz.helpers import (
+    DEFAULT_API_URL,
+    connect_with_retry,
+    create_with,
+    get_hibachi_client,
+)
+from hibachi_xyz.types import (
+    AccountSnapshot,
+    AccountStreamStartResult,
+    Json,
+    Position,
+    WsEventHandler,
+)
 
 log = logging.getLogger(__name__)
 
@@ -20,20 +31,28 @@ class HibachiWSAccountClient:
         api_endpoint: str = DEFAULT_API_URL,
     ):
         self.api_endpoint = api_endpoint.replace("https://", "wss://") + "/ws/account"
-        self.websocket: WsConnection | None = None
+        self._websocket: WsConnection | None = None
         self.message_id = 0
         self.api_key = api_key
         self.account_id = int(account_id)
         self.listenKey: str | None = None
-        self._event_handlers: Dict[str, List[Callable[[dict], None]]] = {}
+        self._event_handlers: dict[str, list[WsEventHandler]] = {}
 
-    def on(self, topic: str, handler: Callable[[dict], None]):
+    @property
+    def websocket(self) -> WsConnection:
+        if self._websocket is None:
+            raise ValidationError from ValueError(
+                "No existing ws connection. Call `connect` first"
+            )
+        return self._websocket
+
+    def on(self, topic: str, handler: WsEventHandler) -> None:
         if topic not in self._event_handlers:
             self._event_handlers[topic] = []
         self._event_handlers[topic].append(handler)
 
-    async def connect(self):
-        self.websocket = await connect_with_retry(
+    async def connect(self) -> None:
+        self._websocket = await connect_with_retry(
             web_url=self.api_endpoint
             + f"?accountId={self.account_id}&hibachiClient={get_hibachi_client()}",
             headers=[("Authorization", self.api_key)],
@@ -54,21 +73,28 @@ class HibachiWSAccountClient:
             "timestamp": self._timestamp(),
         }
 
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        response_data = json.loads(response)
+        response_data = orjson.loads(response)
 
-        result = AccountStreamStartResult(**response_data["result"])
-        result.accountSnapshot = AccountSnapshot(
-            **response_data["result"]["accountSnapshot"]
+        snapshot_data = response_data["result"]["accountSnapshot"]
+        snapshot = AccountSnapshot(
+            account_id=snapshot_data["account_id"],
+            balance=snapshot_data["balance"],
+            positions=[
+                create_with(Position, pos) for pos in snapshot_data["positions"]
+            ],
         )
-        result.accountSnapshot.positions = [
-            Position(**pos) for pos in result.accountSnapshot.positions
-        ]
+
+        result = AccountStreamStartResult(
+            accountSnapshot=snapshot,
+            listenKey=response_data["result"]["listenKey"],
+        )
+
         self.listenKey = result.listenKey
         return result
 
-    async def ping(self):
+    async def ping(self) -> None:
         if not self.listenKey:
             raise ValueError("Cannot send ping: listenKey not initialized.")
 
@@ -79,23 +105,23 @@ class HibachiWSAccountClient:
             "timestamp": self._timestamp(),
         }
 
-        await self.websocket.send(json.dumps(message))
+        await self.websocket.send(orjson.dumps(message).decode())
         response = await self.websocket.recv()
-        parsed = json.loads(response)
+        parsed = orjson.loads(response)
         if parsed.get("status") == 200:
             log.debug("pong!")
 
-    async def listen(self) -> dict | None:
+    async def listen(self) -> Json | None:
         try:
             response = await asyncio.wait_for(self.websocket.recv(), timeout=15)
-            message = json.loads(response)
+            message = orjson.loads(response)
 
             topic = message.get("topic")
             if topic in self._event_handlers:
                 for handler in self._event_handlers[topic]:
                     await handler(message)
 
-            return message
+            return message  # type: ignore
         except asyncio.TimeoutError:
             await self.ping()
             return None
@@ -104,8 +130,9 @@ class HibachiWSAccountClient:
         except Exception as e:
             log.error("WebSocket closed: %s", e)
             raise
+        return None
 
-    async def disconnect(self):
-        if self.websocket:
-            await self.websocket.close()
-            self.websocket = None
+    async def disconnect(self) -> None:
+        if self._websocket:
+            await self._websocket.close()
+            self._websocket = None

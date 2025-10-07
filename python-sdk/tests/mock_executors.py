@@ -48,13 +48,13 @@ InputValidation: TypeAlias = Callable[[InputPack], bool]
 @dataclass
 class MockExceptionOutput(MockOutput):
     exception: Exception
-    call_validation: InputValidation | None
+    call_validation: InputValidation | None = None
 
 
 @dataclass
 class MockSuccessfulOutput(MockOutput):
     output: Any
-    call_validation: InputValidation | None
+    call_validation: InputValidation | None = None
 
 
 class MockHttpExecutor(HttpExecutor):
@@ -97,8 +97,4 @@ class MockHttpExecutor(HttpExecutor):
         path: str,
     ) -> Json:
         input_pack = InputPack(inspect.stack()[0].function, (path,))
-        return self._execute_mock(input_pack)
-
-    def check_auth_data(self) -> None:
-        input_pack = InputPack(inspect.stack()[0].function, ())
         return self._execute_mock(input_pack)

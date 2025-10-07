@@ -21,10 +21,13 @@ from hibachi_xyz.types import (
     AccountTrade,
     AccountTradesResponse,
     Asset,
+    CancelOrderBatchResponse,
     CapitalBalance,
     CapitalHistory,
+    CreateOrderBatchResponse,
     CrossChainAsset,
     DepositInfo,
+    ErrorBatchResponse,
     ExchangeInfo,
     FeeConfig,
     FundingRateEstimation,
@@ -51,6 +54,7 @@ from hibachi_xyz.types import (
     TradesResponse,
     TradingTier,
     Transaction,
+    UpdateOrderBatchResponse,
     WithdrawalLimit,
     WithdrawResponse,
 )
@@ -366,7 +370,7 @@ def test_get_pending_orders():
         assert isinstance(order.availableQuantity, str)
         assert isinstance(order.contractId, int)
         # assert isinstance(order.creationTime, int) # stopped working
-        assert isinstance(order.orderId, str)
+        assert isinstance(order.orderId, int)
         assert isinstance(order.orderType, OrderType)
         # assert isinstance(order.price, str) # in some cases the price is not returned
         assert isinstance(order.side, Side)
@@ -655,10 +659,20 @@ def test_batch_order():
         ]
     )
 
-    # assert all batch orders were successful
     for order in response.orders:
-        both_None = order.nonce is None and order.orderId is None
-        assert not both_None, "Order nonce and ID cannot be both None"
+        if isinstance(order, CreateOrderBatchResponse):
+            assert order.orderId is not None
+            assert order.nonce is not None
+            assert order.creationTime is not None
+            assert order.creationTimeNsPartial
+            # Handle error code / messages
+            continue
+        elif isinstance(order, UpdateOrderBatchResponse):
+            assert order.orderId is not None
+        elif isinstance(order, CancelOrderBatchResponse):
+            assert order.nonce is not None
+        else:
+            assert isinstance(order, ErrorBatchResponse)
 
     # ensure all orders are cancelled
     client.cancel_all_orders()

@@ -1,6 +1,6 @@
 import asyncio
-import json
 
+import orjson
 import pytest
 
 from hibachi_xyz.api_ws_account import HibachiWSAccountClient
@@ -45,7 +45,7 @@ async def test_market_websocket():
         count = 0
         while count < 3:
             msg = await client.websocket.recv()
-            parsed = json.loads(msg)
+            parsed = orjson.loads(msg)
             assert "symbol" in parsed
             assert "topic" in parsed
             count += 1

@@ -12,14 +12,6 @@ def test_cancel_all_orders(mock_http_client, test_data):
     # Extract payloads
     pending_orders = payload["response.pending_orders"]
 
-    # Mock check_auth_data call (from get_pending_orders)
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
-        )
-    )
-
     # Mock get_pending_orders call
     mock_http.stage_output(
         MockSuccessfulOutput(
@@ -32,14 +24,6 @@ def test_cancel_all_orders(mock_http_client, test_data):
 
     # For each pending order, mock cancel_order sequence
     for order in pending_orders:
-        # Mock check_auth_data call
-        mock_http.stage_output(
-            MockSuccessfulOutput(
-                output=None,
-                call_validation=lambda call: call.function_name == "check_auth_data",
-            )
-        )
-
         # Mock send_authorized_request call for cancel
         mock_http.stage_output(
             MockSuccessfulOutput(

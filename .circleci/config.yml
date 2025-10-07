@@ -27,7 +27,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install ruff from project dependencies
+          name: Install project dependencies and static analysis tools
           command: |
             pip install --upgrade pip
             pip install -e python-sdk/[dev]
@@ -39,6 +39,10 @@ jobs:
           name: Run ruff check
           command: |
             ruff check python-sdk/
+      - run:
+          name: Run mypy
+          command: |
+            pushd python-sdk && mypy . && popd
       - slack/notify:
           event: fail
           branch_pattern: ^(main|release)$

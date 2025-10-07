@@ -1,3 +1,4 @@
+import logging
 from importlib.metadata import version
 from pathlib import Path
 
@@ -20,6 +21,7 @@ from hibachi_xyz.errors import (
     WebSocketConnectionError,
     WebSocketMessageError,
 )
+from hibachi_xyz.helpers import print_data
 from hibachi_xyz.types import (
     AccountInfo,
     AccountSnapshot,
@@ -110,17 +112,24 @@ from hibachi_xyz.types import (
     WithdrawResponse,
 )
 
+log = logging.getLogger(__name__)
+
 
 def get_version() -> str:
     """Return the version of the hibachi library package."""
-    pyproject_path = Path(__file__).parents[1] / "pyproject.toml"
-    if pyproject_path.exists():
-        with open(pyproject_path) as f:
-            pyproject = toml.loads(f.read())
+    try:
+        pyproject_path = Path(__file__).parents[1] / "pyproject.toml"
+        if pyproject_path.exists():
+            with open(pyproject_path) as f:
+                pyproject = toml.loads(f.read())
 
-        return pyproject["project"]["version"]
+            return str(pyproject["project"]["version"])
 
-    return version("hibachi_xyz")
+        return version("hibachi_xyz")
+    # this is used only for telemetry, if for some reason we cannot get the version we do not want to break the rest of the api
+    except Exception as e:
+        log.warning(f"Unable to find SDK version - telemetry degraded : {e}")
+        return "0.0.0-unknown"
 
 
 __version__: str = get_version()
@@ -229,4 +238,5 @@ __all__ = [
     "Market",
     "InventoryResponse",
     "__version__",
+    "print_data",
 ]

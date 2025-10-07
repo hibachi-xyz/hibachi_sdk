@@ -5,22 +5,21 @@ from hibachi_xyz.types import Json
 
 
 class HttpExecutor(ABC):
+    api_key: str | None = None
+
     @abstractmethod
     def send_authorized_request(
         self,
         method: str,
         path: str,
         json: Any | None = None,
-    ) -> Any: ...
+    ) -> Json: ...
 
     @abstractmethod
     def send_simple_request(
         self,
         path: str,
     ) -> Json: ...
-
-    @abstractmethod
-    def check_auth_data(self) -> None: ...
 
 
 class WsConnection(ABC):

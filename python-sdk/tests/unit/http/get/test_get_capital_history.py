@@ -14,14 +14,6 @@ def test_get_capital_history(mock_http_client, test_data):
     # Save original transactions before they get mutated
     original_transactions = copy.deepcopy(payload["transactions"])
 
-    # Mock check_auth_data call
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
-        )
-    )
-
     mock_http.stage_output(
         MockSuccessfulOutput(
             output=payload,

@@ -13,14 +13,6 @@ def test_cancel_order(mock_http_client, test_data):
     order_id = payload.get("orderId")
     nonce = payload.get("nonce")
 
-    # Mock check_auth_data call
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
-        )
-    )
-
     # Mock send_authorized_request call for cancel
     mock_http.stage_output(
         MockSuccessfulOutput(

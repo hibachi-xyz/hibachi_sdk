@@ -1,6 +1,20 @@
+import re
 from dataclasses import dataclass, field
+from decimal import Decimal
 from enum import Enum
-from typing import Any, Dict, List, Self, TypeAlias, Union
+from typing import (
+    Any,
+    Callable,
+    Coroutine,
+    Dict,
+    List,
+    Self,
+    TypeAlias,
+    Union,
+    overload,
+)
+
+from hibachi_xyz.errors import ExchangeError, ValidationError
 
 
 class Interval(Enum):
@@ -16,13 +30,53 @@ class Interval(Enum):
 Nonce: TypeAlias = int
 OrderId: TypeAlias = int
 
-# Recursive type for any valid JSON value
-JsonValue: TypeAlias = (
-    None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
-)
+# Internally used json types
+JsonObject: TypeAlias = dict[str, "JsonValue"]
+JsonArray: TypeAlias = list["JsonValue"]
+JsonValue: TypeAlias = None | bool | int | float | str | JsonObject | JsonArray
+Json: TypeAlias = JsonObject | JsonArray
 
-# A JSON document (must be object or array at the top level)
-Json: TypeAlias = dict[str, JsonValue] | list[JsonValue]
+HibachiIntegralInput: TypeAlias = str | int
+HibachiNumericInput: TypeAlias = Decimal | str | float | int
+
+DECIMAL_PATTERN = re.compile(r"^\d+(\.\d+)?$")
+
+
+def full_precision_string(n: HibachiNumericInput) -> str:
+    if isinstance(n, str):
+        if not DECIMAL_PATTERN.match(n):
+            raise ValidationError(f"Invalid numeric input {n}")
+        return n
+    if isinstance(n, (int, float)):
+        n = Decimal(str(n))
+    if not isinstance(n, Decimal):
+        raise ValidationError(f"Invalid numeric input type {n} - {type(n)}")
+    return format(n, "f")
+
+
+@overload
+def numeric_to_decimal(n: HibachiNumericInput) -> Decimal: ...
+
+
+@overload
+def numeric_to_decimal(n: None) -> None: ...
+
+
+def numeric_to_decimal(n: HibachiNumericInput | None) -> Decimal | None:
+    if n is None:
+        return n
+    if isinstance(n, str):
+        if not DECIMAL_PATTERN.match(n):
+            raise ValidationError(f"Invalid numeric input {n}")
+        return Decimal(n)
+    if isinstance(n, (int, float)):
+        n = Decimal(str(n))
+    if not isinstance(n, Decimal):
+        raise ValidationError(f"Invalid numeric input type {n} - {type(n)}")
+    return n
+
+
+WsEventHandler: TypeAlias = Callable[[Json], Coroutine[None, None, None]]
 
 
 @dataclass
@@ -87,28 +141,32 @@ class TPSLConfig:
     @dataclass
     class Leg:
         order_type: "TPSLConfig.Type"
-        price: float
-        quantity: float | None
+        price: Decimal
+        quantity: Decimal | None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.legs: List[TPSLConfig.Leg] = []
 
-    def add_take_profit(self, price: float, quantity: float | None = None) -> Self:
+    def add_take_profit(
+        self, price: HibachiNumericInput, quantity: HibachiNumericInput | None = None
+    ) -> Self:
         self.legs.append(
             TPSLConfig.Leg(
                 order_type=TPSLConfig.Type.TP,
-                price=price,
-                quantity=quantity,
+                price=numeric_to_decimal(price),
+                quantity=numeric_to_decimal(quantity),
             )
         )
         return self
 
-    def add_stop_loss(self, price: float, quantity: float | None = None) -> Self:
+    def add_stop_loss(
+        self, price: HibachiNumericInput, quantity: HibachiNumericInput | None = None
+    ) -> Self:
         self.legs.append(
             TPSLConfig.Leg(
                 order_type=TPSLConfig.Type.SL,
-                price=price,
-                quantity=quantity,
+                price=numeric_to_decimal(price),
+                quantity=numeric_to_decimal(quantity),
             )
         )
         return self
@@ -117,10 +175,10 @@ class TPSLConfig:
         self,
         *,
         parent_symbol: str,
-        parent_quantity: float,
+        parent_quantity: HibachiNumericInput,
         parent_side: "Side",
         parent_nonce: Nonce,
-        max_fees_percent: float,
+        max_fees_percent: HibachiNumericInput,
     ) -> List["CreateOrder"]:
         order_requests = []
         for leg in self.legs:
@@ -135,9 +193,9 @@ class TPSLConfig:
                 CreateOrder(
                     symbol=parent_symbol,
                     side=side,
-                    quantity=leg.quantity or parent_quantity,
-                    max_fees_percent=max_fees_percent,
-                    trigger_price=leg.price,
+                    quantity=leg.quantity or numeric_to_decimal(parent_quantity),
+                    max_fees_percent=numeric_to_decimal(max_fees_percent),
+                    trigger_price=numeric_to_decimal(max_fees_percent),
                     trigger_direction=trigger_direction,
                     parent_order=OrderIdVariant.from_nonce(parent_nonce),
                     order_flags=OrderFlags.ReduceOnly,
@@ -191,7 +249,7 @@ class Order:
     numOrdersRemaining: int | None
     numOrdersTotal: int | None
     orderFlags: OrderFlags | None
-    orderId: str
+    orderId: int
     orderType: OrderType
     price: str | None
     quantityMode: str | None
@@ -205,7 +263,7 @@ class Order:
         self,
         accountId: int,
         availableQuantity: str,
-        orderId: str,
+        orderId: str | int,
         orderType: str,
         side: str,
         status: str,
@@ -228,7 +286,7 @@ class Order:
         self.finishTime = finishTime
         self.numOrdersRemaining = numOrdersRemaining
         self.numOrdersTotal = numOrdersTotal
-        self.orderId = orderId
+        self.orderId = int(orderId)
         self.orderType = OrderType(orderType)
         self.price = price
         self.quantityMode = quantityMode
@@ -314,18 +372,96 @@ class PriceResponse:
 
 
 @dataclass
-class BatchResponseOrder:
-    nonce: Nonce | None
-    orderId: OrderId | None
+class CreateOrderBatchResponse:
+    """Success response to a create request"""
 
-    def __init__(self, nonce: Nonce | None = None, orderId: OrderId | None = None):
-        self.nonce = int(nonce) if isinstance(nonce, str) else nonce
-        self.orderId = int(orderId) if isinstance(orderId, str) else orderId
+    nonce: Nonce
+    orderId: str
+    creationTime: str
+    creationTimeNsPartial: str
+
+
+@dataclass
+class UpdateOrderBatchResponse:
+    """Success response to an update request"""
+
+    orderId: str
+
+
+@dataclass
+class CancelOrderBatchResponse:
+    """Success response to a cancel request"""
+
+    nonce: str
+
+
+@dataclass
+class ErrorBatchResponse:
+    """Error response"""
+
+    errorCode: int
+    message: str
+    status: str
+
+    def as_exception(self) -> ExchangeError:
+        # TODO specfic action
+        return ExchangeError(
+            f"Action failed: {self.errorCode=} {self.status=} {self.message=}"
+        )
+
+
+BatchResponseOrder: TypeAlias = (
+    CreateOrderBatchResponse
+    | UpdateOrderBatchResponse
+    | CancelOrderBatchResponse
+    | ErrorBatchResponse
+)
+
+
+def deserialize_batch_response_order(
+    data: JsonObject,
+) -> BatchResponseOrder:
+    """
+    Deserialize a batch response order based on which fields are present.
+
+    Logic:
+    - If 'errorCode' is present -> ErrorBatchResponse
+    - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
+    - If only 'orderId' is present -> UpdateOrderBatchResponse
+    - If only 'nonce' is present -> CancelOrderBatchResponse
+
+    Raises:
+        DeserializationError: If the data cannot be deserialized into any known type
+    """
+    # TODO
+    from hibachi_xyz.errors import DeserializationError
+    from hibachi_xyz.helpers import create_with
+
+    try:
+        for k in list(data.keys()):  # snapshot keys once
+            if data[k] is None:
+                del data[k]
+        if "errorCode" in data:
+            return create_with(ErrorBatchResponse, data)
+        elif "nonce" in data and "orderId" in data:
+            return create_with(CreateOrderBatchResponse, data)
+        elif "orderId" in data:
+            return create_with(UpdateOrderBatchResponse, data)
+        elif "nonce" in data:
+            return create_with(CancelOrderBatchResponse, data)
+        else:
+            raise DeserializationError(
+                f"Unknown batch response order format - missing required fields: {data}"
+            )
+    except (TypeError, KeyError, ValueError) as e:
+        raise DeserializationError(
+            f"Failed to deserialize batch response order: {data}"
+        ) from e
 
 
 @dataclass
 class BatchResponse:
-    orders: List[BatchResponseOrder]
+    orders: list[BatchResponseOrder]
 
 
 @dataclass
@@ -545,9 +681,27 @@ class WithdrawRequest:
     coin: str
     withdrawAddress: str
     network: str
-    quantity: str
-    maxFees: str
+    quantity: Decimal
+    maxFees: Decimal
     signature: str
+
+    def __init__(
+        self,
+        accountId: int,
+        coin: str,
+        withdrawAddress: str,
+        network: str,
+        quantity: HibachiNumericInput,
+        maxFees: HibachiNumericInput,
+        signature: str,
+    ):
+        self.accountId = accountId
+        self.coin = coin
+        self.withdrawAddress = withdrawAddress
+        self.network = network
+        self.quantity = numeric_to_decimal(quantity)
+        self.maxFees = numeric_to_decimal(maxFees)
+        self.signature = signature
 
 
 @dataclass
@@ -559,11 +713,29 @@ class WithdrawResponse:
 class TransferRequest:
     accountId: int
     coin: str
-    fees: str
+    fees: Decimal
     nonce: int
-    quantity: str
+    quantity: Decimal
     dstPublicKey: str
     signature: str
+
+    def __init__(
+        self,
+        accountId: int,
+        coin: str,
+        fees: HibachiNumericInput,
+        nonce: int,
+        quantity: HibachiNumericInput,
+        dstPublicKey: str,
+        signature: str,
+    ):
+        self.accountId = accountId
+        self.coin = coin
+        self.fees = numeric_to_decimal(fees)
+        self.nonce = nonce
+        self.quantity = numeric_to_decimal(quantity)
+        self.dstPublicKey = dstPublicKey
+        self.signature = signature
 
 
 @dataclass
@@ -707,16 +879,42 @@ class AccountStreamStartResult:
 @dataclass
 class OrderPlaceParams:
     symbol: str
-    quantity: float
+    quantity: Decimal
     side: Side
     orderType: OrderType
-    price: str | None
-    trigger_price: float | None
+    price: Decimal | None
+    trigger_price: Decimal | None
     twap_config: TWAPConfig | None
-    maxFeesPercent: float
-    orderFlags: str | None = None
-    creation_deadline: int | None = None
-    trigger_direction: TriggerDirection | None = None
+    maxFeesPercent: Decimal
+    orderFlags: str | None
+    creation_deadline: Decimal | None
+    trigger_direction: TriggerDirection | None
+
+    def __init__(
+        self,
+        symbol: str,
+        quantity: HibachiNumericInput,
+        side: Side,
+        orderType: OrderType,
+        maxFeesPercent: HibachiNumericInput,
+        price: HibachiNumericInput | None = None,
+        trigger_price: HibachiNumericInput | None = None,
+        twap_config: TWAPConfig | None = None,
+        orderFlags: str | None = None,
+        creation_deadline: int | None = None,
+        trigger_direction: TriggerDirection | None = None,
+    ):
+        self.symbol = symbol
+        self.quantity = numeric_to_decimal(quantity)
+        self.side = side
+        self.orderType = orderType
+        self.price = numeric_to_decimal(price)
+        self.trigger_price = numeric_to_decimal(trigger_price)
+        self.twap_config = twap_config
+        self.maxFeesPercent = numeric_to_decimal(maxFeesPercent)
+        self.orderFlags = orderFlags
+        self.creation_deadline = numeric_to_decimal(creation_deadline)
+        self.trigger_direction = trigger_direction
 
 
 @dataclass
@@ -731,11 +929,31 @@ class OrderModifyParams:
     orderId: str
     accountId: int
     symbol: str
-    quantity: str
-    price: str
+    quantity: Decimal
+    price: Decimal
     side: Side
-    maxFeesPercent: str
+    maxFeesPercent: Decimal
     nonce: int | None
+
+    def __init__(
+        self,
+        orderId: str,
+        accountId: int,
+        symbol: str,
+        quantity: HibachiNumericInput,
+        price: HibachiNumericInput,
+        side: Side,
+        maxFeesPercent: HibachiNumericInput,
+        nonce: int | None = None,
+    ):
+        self.orderId = orderId
+        self.accountId = accountId
+        self.symbol = symbol
+        self.quantity = numeric_to_decimal(quantity)
+        self.price = numeric_to_decimal(price)
+        self.side = side
+        self.maxFeesPercent = numeric_to_decimal(maxFeesPercent)
+        self.nonce = nonce
 
 
 @dataclass
@@ -867,13 +1085,13 @@ class CreateOrder:
     action: str = "place"
     symbol: str
     side: Side
-    quantity: float
-    max_fees_percent: float
-    price: float | None
-    trigger_price: float | None
+    quantity: Decimal
+    max_fees_percent: Decimal
+    price: Decimal | None
+    trigger_price: Decimal | None
     trigger_direction: TriggerDirection | None
     twap_config: TWAPConfig | None
-    creation_deadline: float | None
+    creation_deadline: Decimal | None
     parent_order: OrderIdVariant | None
     order_flags: OrderFlags | None
 
@@ -881,12 +1099,12 @@ class CreateOrder:
         self,
         symbol: str,
         side: Side,
-        quantity: float,
-        max_fees_percent: float,
-        price: float | None = None,
-        trigger_price: float | None = None,
+        quantity: HibachiNumericInput,
+        max_fees_percent: HibachiNumericInput,
+        price: HibachiNumericInput | None = None,
+        trigger_price: HibachiNumericInput | None = None,
         twap_config: TWAPConfig | None = None,
-        creation_deadline: float | None = None,
+        creation_deadline: HibachiNumericInput | None = None,
         parent_order: OrderIdVariant | None = None,
         order_flags: OrderFlags | None = None,
         trigger_direction: TriggerDirection | None = None,
@@ -898,13 +1116,12 @@ class CreateOrder:
 
         self.symbol = symbol
         self.side = side
-        self.quantity = quantity
-        self.max_fees_percent = max_fees_percent
-        self.price = price
-        self.trigger_price = trigger_price
-        self.trigger_price = trigger_price
+        self.quantity = numeric_to_decimal(quantity)
+        self.max_fees_percent = numeric_to_decimal(max_fees_percent)
+        self.price = numeric_to_decimal(price)
+        self.trigger_price = numeric_to_decimal(trigger_price)
         self.twap_config = twap_config
-        self.creation_deadline = creation_deadline
+        self.creation_deadline = numeric_to_decimal(creation_deadline)
         self.parent_order = parent_order
         self.order_flags = order_flags
         self.trigger_direction = trigger_direction
@@ -917,23 +1134,24 @@ class UpdateOrder:
     symbol: str
     # needed for creating the signature
     side: Side
-    quantity: float
-    max_fees_percent: float
-    price: float | None
-    trigger_price: float | None
+    quantity: Decimal
+    max_fees_percent: Decimal
+    price: Decimal | None
+    trigger_price: Decimal | None
     parent_order: OrderIdVariant | None
     order_flags: OrderFlags | None
+    creation_deadline: Decimal | None
 
     def __init__(
         self,
         order_id: int,
         symbol: str,
         side: Side,
-        quantity: float,
-        max_fees_percent: float,
-        price: float | None = None,
-        trigger_price: float | None = None,
-        creation_deadline: float | None = None,
+        quantity: HibachiNumericInput,
+        max_fees_percent: HibachiNumericInput,
+        price: HibachiNumericInput | None = None,
+        trigger_price: HibachiNumericInput | None = None,
+        creation_deadline: HibachiNumericInput | None = None,
         parent_order: OrderIdVariant | None = None,
         order_flags: OrderFlags | None = None,
     ):
@@ -945,11 +1163,11 @@ class UpdateOrder:
         self.order_id = order_id
         self.symbol = symbol
         self.side = side
-        self.quantity = quantity
-        self.max_fees_percent = max_fees_percent
-        self.price = price
-        self.trigger_price = trigger_price
-        self.creation_deadline = creation_deadline
+        self.quantity = numeric_to_decimal(quantity)
+        self.max_fees_percent = numeric_to_decimal(max_fees_percent)
+        self.price = numeric_to_decimal(price)
+        self.trigger_price = numeric_to_decimal(trigger_price)
+        self.creation_deadline = numeric_to_decimal(creation_deadline)
         self.parent_order = parent_order
         self.order_flags = order_flags
 

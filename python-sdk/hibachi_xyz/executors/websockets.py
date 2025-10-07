@@ -1,7 +1,7 @@
 from typing import override
 
 import websockets
-from websockets.client import WebSocketClientProtocol
+from websockets.asyncio.client import ClientConnection
 
 from hibachi_xyz.errors import (
     DeserializationError,
@@ -13,7 +13,7 @@ from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 
 
 class WebsocketsWsConnection(WsConnection):
-    def __init__(self, ws: WebSocketClientProtocol):
+    def __init__(self, ws: ClientConnection):
         self._ws = ws
 
     @override
@@ -67,7 +67,7 @@ class WebsocketsWsExecutor(WsExecutor):
             ) from e
         except (
             websockets.exceptions.InvalidHandshake,
-            websockets.exceptions.InvalidStatusCode,
+            websockets.exceptions.InvalidStatus,
         ) as e:
             raise WebSocketConnectionError(
                 f"WebSocket handshake failed for {web_url}: {e}", url=web_url

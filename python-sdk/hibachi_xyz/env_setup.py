@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 log = logging.getLogger(__name__)
 
 
-def setup_environment():
+def setup_environment() -> tuple[str, str, str, int, str, str, str]:
     # Load the .env file if it exists
     env_file_path = Path(".env")
     if env_file_path.exists():

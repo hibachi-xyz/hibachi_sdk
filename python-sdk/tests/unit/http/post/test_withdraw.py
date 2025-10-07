@@ -20,14 +20,6 @@ def test_withdraw(mock_http_client, test_data):
     max_fees = withdraw_response["maxFees"]
     network = withdraw_response["network"]
 
-    # Mock check_auth_data call
-    mock_http.stage_output(
-        MockSuccessfulOutput(
-            output=None,
-            call_validation=lambda call: call.function_name == "check_auth_data",
-        )
-    )
-
     # Mock exchange_info call (needed for withdraw to determine asset ID)
     mock_http.stage_output(
         MockSuccessfulOutput(

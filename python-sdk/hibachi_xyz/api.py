@@ -1,20 +1,25 @@
 import hmac
+import logging
 from dataclasses import asdict
 from decimal import Decimal
 from hashlib import sha256
-from math import floor
-from time import time, time_ns
-from typing import Any, Dict
+from time import time_ns
+from types import NoneType
+from typing import Any, Dict, cast
 
-from eth_keys import keys
+import eth_keys.datatypes
 
-from hibachi_xyz.errors import ValidationError
+from hibachi_xyz.errors import (
+    DeserializationError,
+    ValidationError,
+)
 from hibachi_xyz.executors import HttpExecutor, RequestsHttpExecutor
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
+    absolute_creation_deadline,
+    check_maintenance_window,
     create_with,
-    full_precision_string,
 )
 from hibachi_xyz.types import (
     AccountInfo,
@@ -22,20 +27,24 @@ from hibachi_xyz.types import (
     AccountTradesResponse,
     Asset,
     BatchResponse,
-    BatchResponseOrder,
     CancelOrder,
     CapitalBalance,
     CapitalHistory,
     CreateOrder,
+    CreateOrderBatchResponse,
     CrossChainAsset,
     DepositInfo,
+    ErrorBatchResponse,
     ExchangeInfo,
     FeeConfig,
     FundingRateEstimation,
     FutureContract,
+    HibachiNumericInput,
     Interval,
     InventoryResponse,
     Json,
+    JsonArray,
+    JsonObject,
     Kline,
     KlinesResponse,
     MaintenanceWindow,
@@ -49,6 +58,7 @@ from hibachi_xyz.types import (
     OrderFlags,
     OrderId,
     OrderIdVariant,
+    OrderType,
     PendingOrdersResponse,
     Position,
     PriceResponse,
@@ -70,12 +80,17 @@ from hibachi_xyz.types import (
     WithdrawalLimit,
     WithdrawRequest,
     WithdrawResponse,
+    deserialize_batch_response_order,
+    full_precision_string,
+    numeric_to_decimal,
 )
 
+log = logging.getLogger(__name__)
 
-def price_to_bytes(price: float, contract: FutureContract) -> bytes:
+
+def price_to_bytes(price: HibachiNumericInput, contract: FutureContract) -> bytes:
     return int(
-        Decimal(full_precision_string(price))
+        numeric_to_decimal(price)
         * pow(Decimal("2"), 32)
         * pow(Decimal("10"), contract.settlementDecimals - contract.underlyingDecimals)
     ).to_bytes(8, "big")
@@ -112,13 +127,14 @@ class HibachiApiClient:
 
     """
 
-    account_id: int | None = None
-    api_key: str | None = None
+    _account_id: int | None = None
 
-    _private_key: keys.PrivateKey | None = None  # ECDSA for wallet account
+    _private_key: eth_keys.datatypes.PrivateKey | None = (
+        None  # ECDSA for wallet account
+    )
     _private_key_hmac: str | None = None  # HMAC for web account
 
-    future_contracts: Dict[str, FutureContract] | None = None
+    _future_contracts: dict[str, FutureContract] | None = None
 
     _rest_executor: HttpExecutor
 
@@ -131,11 +147,6 @@ class HibachiApiClient:
         private_key: str | None = None,
         executor: HttpExecutor | None = None,
     ):
-        self.account_id = (
-            int(account_id)
-            if isinstance(account_id, str) and account_id.isdigit()
-            else account_id
-        )
         if private_key is not None:
             self.set_private_key(private_key)
 
@@ -144,18 +155,54 @@ class HibachiApiClient:
             data_api_url=data_api_url,
             api_key=api_key,
         )
+        self.set_api_key(api_key)
+        self.set_account_id(account_id)
 
-    def set_account_id(self, account_id: int):
-        self.account_id = account_id
+    @property
+    def future_contracts(self) -> dict[str, FutureContract]:
+        if self._future_contracts is None:
+            raise ValidationError("future_contracts not yet loaded")
+        return self._future_contracts
 
-    def set_api_key(self, api_key: str):
+    @property
+    def account_id(self) -> int:
+        if self._account_id is None:
+            raise ValidationError("account_id has not been set")
+        return self._account_id
+
+    @property
+    def api_key(self) -> str:
+        if self._rest_executor.api_key is None:
+            raise ValidationError("api_key has not been set")
+        return self._rest_executor.api_key
+
+    def set_account_id(self, account_id: int | None) -> None:
+        _account_id = cast(Any, account_id)
+        if isinstance(_account_id, str):
+            if not _account_id.isdigit():
+                raise ValidationError(f"Invalid {account_id=}")
+            self._account_id = int(_account_id)
+        elif isinstance(_account_id, (int, NoneType)):
+            self._account_id = _account_id
+        else:
+            raise ValidationError from TypeError(
+                f"Unexpected type for account_id {type(account_id)}"
+            )
+
+    def set_api_key(self, api_key: str | None) -> None:
+        _api_key = cast(Any, api_key)
+        if not isinstance(_api_key, (str, NoneType)):
+            raise ValidationError from TypeError(
+                f"Unexpected type for api_key {type(api_key)}"
+            )
+
         self._rest_executor.api_key = api_key
 
-    def set_private_key(self, private_key: str):
+    def set_private_key(self, private_key: str) -> None:
         if private_key.startswith("0x"):
             private_key = private_key[2:]
             private_key_bytes = bytes.fromhex(private_key)
-            self._private_key = keys.PrivateKey(private_key_bytes)
+            self._private_key = eth_keys.datatypes.PrivateKey(private_key_bytes)
 
         if private_key.startswith("0x") is False:
             self._private_key_hmac = private_key
@@ -190,31 +237,40 @@ class HibachiApiClient:
 
         """
         exchange_info = self.__send_simple_request("/market/exchange-info")
+        check_maintenance_window(exchange_info)  # type: ignore
 
-        self.future_contracts = {}
-        for contract in exchange_info["futureContracts"]:
-            self.future_contracts[contract["symbol"]] = create_with(
-                FutureContract, contract
+        try:
+            self._future_contracts = {}
+            for contract in exchange_info["futureContracts"]:  # type: ignore
+                self.future_contracts[contract["symbol"]] = create_with(  # type: ignore
+                    FutureContract,
+                    contract,  # type: ignore
+                )
+
+            fee_config = create_with(FeeConfig, exchange_info["feeConfig"])  # type: ignore
+
+            # Parse future contracts
+            future_contracts = [
+                create_with(FutureContract, contract)  # type: ignore
+                for contract in exchange_info["futureContracts"]  # type: ignore
+            ]
+
+            # Parse withdrawal limit
+            withdrawal_limit = create_with(
+                WithdrawalLimit,
+                exchange_info["instantWithdrawalLimit"],  # type: ignore
             )
 
-        fee_config = create_with(FeeConfig, exchange_info["feeConfig"])
-
-        # Parse future contracts
-        future_contracts = [
-            create_with(FutureContract, contract)
-            for contract in exchange_info["futureContracts"]
-        ]
-
-        # Parse withdrawal limit
-        withdrawal_limit = create_with(
-            WithdrawalLimit, exchange_info["instantWithdrawalLimit"]
-        )
-
-        # Parse maintenance windows
-        maintenance_windows = [
-            create_with(MaintenanceWindow, window)
-            for window in exchange_info["maintenanceWindow"]
-        ]
+            # Parse maintenance windows
+            maintenance_windows = [
+                create_with(MaintenanceWindow, window)  # type: ignore
+                for window in exchange_info["maintenanceWindow"]  # type: ignore
+            ]
+            status = str(exchange_info["status"])  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(
+                f"Received invalid response {exchange_info=}"
+            ) from e
 
         # Create exchange info object
         return ExchangeInfo(
@@ -222,12 +278,8 @@ class HibachiApiClient:
             futureContracts=future_contracts,
             instantWithdrawalLimit=withdrawal_limit,
             maintenanceWindow=maintenance_windows,
-            status=exchange_info["status"],
+            status=status,
         )
-
-        # exchange_info_types = create_with(ExchangeInfo, exchange_info)
-
-        # return exchange_info_types
 
     def get_inventory(self) -> InventoryResponse:
         """
@@ -292,68 +344,88 @@ class HibachiApiClient:
         """
         market_inventory = self.__send_simple_request("/market/inventory")
 
-        self.future_contracts = {}
-        for market in market_inventory["markets"]:
-            contract = create_with(FutureContract, market["contract"])
-            self.future_contracts[contract.symbol] = contract
+        try:
+            self._future_contracts = {}
+            for market in market_inventory["markets"]:  # type: ignore
+                contract = create_with(FutureContract, market["contract"])  # type: ignore
+                self.future_contracts[contract.symbol] = contract
 
-        markets = [
-            Market(
-                contract=create_with(FutureContract, m["contract"]),
-                info=create_with(MarketInfo, m["info"]),
+            markets = [
+                Market(
+                    contract=create_with(FutureContract, m["contract"]),  # type: ignore
+                    info=create_with(MarketInfo, m["info"]),  # type: ignore
+                )
+                for m in market_inventory["markets"]  # type: ignore
+            ]
+
+            output = InventoryResponse(
+                crossChainAssets=[
+                    create_with(CrossChainAsset, cca)  # type: ignore
+                    for cca in market_inventory["crossChainAssets"]  # type: ignore
+                ],
+                feeConfig=create_with(FeeConfig, market_inventory["feeConfig"]),  # type: ignore
+                markets=markets,
+                tradingTiers=[
+                    create_with(TradingTier, tt)  # type: ignore
+                    for tt in market_inventory["tradingTiers"]  # type: ignore
+                ],
             )
-            for m in market_inventory["markets"]
-        ]
-
-        output = InventoryResponse(
-            crossChainAssets=[
-                create_with(CrossChainAsset, cca)
-                for cca in market_inventory["crossChainAssets"]
-            ],
-            feeConfig=create_with(FeeConfig, market_inventory["feeConfig"]),
-            markets=markets,
-            tradingTiers=[
-                create_with(TradingTier, tt) for tt in market_inventory["tradingTiers"]
-            ],
-        )
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(
+                f"Received invalid response {market_inventory=}"
+            ) from e
 
         return output
 
     def get_prices(self, symbol: str) -> PriceResponse:
         response = self.__send_simple_request(f"/market/data/prices?symbol={symbol}")
-        response["fundingRateEstimation"] = create_with(
-            FundingRateEstimation,
-            response["fundingRateEstimation"],
-        )
-        return create_with(PriceResponse, response)
+        try:
+            response["fundingRateEstimation"] = create_with(  # type: ignore
+                FundingRateEstimation,
+                response["fundingRateEstimation"],  # type: ignore
+            )
+            result = create_with(PriceResponse, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_stats(self, symbol: str) -> StatsResponse:
-        return create_with(
-            StatsResponse,
-            self.__send_simple_request(f"/market/data/stats?symbol={symbol}"),
-        )
+        response = self.__send_simple_request(f"/market/data/stats?symbol={symbol}")
+        try:
+            result = create_with(StatsResponse, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_trades(self, symbol: str) -> TradesResponse:
         response = self.__send_simple_request(f"/market/data/trades?symbol={symbol}")
-        return TradesResponse(
-            trades=[
-                Trade(
-                    price=t["price"],
-                    quantity=t["quantity"],
-                    takerSide=TakerSide(t["takerSide"]),
-                    timestamp=t["timestamp"],
-                )
-                for t in response["trades"]
-            ]
-        )
+        try:
+            result = TradesResponse(
+                trades=[
+                    Trade(
+                        price=t["price"],  # type: ignore
+                        quantity=t["quantity"],  # type: ignore
+                        takerSide=TakerSide(t["takerSide"]),  # type: ignore
+                        timestamp=t["timestamp"],  # type: ignore
+                    )
+                    for t in response["trades"]  # type: ignore
+                ]
+            )
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_klines(self, symbol: str, interval: Interval) -> KlinesResponse:
         response = self.__send_simple_request(
             f"/market/data/klines?symbol={symbol}&interval={interval.value}"
         )
-        return KlinesResponse(
-            klines=[create_with(Kline, kline) for kline in response["klines"]]
-        )
+        try:
+            result = KlinesResponse(
+                klines=[create_with(Kline, kline) for kline in response["klines"]]  # type: ignore
+            )
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_open_interest(self, symbol: str) -> OpenInterestResponse:
         """Get open interest for a symbol
@@ -371,7 +443,11 @@ class HibachiApiClient:
         response = self.__send_simple_request(
             f"/market/data/open-interest?symbol={symbol}"
         )
-        return create_with(OpenInterestResponse, response)
+        try:
+            result = create_with(OpenInterestResponse, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_orderbook(self, symbol: str, depth: int, granularity: float) -> OrderBook:
         """
@@ -407,9 +483,7 @@ class HibachiApiClient:
                 "Depth must be a positive integer between 1 and 100, inclusive"
             )
 
-        self.__check_symbol(symbol)
-
-        contract = self.future_contracts.get(symbol)
+        contract = self.__get_contract(symbol)
         granularities = contract.orderbookGranularities
         if str(granularity) not in granularities:
             raise ValueError(
@@ -420,16 +494,21 @@ class HibachiApiClient:
             f"/market/data/orderbook?symbol={symbol}&depth={depth}&granularity={granularity}"
         )
 
-        ask_levels = [
-            OrderBookLevel(price=level["price"], quantity=level["quantity"])
-            for level in response["ask"]["levels"]
-        ]
-        bid_levels = [
-            OrderBookLevel(price=level["price"], quantity=level["quantity"])
-            for level in response["bid"]["levels"]
-        ]
+        try:
+            ask_levels = [
+                OrderBookLevel(price=level["price"], quantity=level["quantity"])  # type: ignore
+                for level in response["ask"]["levels"]  # type: ignore
+            ]
+            bid_levels = [
+                OrderBookLevel(price=level["price"], quantity=level["quantity"])  # type: ignore
+                for level in response["bid"]["levels"]  # type: ignore
+            ]
 
-        return OrderBook(ask=ask_levels, bid=bid_levels)
+            result = OrderBook(ask=ask_levels, bid=bid_levels)
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+
+        return result
 
     ### ===================================================== Account API =====================================================
 
@@ -454,11 +533,15 @@ class HibachiApiClient:
         ```
         -----------------------------------------------------------------------
         """
-        self.__check_auth_data()
+
         response = self.__send_authorized_request(
             "GET", f"/capital/balance?accountId={self.account_id}"
         )
-        return create_with(CapitalBalance, response)
+        try:
+            result = create_with(CapitalBalance, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_capital_history(self) -> CapitalHistory:
         """
@@ -492,16 +575,22 @@ class HibachiApiClient:
         ```
         -----------------------------------------------------------------------
         """
-        self.__check_auth_data()
+
         response = self.__send_authorized_request(
             "GET", f"/capital/history?accountId={self.account_id}"
         )
 
-        return CapitalHistory(
-            transactions=[
-                create_with(Transaction, tx) for tx in response["transactions"]
-            ]
-        )
+        try:
+            result = CapitalHistory(
+                transactions=[
+                    create_with(Transaction, tx)  # type: ignore
+                    for tx in response["transactions"]  # type: ignore
+                ]
+            )
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+
+        return result
 
     def withdraw(
         self,
@@ -527,7 +616,6 @@ class HibachiApiClient:
 
         -----------------------------------------------------------------------
         """
-        self.__check_auth_data()
 
         # Create withdraw request payload
         request = WithdrawRequest(
@@ -545,9 +633,19 @@ class HibachiApiClient:
         response = self.__send_authorized_request(
             "POST", "/capital/withdraw", json=asdict(request)
         )
-        return create_with(WithdrawResponse, response)
+        try:
+            result = create_with(WithdrawResponse, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
-    def transfer(self, coin: str, quantity: str, dstPublicKey: str, max_fees: str):
+    def transfer(
+        self,
+        coin: str,
+        quantity: HibachiNumericInput,
+        dstPublicKey: str,
+        max_fees: HibachiNumericInput,
+    ) -> TransferResponse:
         """
         Request fund transfer to another account.
 
@@ -577,7 +675,11 @@ class HibachiApiClient:
             "POST", "/capital/transfer", json=asdict(request)
         )
 
-        return create_with(TransferResponse, response)
+        try:
+            result = create_with(TransferResponse, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_deposit_info(self, public_key: str) -> DepositInfo:
         """Get deposit address information.
@@ -599,7 +701,11 @@ class HibachiApiClient:
             "GET",
             f"/capital/deposit-info?accountId={self.account_id}&publicKey={public_key}",
         )
-        return create_with(DepositInfo, response)
+        try:
+            result = create_with(DepositInfo, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def __sign_withdraw_payload(
         self, coin: str, withdraw_address: str, quantity: str, max_fees: str
@@ -615,20 +721,7 @@ class HibachiApiClient:
         Returns:
             str: The signature for the withdrawal request
         """
-        # Get asset ID from exchange info
-        if self.future_contracts is None:
-            self.get_exchange_info()
-
-        # Find asset ID for the coin
-        asset_id = None
-        for contract in self.future_contracts.values():
-            if contract.settlementSymbol == coin:
-                asset_id = contract.id
-                break
-
-        if asset_id is None:
-            raise ValueError(f"Unknown coin: {coin}")
-
+        asset_id = self.__get_asset_id(coin)
         # Create payload bytes
         asset_id_bytes = asset_id.to_bytes(4, "big")
         quantity_bytes = int(float(quantity) * 1e6).to_bytes(
@@ -649,24 +742,13 @@ class HibachiApiClient:
         self,
         nonce: int,
         coin: str,
-        quantity: int,
+        quantity: HibachiNumericInput,
         dst_account_public_key: str,
-        max_fees_percent: str,
+        max_fees_percent: HibachiNumericInput,
     ) -> str:
-        # Get asset ID from exchange info
-        if self.future_contracts is None:
-            self.get_exchange_info()
-
-        # Find asset ID for the coin
-        asset_id = None
-        for contract in self.future_contracts.values():
-            if contract.settlementSymbol == coin:
-                asset_id = contract.id
-                break
-
-        if asset_id is None:
-            raise ValueError(f"Unknown coin: {coin}")
-
+        quantity = numeric_to_decimal(quantity)
+        max_fees_percent = numeric_to_decimal(max_fees_percent)
+        asset_id = self.__get_asset_id(coin)
         # Create payload bytes
         nonce_bytes = nonce.to_bytes(8, "big")
         asset_id_bytes = asset_id.to_bytes(4, "big")
@@ -735,30 +817,36 @@ class HibachiApiClient:
         ```
         -----------------------------------------------------------------------
         """
-        self.__check_auth_data()
+
         response = self.__send_authorized_request(
             "GET", f"/trade/account/info?accountId={self.account_id}"
         )
 
-        assets = [create_with(Asset, asset) for asset in response["assets"]]
-        positions = [
-            create_with(Position, position) for position in response["positions"]
-        ]
+        try:
+            assets = [create_with(Asset, asset) for asset in response["assets"]]  # type: ignore
+            positions = [
+                create_with(Position, position)  # type: ignore
+                for position in response["positions"]  # type: ignore
+            ]
 
-        return AccountInfo(
-            assets=assets,
-            balance=response["balance"],
-            maximalWithdraw=response["maximalWithdraw"],
-            numFreeTransfersRemaining=response["numFreeTransfersRemaining"],
-            positions=positions,
-            totalOrderNotional=response["totalOrderNotional"],
-            totalPositionNotional=response["totalPositionNotional"],
-            totalUnrealizedFundingPnl=response["totalUnrealizedFundingPnl"],
-            totalUnrealizedPnl=response["totalUnrealizedPnl"],
-            totalUnrealizedTradingPnl=response["totalUnrealizedTradingPnl"],
-            tradeMakerFeeRate=response["tradeMakerFeeRate"],
-            tradeTakerFeeRate=response["tradeTakerFeeRate"],
-        )
+            result = AccountInfo(
+                assets=assets,
+                balance=response["balance"],  # type: ignore
+                maximalWithdraw=response["maximalWithdraw"],  # type: ignore
+                numFreeTransfersRemaining=response["numFreeTransfersRemaining"],  # type: ignore
+                positions=positions,
+                totalOrderNotional=response["totalOrderNotional"],  # type: ignore
+                totalPositionNotional=response["totalPositionNotional"],  # type: ignore
+                totalUnrealizedFundingPnl=response["totalUnrealizedFundingPnl"],  # type: ignore
+                totalUnrealizedPnl=response["totalUnrealizedPnl"],  # type: ignore
+                totalUnrealizedTradingPnl=response["totalUnrealizedTradingPnl"],  # type: ignore
+                tradeMakerFeeRate=response["tradeMakerFeeRate"],  # type: ignore
+                tradeTakerFeeRate=response["tradeTakerFeeRate"],  # type: ignore
+            )
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+
+        return result
 
     def get_account_trades(self) -> AccountTradesResponse:
         """
@@ -794,12 +882,16 @@ class HibachiApiClient:
         ```
         -----------------------------------------------------------------------
         """
-        self.__check_auth_data()
+
         response = self.__send_authorized_request(
             "GET", f"/trade/account/trades?accountId={self.account_id}"
         )
-        trades = [create_with(AccountTrade, trade) for trade in response["trades"]]
-        return AccountTradesResponse(trades=trades)
+        try:
+            trades = [create_with(AccountTrade, trade) for trade in response["trades"]]  # type: ignore
+            result = AccountTradesResponse(trades=trades)
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_settlements_history(self) -> SettlementsResponse:
         """
@@ -827,15 +919,19 @@ class HibachiApiClient:
         ```
         -----------------------------------------------------------------------
         """
-        self.__check_auth_data()
+
         response = self.__send_authorized_request(
             "GET", f"/trade/account/settlements_history?accountId={self.account_id}"
         )
-        settlements = [
-            create_with(Settlement, settlement)
-            for settlement in response["settlements"]
-        ]
-        return SettlementsResponse(settlements=settlements)
+        try:
+            settlements = [
+                create_with(Settlement, settlement)  # type: ignore
+                for settlement in response["settlements"]  # type: ignore
+            ]
+            result = SettlementsResponse(settlements=settlements)
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_pending_orders(self) -> PendingOrdersResponse:
         """
@@ -872,12 +968,16 @@ class HibachiApiClient:
         ```
         -----------------------------------------------------------------------
         """
-        self.__check_auth_data()
+
         response = self.__send_authorized_request(
             "GET", f"/trade/orders?accountId={self.account_id}"
         )
-        orders = [create_with(Order, order_data) for order_data in response]
-        return PendingOrdersResponse(orders=orders)
+        try:
+            orders = [create_with(Order, order_data) for order_data in response]  # type: ignore
+            result = PendingOrdersResponse(orders=orders)
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+        return result
 
     def get_order_details(
         self, order_id: int | None = None, nonce: int | None = None
@@ -919,7 +1019,6 @@ class HibachiApiClient:
         -----------------------------------------------------------------------
         """
         self.__check_order_selector(order_id, nonce)
-        self.__check_auth_data()
 
         order_selector = (
             f"orderId={order_id}" if order_id is not None else f"nonce={nonce}"
@@ -928,28 +1027,33 @@ class HibachiApiClient:
             "GET", f"/trade/order?accountId={self.account_id}&{order_selector}"
         )
 
-        response["numOrdersTotal"] = response.get("numOrdersTotal")
-        response["numOrdersRemaining"] = response.get("numOrdersRemaining")
-        response["totalQuantity"] = response.get("totalQuantity")
-        response["quantityMode"] = response.get("quantityMode")
-        response["price"] = response.get("price")
-        response["triggerPrice"] = response.get("triggerPrice")
-        response["finishTime"] = response.get("finishTime")
-        response["orderFlags"] = response.get("orderFlags")
+        try:
+            response["numOrdersTotal"] = response.get("numOrdersTotal")  # type: ignore
+            response["numOrdersRemaining"] = response.get("numOrdersRemaining")  # type: ignore
+            response["totalQuantity"] = response.get("totalQuantity")  # type: ignore
+            response["quantityMode"] = response.get("quantityMode")  # type: ignore
+            response["price"] = response.get("price")  # type: ignore
+            response["triggerPrice"] = response.get("triggerPrice")  # type: ignore
+            response["finishTime"] = response.get("finishTime")  # type: ignore
+            response["orderFlags"] = response.get("orderFlags")  # type: ignore
 
-        return create_with(Order, response)
+            result = create_with(Order, response)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {response=}") from e
+
+        return result
 
     # Order API endpoints require the private key to be set
 
     def place_market_order(
         self,
         symbol: str,
-        quantity: float,
+        quantity: HibachiNumericInput,
         side: Side,
-        max_fees_percent: float,
-        trigger_price: float | None = None,
+        max_fees_percent: HibachiNumericInput,
+        trigger_price: HibachiNumericInput | None = None,
         twap_config: TWAPConfig | None = None,
-        creation_deadline: int | None = None,
+        creation_deadline: HibachiNumericInput | None = None,
         order_flags: OrderFlags | None = None,
         tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
@@ -967,8 +1071,7 @@ class HibachiApiClient:
         (nonce, trigger_market_order_id) = client.place_market_order("BTC/USDT-P", 0.001, Side.ASK, max_fees_percent, trigger_price=90_100)
         ```
         """
-        self.__check_auth_data()
-        self.__check_symbol(symbol)
+        self.__ensure_contract_listed(symbol)
 
         if side == Side.BUY:
             side = Side.BID
@@ -980,6 +1083,11 @@ class HibachiApiClient:
 
         if twap_config is not None and tpsl is not None:
             raise ValueError("Can not set tpsl for TWAP order")
+
+        quantity = numeric_to_decimal(quantity)
+        max_fees_percent = numeric_to_decimal(max_fees_percent)
+        trigger_price = numeric_to_decimal(trigger_price)
+        creation_deadline = numeric_to_decimal(creation_deadline)
 
         if tpsl is not None and len(tpsl.legs) > 0:
             return self._place_parent_with_tpsl(
@@ -1011,18 +1119,22 @@ class HibachiApiClient:
         response = self.__send_authorized_request(
             "POST", "/trade/order", json=request_data
         )
-        order_id = int(response["orderId"])
-        return (nonce, order_id)
+        try:
+            order_id = int(response["orderId"])  # type: ignore
+            return (nonce, order_id)
+
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid {response=}") from e
 
     def place_limit_order(
         self,
         symbol: str,
-        quantity: float,
-        price: float,
+        quantity: HibachiNumericInput,
+        price: HibachiNumericInput,
         side: Side,
-        max_fees_percent: float,
-        trigger_price: float | None = None,
-        creation_deadline: int | None = None,
+        max_fees_percent: HibachiNumericInput,
+        trigger_price: HibachiNumericInput | None = None,
+        creation_deadline: HibachiNumericInput | None = None,
         order_flags: OrderFlags | None = None,
         tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
@@ -1040,13 +1152,19 @@ class HibachiApiClient:
         (nonce, trigger_limit_order_id) = client.place_limit_order("BTC/USDT-P", 0.001, 90_000, Side.ASK, max_fees_percent, trigger_price=90_100)
         ```
         """
-        self.__check_auth_data()
-        self.__check_symbol(symbol)
+
+        self.__ensure_contract_listed(symbol)
 
         if side == Side.BUY:
             side = Side.BID
         elif side == Side.SELL:
             side = Side.ASK
+
+        price = numeric_to_decimal(price)
+        quantity = numeric_to_decimal(quantity)
+        max_fees_percent = numeric_to_decimal(max_fees_percent)
+        trigger_price = numeric_to_decimal(trigger_price)
+        creation_deadline = numeric_to_decimal(creation_deadline)
 
         if tpsl is not None and len(tpsl.legs) > 0:
             return self._place_parent_with_tpsl(
@@ -1077,21 +1195,26 @@ class HibachiApiClient:
         response = self.__send_authorized_request(
             "POST", "/trade/order", json=request_data
         )
-        order_id = int(response["orderId"])
-        return (nonce, order_id)
+        try:
+            order_id = int(response["orderId"])  # type: ignore
+            return (nonce, order_id)
+
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid {response=}") from e
 
     def _place_parent_with_tpsl(
         self,
         symbol: str,
-        quantity: float,
-        price: float | None,
+        quantity: Decimal,
+        price: Decimal | None,
         side: Side,
-        max_fees_percent: float,
-        trigger_price: float | None = None,
-        creation_deadline: int | None = None,
+        max_fees_percent: Decimal,
+        tpsl: TPSLConfig,
+        trigger_price: Decimal | None = None,
+        creation_deadline: Decimal | None = None,
         order_flags: OrderFlags | None = None,
-        tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
+        # TODO double conversion
         parent_order_request = CreateOrder(
             symbol=symbol,
             quantity=quantity,
@@ -1105,7 +1228,7 @@ class HibachiApiClient:
 
         nonce = time_ns() // 1_000
 
-        tpsl_order_requests = tpsl._as_requests(
+        orders: list[CreateOrder] = tpsl._as_requests(
             parent_symbol=symbol,
             parent_quantity=quantity,
             parent_side=side,
@@ -1113,33 +1236,49 @@ class HibachiApiClient:
             max_fees_percent=max_fees_percent,
         )
 
-        orders = [parent_order_request] + tpsl_order_requests
-        orders_data = [
+        # prepend parent order request - this MUST be listed first
+        orders.insert(0, parent_order_request)
+
+        orders_data: JsonArray = [
             self.__batch_order_request_data(nonce + i, order)
             for (i, order) in enumerate(orders)
         ]
-        request_data = {"accountId": int(self.account_id), "orders": orders_data}
+        request_data: JsonObject = {
+            "accountId": int(self.account_id),
+            "orders": orders_data,
+        }
 
         result = self.__send_authorized_request(
             "POST", "/trade/orders", json=request_data
         )
-        orders = [create_with(BatchResponseOrder, order) for order in result["orders"]]
-        if len(orders) < 1:
-            raise RuntimeError(
-                f"Received empty response to batch order request {request_data=}"
-            )
-        parent_order: BatchResponseOrder = orders[0]
-        return (parent_order.nonce, parent_order.orderId)
+        try:
+            orders = [
+                deserialize_batch_response_order(order)  # type: ignore
+                for order in result["orders"]  # type: ignore
+            ]
+            result["orders"] = orders  # type: ignore
+            response = create_with(BatchResponse, result)  # type: ignore
+            parent_order = response.orders[0]
+            if isinstance(parent_order, CreateOrderBatchResponse):
+                return (parent_order.nonce, int(parent_order.orderId))
+            elif isinstance(parent_order, ErrorBatchResponse):
+                raise parent_order.as_exception()
+            else:
+                raise DeserializationError(
+                    f"Received invalid response, {parent_order=} of type {type(parent_order)}"
+                )
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {result=}") from e
 
     def update_order(
         self,
         order_id: int,
-        max_fees_percent: float,
-        quantity: float | None = None,
-        price: float | None = None,
-        trigger_price: float | None = None,
-        creation_deadline: int | None = None,
-    ) -> Dict[str, Any]:
+        max_fees_percent: HibachiNumericInput,
+        quantity: HibachiNumericInput | None = None,
+        price: HibachiNumericInput | None = None,
+        trigger_price: HibachiNumericInput | None = None,
+        creation_deadline: HibachiNumericInput | None = None,
+    ) -> Json:
         """
         Update an order
 
@@ -1153,8 +1292,13 @@ class HibachiApiClient:
         client.update_order(order_id, max_fees_percent, quantity=0.001, price=1_210_000, trigger_price=1_250_000)
         ```
         """
-        self.__check_auth_data()
+
         order = self.get_order_details(order_id=order_id)
+
+        price = numeric_to_decimal(price)
+        trigger_price = numeric_to_decimal(trigger_price)
+        quantity = numeric_to_decimal(quantity)
+        max_fees_percent = numeric_to_decimal(max_fees_percent)
 
         request_data_two = self._update_order_generate_sig(
             order,
@@ -1174,31 +1318,47 @@ class HibachiApiClient:
         self,
         order: Order,
         side: Side,
-        max_fees_percent: float,
-        price: float | None = None,
-        trigger_price: float | None = None,
-        quantity: float | None = None,
-        creation_deadline: int | None = None,
+        max_fees_percent: HibachiNumericInput,
+        quantity: HibachiNumericInput | None,
+        price: HibachiNumericInput | None = None,
+        trigger_price: HibachiNumericInput | None = None,
+        creation_deadline: HibachiNumericInput | None = None,
         nonce: Nonce | None = None,
     ) -> Dict[str, Any]:
         """used to generate the signature for the update order request"""
         symbol = order.symbol
-        self.__check_symbol(symbol)
+        self.__ensure_contract_listed(symbol)
 
-        if order.orderType == "MARKET" and price is not None:
-            raise ValueError("Can not update price for a market order")
+        # Infer missing fields from order object
+        if order.orderType == OrderType.MARKET and price is not None:
+            raise ValidationError from ValueError(
+                "Can not update price for a market order"
+            )
 
-        if order.orderType == "LIMIT" and price is None:
-            price = float(order.price)
+        # TODO these should raise, warn short term
+        if order.orderType == OrderType.LIMIT and price is None:
+            price = numeric_to_decimal(order.price)
 
         if order.triggerPrice is None and trigger_price is not None:
-            raise ValueError("Can not update trigger price for a non trigger order")
+            raise ValidationError from ValueError(
+                "Cannot update trigger price for a non trigger order"
+            )
 
         if order.triggerPrice is not None and trigger_price is None:
-            trigger_price = float(order.triggerPrice)
+            trigger_price = order.triggerPrice
 
         if quantity is None:
-            quantity = float(order.totalQuantity)
+            if order.totalQuantity is None:
+                raise ValidationError from ValueError(
+                    "one of `quantity` or `order.totalQuantity` must be defined"
+                )
+            quantity = order.totalQuantity
+
+        price = numeric_to_decimal(price)
+        trigger_price = numeric_to_decimal(trigger_price)
+        quantity = numeric_to_decimal(quantity)
+        max_fees_percent = numeric_to_decimal(max_fees_percent)
+        creation_deadline = numeric_to_decimal(creation_deadline)
 
         side = Side(order.side)
 
@@ -1209,12 +1369,12 @@ class HibachiApiClient:
 
         nonce = time_ns() // 1_000 if nonce is None else nonce
         request_data = self.__update_order_request_data(
-            order.orderId,
-            nonce,
-            symbol,
-            quantity,
-            side,
-            max_fees_percent,
+            order_id=order.orderId,
+            nonce=nonce,
+            symbol=symbol,
+            quantity=quantity,
+            side=side,
+            max_fees_percent=max_fees_percent,
             price=price,
             trigger_price=trigger_price,
             creation_deadline=creation_deadline,
@@ -1224,7 +1384,7 @@ class HibachiApiClient:
 
     def cancel_order(
         self, order_id: int | None = None, nonce: int | None = None
-    ) -> Dict[str, Any]:
+    ) -> Json:
         """
         Cancel an order
 
@@ -1236,15 +1396,17 @@ class HibachiApiClient:
         ```
         """
         self.__check_order_selector(order_id, nonce)
-        self.__check_auth_data()
 
-        request_data = self._cancel_order_request_data(order_id, nonce, True)
+        request_data = self._cancel_order_request_data(
+            order_id=order_id,
+            nonce=nonce,
+        )
         request_data["accountId"] = int(self.account_id)
         return self.__send_authorized_request(
             "DELETE", "/trade/order", json=request_data
         )
 
-    def cancel_all_orders(self, contractId: int | None = None) -> Dict[str, Any]:
+    def cancel_all_orders(self, contractId: int | None = None) -> Json:
         """
         Cancel all orders
 
@@ -1257,17 +1419,17 @@ class HibachiApiClient:
         Note: currently there is a bug in the API where cancelling all orders is not working.
         This is a workaround to cancel all orders.
         """
+        # TODO remove this
         workaround = True
 
         if workaround:
             orders = self.get_pending_orders().orders
             for order in orders:
                 self.cancel_order(order_id=int(order.orderId))
-            return
+            return {}
         else:
-            self.__check_auth_data()
             nonce = time_ns() // 1_000
-            request_data = self._cancel_order_request_data(None, nonce, False)
+            request_data = self._cancel_order_request_data(order_id=None, nonce=nonce)
             request_data["accountId"] = int(self.account_id)
             return self.__send_authorized_request(
                 "DELETE", "/trade/orders", json=request_data
@@ -1319,31 +1481,34 @@ class HibachiApiClient:
         ])
         ```
         """
-        self.__check_auth_data()
-
         nonce = time_ns() // 1_000
-        orders_data = [
+        orders_data: JsonArray = [
             self.__batch_order_request_data(nonce + i, order)
             for (i, order) in enumerate(orders)
         ]
-        request_data = {"accountId": int(self.account_id), "orders": orders_data}
+        request_data: JsonObject = {
+            "accountId": int(self.account_id),
+            "orders": orders_data,
+        }
 
         result = self.__send_authorized_request(
             "POST", "/trade/orders", json=request_data
         )
-        orders = [create_with(BatchResponseOrder, order) for order in result["orders"]]
-        result["orders"] = orders
-        return create_with(BatchResponse, result)
+        try:
+            orders = [
+                deserialize_batch_response_order(order)  # type: ignore
+                for order in result["orders"]  # type: ignore
+            ]
+            result["orders"] = orders  # type: ignore
+            response = create_with(BatchResponse, result)  # type: ignore
+        except (TypeError, IndexError, ValueError) as e:
+            raise DeserializationError(f"Received invalid response {result=}") from e
+        return response
 
     """ Deferred helpers """
 
     def __send_simple_request(self, path: str) -> Json:
         return self._rest_executor.send_simple_request(path)
-
-    def __check_auth_data(self):
-        if self.account_id is None:
-            raise ValidationError("Account ID is not set")
-        return self._rest_executor.check_auth_data()
 
     def __send_authorized_request(
         self,
@@ -1355,18 +1520,55 @@ class HibachiApiClient:
 
     """ Private helpers """
 
-    def __check_symbol(self, symbol: str):
-        if self.future_contracts is None:
+    def __get_asset_id(self, coin: str) -> int:
+        if self._future_contracts is None:
             self.get_exchange_info()
 
-        if self.future_contracts.get(symbol) is None:
-            raise ValueError(f"Unknown symbol: {symbol}")
+        # Find asset ID for the coin
+        asset_id: int | None = None
+        for contract in self.future_contracts.values():
+            if contract.settlementSymbol == coin:
+                asset_id = contract.id
+                break
 
-    def __check_order_selector(self, order_id: int | None, nonce: int | None):
+        if asset_id is None:
+            known_coins = ", ".join(
+                set(
+                    contract.settlementSymbol
+                    for contract in self.future_contracts.values()
+                )
+            )
+            if not known_coins:
+                known_coins = "<none>"
+            raise ValidationError from ValueError(
+                f"{coin=} not recognized by exchange. Known coins: {known_coins}"
+            )
+
+        return asset_id
+
+    def __get_contract(self, symbol: str) -> FutureContract:
+        if self._future_contracts is None:
+            self.get_exchange_info()
+
+        contract = self.future_contracts.get(symbol)
+        if contract is None:
+            known_symbols = ", ".join(self.future_contracts.keys())
+            if not known_symbols:
+                known_symbols = "<none>"
+            raise ValidationError from ValueError(
+                f"{symbol=} not recognized by exchange. Known symbols: {known_symbols}"
+            )
+
+        return contract
+
+    def __ensure_contract_listed(self, symbol: str) -> None:
+        self.__get_contract(symbol)
+
+    def __check_order_selector(self, order_id: int | None, nonce: int | None) -> None:
         if order_id is None and nonce is None:
-            raise ValueError("Either order_id or nonce must be provided")
-        # if order_id is not None and nonce is not None:
-        #     raise ValueError("Only one of order_id or nonce must be provided")
+            raise ValidationError from ValueError(
+                "Either order_id or nonce must be provided"
+            )
 
     def __sign_payload(self, payload: bytes) -> str:
         if self._private_key:
@@ -1384,7 +1586,7 @@ class HibachiApiClient:
             # Combine to form the signature
             signature_hex = r.hex() + s.hex() + v.hex()
 
-            return signature_hex
+            return signature_hex  # type: ignore
 
         if self._private_key_hmac:
             return hmac.new(
@@ -1397,24 +1599,21 @@ class HibachiApiClient:
         self,
         contract: FutureContract,
         nonce: int,
-        quantity: float,
+        quantity: Decimal,
         side: Side,
-        max_fees_percent: float,
-        price: float | None,
+        max_fees_percent: Decimal,
+        price: Decimal | None,
     ) -> bytes:
         contract_id = contract.id
 
         nonce_bytes = nonce.to_bytes(8, "big")
         contract_id_bytes = contract_id.to_bytes(4, "big")
-        quantity_bytes = int(
-            Decimal(full_precision_string(quantity))
-            * pow(10, contract.underlyingDecimals)
-        ).to_bytes(8, "big")
+        quantity_bytes = int(quantity * pow(10, contract.underlyingDecimals)).to_bytes(
+            8, "big"
+        )
         price_bytes = b"" if price is None else price_to_bytes(price, contract)
         side_bytes = (0 if side.value == "ASK" else 1).to_bytes(4, "big")
-        max_fees_percent_bytes = int(
-            Decimal(full_precision_string(max_fees_percent)) * pow(10, 8)
-        ).to_bytes(8, "big")
+        max_fees_percent_bytes = int(max_fees_percent * pow(10, 8)).to_bytes(8, "big")
 
         payload = (
             nonce_bytes
@@ -1431,20 +1630,18 @@ class HibachiApiClient:
         self,
         nonce: int,
         symbol: str,
-        quantity: float,
+        quantity: Decimal,
         side: Side,
-        max_fees_percent: float,
-        trigger_price: float | None,
-        price: float | None,
-        creation_deadline: int | None,
+        max_fees_percent: Decimal,
+        trigger_price: Decimal | None,
+        price: Decimal | None,
+        creation_deadline: Decimal | None,
         twap_config: TWAPConfig | None = None,
         parent_order: OrderIdVariant | None = None,
         order_flags: OrderFlags | None = None,
         trigger_direction: TriggerDirection | None = None,
     ) -> Dict[str, Any]:
-        self.__check_auth_data()
-        self.__check_symbol(symbol)
-        contract = self.future_contracts.get(symbol)
+        contract = self.__get_contract(symbol)
         payload = self.__create_or_update_order_payload(
             contract, nonce, quantity, side, max_fees_percent, price
         )
@@ -1474,8 +1671,7 @@ class HibachiApiClient:
         if twap_config is not None:
             request = request | twap_config.to_dict()
         if creation_deadline is not None:
-            deadline = floor(time()) + creation_deadline
-            request["creationDeadline"] = deadline
+            request["creationDeadline"] = absolute_creation_deadline(creation_deadline)
         if parent_order is not None:
             request["parentOrder"] = parent_order.to_dict()
         if order_flags is not None:
@@ -1488,26 +1684,28 @@ class HibachiApiClient:
         order_id: int,
         nonce: int,
         symbol: str,
-        quantity: float,
+        quantity: Decimal,
         side: Side,
-        max_fees_percent: float,
-        price: float | None,
-        trigger_price: float | None,
-        creation_deadline: int | None,
+        max_fees_percent: Decimal,
+        price: Decimal | None,
+        trigger_price: Decimal | None,
+        creation_deadline: Decimal | None,
         order_flags: OrderFlags | None = None,
     ) -> Dict[str, Any]:
-        contract = self.future_contracts.get(symbol)
+        contract = self.__get_contract(symbol)
         payload = self.__create_or_update_order_payload(
             contract, nonce, quantity, side, max_fees_percent, price
         )
         signature = self.__sign_payload(payload)
         request = {
             "nonce": nonce,
-            "updatedQuantity": full_precision_string(quantity),
-            "quantity": full_precision_string(quantity),
             "maxFeesPercent": full_precision_string(max_fees_percent),
             "signature": signature,
         }
+
+        if quantity is not None:
+            request["updatedQuantity"] = full_precision_string(quantity)
+            request["quantity"] = full_precision_string(quantity)
         if price is not None:
             request["updatedPrice"] = full_precision_string(price)
             request["price"] = full_precision_string(price)
@@ -1517,8 +1715,7 @@ class HibachiApiClient:
             request["updatedTriggerPrice"] = full_precision_string(trigger_price)
             request["trigger_price"] = full_precision_string(trigger_price)
         if creation_deadline is not None:
-            deadline = floor(time()) + creation_deadline
-            request["creationDeadline"] = deadline
+            request["creationDeadline"] = absolute_creation_deadline(creation_deadline)
         if order_flags is not None:
             request["orderFlags"] = order_flags.value
         return request
@@ -1526,25 +1723,31 @@ class HibachiApiClient:
     def __cancel_order_payload(self, order_id: int | None, nonce: int | None) -> bytes:
         if order_id is not None:
             return order_id.to_bytes(8, "big")
+        if nonce is None:
+            raise ValidationError from ValueError(
+                "either of 'order_id' or 'nonce' must be non-None"
+            )
         return nonce.to_bytes(8, "big")
 
     def _cancel_order_request_data(
-        self, order_id: int | None, nonce: int | None, nonce_as_str: bool
+        self,
+        *,
+        order_id: int | None,
+        nonce: int | None,
+        nonce_as_str: bool = True,
     ) -> Dict[str, Any]:
         payload = self.__cancel_order_payload(order_id, nonce)
         signature = self.__sign_payload(payload)
         request = {"signature": signature}
         if order_id is not None:
             request["orderId"] = str(order_id)
-        elif nonce_as_str:
-            request["nonce"] = str(nonce)
         else:
-            request["nonce"] = nonce
+            request["nonce"] = str(nonce) if nonce_as_str else nonce  # type: ignore
         return request
 
     def __batch_order_request_data(
         self, nonce: int, o: CreateOrder | UpdateOrder | CancelOrder
-    ) -> Dict[str, Any]:
+    ) -> JsonObject:
         if type(o) is CreateOrder:
             payload = self._create_order_request_data(
                 nonce,
@@ -1573,7 +1776,11 @@ class HibachiApiClient:
                 o.creation_deadline,
                 order_flags=o.order_flags,
             )
+        elif type(o) is CancelOrder:
+            payload = self._cancel_order_request_data(
+                order_id=o.order_id, nonce=o.nonce
+            )
         else:
-            payload = self._cancel_order_request_data(o.order_id, o.nonce, True)
+            raise ValidationError from TypeError(f"Unexpected request type {type(o)}")
         payload["action"] = o.action
         return payload
