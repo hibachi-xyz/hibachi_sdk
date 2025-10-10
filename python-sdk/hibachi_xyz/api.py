@@ -10,10 +10,21 @@ from typing import Any, Dict, cast
 import eth_keys.datatypes
 
 from hibachi_xyz.errors import (
+    BadGateway,
+    BadHttpStatus,
+    BadRequest,
     DeserializationError,
+    Forbidden,
+    GatewayTimeout,
+    InternalServerError,
+    NotFound,
+    RateLimited,
+    ServiceUnavailable,
+    Unauthorized,
     ValidationError,
 )
 from hibachi_xyz.executors import HttpExecutor, RequestsHttpExecutor
+from hibachi_xyz.executors.interface import HttpResponse
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
@@ -86,6 +97,87 @@ from hibachi_xyz.types import (
 )
 
 log = logging.getLogger(__name__)
+
+
+def raise_response_errors(response: HttpResponse) -> None:
+    """check if the response status is not 2XX and if so raise the appropriate pre-defined error from errors.py"""
+    status = response.status
+
+    # Success status codes (2xx)
+    if 200 <= status < 300:
+        return
+
+    # Extract error message from response body if available
+    body = response.body if isinstance(response.body, dict) else {}
+
+    # Try to extract common Hibachi error fields
+    code = body.get("errorCode")
+    app_status = body.get("status")
+    message = body.get("message")
+
+    # Construct error message based on available fields
+    if code is not None and app_status is not None and message is not None:
+        error_message = f"[{code}] {app_status}: {message}"
+    else:
+        error_message = str(body) if body else "<no error message>"
+
+    # 4xx Client Errors
+    if status == 400:
+        raise BadRequest(status, f"Bad request: {error_message}")
+
+    if status == 401:
+        raise Unauthorized(status, f"Unauthorized: {error_message}")
+
+    if status == 403:
+        raise Forbidden(status, f"Forbidden: {error_message}")
+
+    if status == 404:
+        # TODO potentially coalesce into MaintenanceWindow with additional query
+        raise NotFound(status, f"Not found: {error_message}")
+
+    if status == 429:
+        # Extract rate limit specific fields
+        name = body.get("name")  # name of the limit hit
+        count = body.get("count")  # current count of the action
+        limit = body.get("limit")  # maximum count before limit is reached
+        window_duration = body.get(
+            "windowDuration"
+        )  # optional (duration after which count is reset)
+
+        # Construct detailed rate limit message
+        if name is not None and count is not None and limit is not None:
+            rate_limit_msg = f"Rate limit '{name}' exceeded: {count}/{limit}"
+            if window_duration is not None:
+                rate_limit_msg += f" (resets after {window_duration})"
+        else:
+            rate_limit_msg = f"Rate limit exceeded: {error_message}"
+
+        raise RateLimited(status, rate_limit_msg)
+
+    # Other 4xx errors
+    if 400 <= status < 500:
+        raise BadHttpStatus(status, f"Client error ({status}): {error_message}")
+
+    # 5xx Server Errors
+    if status == 500:
+        raise InternalServerError(status, f"Internal server error: {error_message}")
+
+    if status == 502:
+        raise BadGateway(status, f"Bad gateway: {error_message}")
+
+    if status == 503:
+        raise ServiceUnavailable(status, f"Service unavailable: {error_message}")
+
+    if status == 504:
+        raise GatewayTimeout(status, f"Gateway timeout: {error_message}")
+
+    # Other 5xx errors
+    if 500 <= status < 600:
+        raise InternalServerError(status, f"Server error ({status}): {error_message}")
+
+    # 3xx Redirects or other unexpected status codes
+    # This shouldn't normally happen in an API context, but handle it just in case
+    raise BadHttpStatus(status, f"Unexpected status code ({status}): {error_message}")
 
 
 def price_to_bytes(price: HibachiNumericInput, contract: FutureContract) -> bytes:
@@ -237,7 +329,7 @@ class HibachiApiClient:
 
         """
         exchange_info = self.__send_simple_request("/market/exchange-info")
-        check_maintenance_window(exchange_info)  # type: ignore
+        check_maintenance_window(exchange_info)
 
         try:
             self._future_contracts = {}
@@ -266,7 +358,7 @@ class HibachiApiClient:
                 create_with(MaintenanceWindow, window)  # type: ignore
                 for window in exchange_info["maintenanceWindow"]  # type: ignore
             ]
-            status = str(exchange_info["status"])  # type: ignore
+            status = str(exchange_info["status"])
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(
                 f"Received invalid response {exchange_info=}"
@@ -384,7 +476,7 @@ class HibachiApiClient:
                 FundingRateEstimation,
                 response["fundingRateEstimation"],  # type: ignore
             )
-            result = create_with(PriceResponse, response)  # type: ignore
+            result = create_with(PriceResponse, response)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
         return result
@@ -392,7 +484,7 @@ class HibachiApiClient:
     def get_stats(self, symbol: str) -> StatsResponse:
         response = self.__send_simple_request(f"/market/data/stats?symbol={symbol}")
         try:
-            result = create_with(StatsResponse, response)  # type: ignore
+            result = create_with(StatsResponse, response)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
         return result
@@ -444,7 +536,7 @@ class HibachiApiClient:
             f"/market/data/open-interest?symbol={symbol}"
         )
         try:
-            result = create_with(OpenInterestResponse, response)  # type: ignore
+            result = create_with(OpenInterestResponse, response)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
         return result
@@ -538,7 +630,7 @@ class HibachiApiClient:
             "GET", f"/capital/balance?accountId={self.account_id}"
         )
         try:
-            result = create_with(CapitalBalance, response)  # type: ignore
+            result = create_with(CapitalBalance, response)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
         return result
@@ -634,7 +726,7 @@ class HibachiApiClient:
             "POST", "/capital/withdraw", json=asdict(request)
         )
         try:
-            result = create_with(WithdrawResponse, response)  # type: ignore
+            result = create_with(WithdrawResponse, response)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
         return result
@@ -676,7 +768,7 @@ class HibachiApiClient:
         )
 
         try:
-            result = create_with(TransferResponse, response)  # type: ignore
+            result = create_with(TransferResponse, response)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
         return result
@@ -702,7 +794,7 @@ class HibachiApiClient:
             f"/capital/deposit-info?accountId={self.account_id}&publicKey={public_key}",
         )
         try:
-            result = create_with(DepositInfo, response)  # type: ignore
+            result = create_with(DepositInfo, response)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
         return result
@@ -1028,16 +1120,7 @@ class HibachiApiClient:
         )
 
         try:
-            response["numOrdersTotal"] = response.get("numOrdersTotal")  # type: ignore
-            response["numOrdersRemaining"] = response.get("numOrdersRemaining")  # type: ignore
-            response["totalQuantity"] = response.get("totalQuantity")  # type: ignore
-            response["quantityMode"] = response.get("quantityMode")  # type: ignore
-            response["price"] = response.get("price")  # type: ignore
-            response["triggerPrice"] = response.get("triggerPrice")  # type: ignore
-            response["finishTime"] = response.get("finishTime")  # type: ignore
-            response["orderFlags"] = response.get("orderFlags")  # type: ignore
-
-            result = create_with(Order, response)  # type: ignore
+            result = create_with(Order, response, implicit_null=True)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {response=}") from e
 
@@ -1257,7 +1340,7 @@ class HibachiApiClient:
                 for order in result["orders"]  # type: ignore
             ]
             result["orders"] = orders  # type: ignore
-            response = create_with(BatchResponse, result)  # type: ignore
+            response = create_with(BatchResponse, result)
             parent_order = response.orders[0]
             if isinstance(parent_order, CreateOrderBatchResponse):
                 return (parent_order.nonce, int(parent_order.orderId))
@@ -1500,7 +1583,7 @@ class HibachiApiClient:
                 for order in result["orders"]  # type: ignore
             ]
             result["orders"] = orders  # type: ignore
-            response = create_with(BatchResponse, result)  # type: ignore
+            response = create_with(BatchResponse, result)
         except (TypeError, IndexError, ValueError) as e:
             raise DeserializationError(f"Received invalid response {result=}") from e
         return response
@@ -1508,7 +1591,7 @@ class HibachiApiClient:
     """ Deferred helpers """
 
     def __send_simple_request(self, path: str) -> Json:
-        return self._rest_executor.send_simple_request(path)
+        return self._rest_executor.send_simple_request(path).body
 
     def __send_authorized_request(
         self,
@@ -1516,7 +1599,7 @@ class HibachiApiClient:
         path: str,
         json: Json | None = None,
     ) -> Json:
-        return self._rest_executor.send_authorized_request(method, path, json)
+        return self._rest_executor.send_authorized_request(method, path, json).body
 
     """ Private helpers """
 

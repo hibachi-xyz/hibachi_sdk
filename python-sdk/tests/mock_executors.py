@@ -12,7 +12,7 @@ from typing import (
 )
 
 from hibachi_xyz.executors import HttpExecutor
-from hibachi_xyz.types import Json
+from hibachi_xyz.executors.interface import HttpResponse
 
 
 class MockExecutorException(Exception):
@@ -75,7 +75,9 @@ class MockHttpExecutor(HttpExecutor):
         if not self.staged_outputs:
             raise MockOutputExhausted(input_pack)
         output = self.staged_outputs.popleft()
-        if output.call_validation and not output.call_validation(input_pack):
+        if output.call_validation is not None and not output.call_validation(
+            input_pack
+        ):
             raise MockValidationFailure(input_pack, "Validation failed")
         if isinstance(output, MockExceptionOutput):
             raise output.exception
@@ -88,13 +90,13 @@ class MockHttpExecutor(HttpExecutor):
         method: str,
         path: str,
         json: Optional[Any] = None,
-    ) -> Any:
+    ) -> HttpResponse:
         input_pack = InputPack(inspect.stack()[0].function, (method, path, json))
         return self._execute_mock(input_pack)
 
     def send_simple_request(
         self,
         path: str,
-    ) -> Json:
+    ) -> HttpResponse:
         input_pack = InputPack(inspect.stack()[0].function, (path,))
         return self._execute_mock(input_pack)

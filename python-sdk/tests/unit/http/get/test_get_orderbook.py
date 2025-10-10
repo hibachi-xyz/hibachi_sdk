@@ -2,6 +2,7 @@ import copy
 
 import pytest
 
+from hibachi_xyz.executors.interface import HttpResponse
 from hibachi_xyz.types import FutureContract
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
@@ -46,7 +47,7 @@ def test_get_orderbook(mock_http_client, test_data):
 
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=payload,
+            output=HttpResponse(status=200, body=payload),
             call_validation=lambda call: call.function_name == "send_simple_request"
             and call.arg_pack
             == (
