@@ -1,7 +1,8 @@
+import asyncio
 import logging
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any, Callable, Generator
 
 import orjson
 import pytest
@@ -12,6 +13,34 @@ from tests.mock_executors import MockHttpExecutor, MockOutputNotExhausted
 DATA_DIR = Path(__file__).parent.joinpath("data")
 
 log = logging.getLogger(__name__)
+
+
+async def wait_for_predicate(
+    condition: Callable[[], bool], timeout: float, poll_interval: float = 0.01
+) -> None:
+    """
+    Wait for a condition to become true, polling at regular intervals.
+
+    Args:
+        condition: A callable that returns True when the condition is met
+        timeout: Maximum time to wait in seconds
+        poll_interval: Time between condition checks in seconds (default: 0.01)
+
+    Raises:
+        TimeoutError: If the condition doesn't become true within the timeout
+    """
+    start_time = asyncio.get_event_loop().time()
+    end_time = start_time + timeout
+
+    while True:
+        if condition():
+            return
+
+        current_time = asyncio.get_event_loop().time()
+        if current_time >= end_time:
+            raise TimeoutError(f"Condition not met within {timeout}s timeout")
+
+        await asyncio.sleep(poll_interval)
 
 
 @pytest.fixture

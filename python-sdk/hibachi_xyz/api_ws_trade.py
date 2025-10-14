@@ -7,12 +7,12 @@ from typing import Self
 import orjson
 
 from hibachi_xyz.api import HibachiApiClient
+from hibachi_xyz.connection import connect_with_retry
 from hibachi_xyz.errors import ValidationError
-from hibachi_xyz.executors import WsConnection
+from hibachi_xyz.executors import DEFAULT_WS_EXECUTOR, WsConnection, WsExecutor
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
     DEFAULT_DATA_API_URL,
-    connect_with_retry,
     create_with,
     get_hibachi_client,
 )
@@ -88,6 +88,7 @@ class HibachiWSTradeClient:
         api_url: str = DEFAULT_API_URL,
         data_api_url: str = DEFAULT_DATA_API_URL,
         private_key: str | None = None,
+        executor: WsExecutor | None = None,
     ):
         self.api_endpoint = api_url
         self.api_endpoint = (
@@ -102,6 +103,9 @@ class HibachiWSTradeClient:
             int(account_id) if isinstance(account_id, str) else account_id
         )
         self.account_public_key = account_public_key
+        self._executor: WsExecutor = (
+            executor if executor is not None else DEFAULT_WS_EXECUTOR()
+        )
 
         self.api = HibachiApiClient(
             api_url=api_url,
@@ -125,6 +129,7 @@ class HibachiWSTradeClient:
             web_url=self.api_endpoint
             + f"?accountId={self.account_id}&hibachiClient={get_hibachi_client()}",
             headers=[("Authorization", self.api_key)],
+            executor=self._executor,
         )
 
         return self

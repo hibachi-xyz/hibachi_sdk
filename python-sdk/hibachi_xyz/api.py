@@ -23,7 +23,7 @@ from hibachi_xyz.errors import (
     Unauthorized,
     ValidationError,
 )
-from hibachi_xyz.executors import HttpExecutor, RequestsHttpExecutor
+from hibachi_xyz.executors import DEFAULT_HTTP_EXECUTOR, HttpExecutor
 from hibachi_xyz.executors.interface import HttpResponse
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
@@ -228,7 +228,7 @@ class HibachiApiClient:
 
     _future_contracts: dict[str, FutureContract] | None = None
 
-    _rest_executor: HttpExecutor
+    _http_executor: HttpExecutor
 
     def __init__(
         self,
@@ -242,10 +242,14 @@ class HibachiApiClient:
         if private_key is not None:
             self.set_private_key(private_key)
 
-        self._rest_executor = executor or RequestsHttpExecutor(
-            api_url=api_url,
-            data_api_url=data_api_url,
-            api_key=api_key,
+        self._http_executor = (
+            executor
+            if executor is not None
+            else DEFAULT_HTTP_EXECUTOR(
+                api_url=api_url,
+                data_api_url=data_api_url,
+                api_key=api_key,
+            )
         )
         self.set_api_key(api_key)
         self.set_account_id(account_id)
@@ -264,9 +268,9 @@ class HibachiApiClient:
 
     @property
     def api_key(self) -> str:
-        if self._rest_executor.api_key is None:
+        if self._http_executor.api_key is None:
             raise ValidationError("api_key has not been set")
-        return self._rest_executor.api_key
+        return self._http_executor.api_key
 
     def set_account_id(self, account_id: int | None) -> None:
         _account_id = cast(Any, account_id)
@@ -288,7 +292,7 @@ class HibachiApiClient:
                 f"Unexpected type for api_key {type(api_key)}"
             )
 
-        self._rest_executor.api_key = api_key
+        self._http_executor.api_key = api_key
 
     def set_private_key(self, private_key: str) -> None:
         if private_key.startswith("0x"):
@@ -1591,7 +1595,7 @@ class HibachiApiClient:
     """ Deferred helpers """
 
     def __send_simple_request(self, path: str) -> Json:
-        return self._rest_executor.send_simple_request(path).body
+        return self._http_executor.send_simple_request(path).body
 
     def __send_authorized_request(
         self,
@@ -1599,7 +1603,7 @@ class HibachiApiClient:
         path: str,
         json: Json | None = None,
     ) -> Json:
-        return self._rest_executor.send_authorized_request(method, path, json).body
+        return self._http_executor.send_authorized_request(method, path, json).body
 
     """ Private helpers """
 
