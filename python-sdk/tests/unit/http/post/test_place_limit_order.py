@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.executors.interface import HttpResponse
 from hibachi_xyz.types import Side
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
@@ -24,7 +25,7 @@ def test_place_limit_order(mock_http_client, test_data):
     # Mock exchange_info call (needed for __get_contract in place_limit_order)
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=exchange_info,
+            output=HttpResponse(status=200, body=exchange_info),
             call_validation=lambda call: call.function_name == "send_simple_request"
             and call.arg_pack == ("/market/exchange-info",),
         )
@@ -33,7 +34,7 @@ def test_place_limit_order(mock_http_client, test_data):
     # Mock send_authorized_request call for order placement
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=order_response,
+            output=HttpResponse(status=200, body=order_response),
             call_validation=lambda call: call.function_name == "send_authorized_request"
             and call.arg_pack[0:2] == ("POST", "/trade/order")
             and call.arg_pack[2] is not None,

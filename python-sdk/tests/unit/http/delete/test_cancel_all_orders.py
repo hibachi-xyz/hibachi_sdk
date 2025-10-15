@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.executors.interface import HttpResponse
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
 
@@ -15,7 +16,7 @@ def test_cancel_all_orders(mock_http_client, test_data):
     # Mock get_pending_orders call
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=pending_orders,
+            output=HttpResponse(status=200, body=pending_orders),
             call_validation=lambda call: call.function_name == "send_authorized_request"
             and call.arg_pack[0] == "GET"
             and "/trade/orders" in call.arg_pack[1],
@@ -27,7 +28,10 @@ def test_cancel_all_orders(mock_http_client, test_data):
         # Mock send_authorized_request call for cancel
         mock_http.stage_output(
             MockSuccessfulOutput(
-                output={"orderId": order["orderId"], "status": "cancelled"},
+                output=HttpResponse(
+                    status=200,
+                    body={"orderId": order["orderId"], "status": "cancelled"},
+                ),
                 call_validation=lambda call: call.function_name
                 == "send_authorized_request"
                 and call.arg_pack[0:2] == ("DELETE", "/trade/order")

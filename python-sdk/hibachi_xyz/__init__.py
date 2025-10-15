@@ -22,7 +22,7 @@ from hibachi_xyz.errors import (
     WebSocketMessageError,
 )
 from hibachi_xyz.helpers import print_data
-from hibachi_xyz.types import (
+from hibachi_xyz.types import (  # type: ignore[attr-defined]
     AccountInfo,
     AccountSnapshot,
     AccountStreamStartResult,
@@ -239,4 +239,5 @@ __all__ = [
     "InventoryResponse",
     "__version__",
     "print_data",
+    "HibachiApiError",
 ]

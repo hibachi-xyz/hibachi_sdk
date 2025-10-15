@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.executors.interface import HttpResponse
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
 
@@ -23,7 +24,7 @@ def test_withdraw(mock_http_client, test_data):
     # Mock exchange_info call (needed for withdraw to determine asset ID)
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=exchange_info,
+            output=HttpResponse(status=200, body=exchange_info),
             call_validation=lambda call: call.function_name == "send_simple_request"
             and call.arg_pack == ("/market/exchange-info",),
         )
@@ -32,7 +33,7 @@ def test_withdraw(mock_http_client, test_data):
     # Mock send_authorized_request call for withdraw
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=withdraw_response,
+            output=HttpResponse(status=200, body=withdraw_response),
             call_validation=lambda call: call.function_name == "send_authorized_request"
             and call.arg_pack[0:2] == ("POST", "/capital/withdraw")
             and call.arg_pack[2] is not None,

@@ -25,6 +25,11 @@ class BaseError(Exception):
     pass
 
 
+# ============================================================================
+# EXCHANGE ERROR
+# ============================================================================
+
+
 class ExchangeError(BaseError):
     """Exception raised when the API server returns an error response.
 
@@ -39,6 +44,71 @@ class ExchangeError(BaseError):
     """
 
     pass
+
+
+class MaintanenceOutage(ExchangeError):
+    """Raised when exchange cannot handle response due to maintanence"""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class BadHttpStatus(ExchangeError):
+    """Raised when response status from exchange is not 2XX"""
+
+    status_code: int
+    message: str
+
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
+
+
+## 5xx status errors - unexpected - should be reported
+
+
+class InternalServerError(BadHttpStatus):
+    pass
+
+
+class BadGateway(BadHttpStatus):
+    pass
+
+
+class ServiceUnavailable(BadHttpStatus):
+    pass
+
+
+class GatewayTimeout(BadHttpStatus):
+    pass
+
+
+## 4xx status errors
+
+
+class BadRequest(BadHttpStatus):
+    pass
+
+
+class NotFound(BadHttpStatus):
+    pass
+
+
+class RateLimited(BadHttpStatus):
+    pass
+
+
+class Unauthorized(BadHttpStatus):
+    pass
+
+
+class Forbidden(BadHttpStatus):
+    pass
+
+
+# ============================================================================
+# TRANSPORT ERROR
+# ============================================================================
 
 
 class TransportError(BaseError):
@@ -80,45 +150,6 @@ class TransportError(BaseError):
     pass
 
 
-class ValidationError(BaseError):
-    """Exception raised for client-side input validation failures.
-
-    This exception is raised when input parameters fail validation checks before
-    any request is sent to the API server. ValidationError indicates a problem
-    with the arguments provided to SDK methods, such as missing required fields,
-    invalid types, out-of-range values, or malformed data.
-
-    ValidationError indicates that:
-    - No network request was attempted
-    - The error is due to invalid input from the caller
-    - The error can be fixed by correcting the input parameters
-
-    Common causes include:
-    - Missing required parameters
-    - Invalid parameter types (e.g., string instead of number)
-    - Out-of-range values
-    - Malformed identifiers or formats
-    - Mutually exclusive parameters specified together
-    """
-
-    pass
-
-
-class MaintanenceOutage(ExchangeError):
-    """Raised when exchange cannot handle response due to maintanence"""
-
-    def __init__(self, message: str):
-        super().__init__(message)
-
-
-class MissingCredentialsError(ValidationError):
-    """Raised when required authentication credentials are missing."""
-
-    def __init__(self, credential_type: str = "API key"):
-        self.credential_type = credential_type
-        super().__init__(f"{credential_type} is not set")
-
-
 class HttpConnectionError(TransportError):
     """Raised when a connection cannot be established or is lost."""
 
@@ -147,7 +178,12 @@ class WebSocketConnectionError(TransportError):
     """Raised when WebSocket connection fails or is closed unexpectedly."""
 
     def __init__(self, message: str, url: str | None = None):
-        super().__init__(message)
+        self.message = message
+        self.url = url
+        if url:
+            super().__init__(f"{message} (url: {url})")
+        else:
+            super().__init__(message)
 
 
 class WebSocketMessageError(TransportError):
@@ -172,3 +208,56 @@ class SerializationError(TransportError):
     def __init__(self, message: str):
         self.message = message
         super().__init__(message)
+
+
+# ============================================================================
+# TRANSPORT ERROR
+# ============================================================================
+
+
+class ValidationError(BaseError):
+    """Exception raised for client-side input validation failures.
+
+    This exception is raised when input parameters fail validation checks before
+    any request is sent to the API server. ValidationError indicates a problem
+    with the arguments provided to SDK methods, such as missing required fields,
+    invalid types, out-of-range values, or malformed data.
+
+    ValidationError indicates that:
+    - No network request was attempted
+    - The error is due to invalid input from the caller
+    - The error can be fixed by correcting the input parameters
+
+    Common causes include:
+    - Missing required parameters
+    - Invalid parameter types (e.g., string instead of number)
+    - Out-of-range values
+    - Malformed identifiers or formats
+    - Mutually exclusive parameters specified together
+    """
+
+    pass
+
+
+class MissingCredentialsError(ValidationError):
+    """Raised when required authentication credentials are missing."""
+
+    def __init__(self, credential_type: str = "API key"):
+        self.credential_type = credential_type
+        super().__init__(f"{credential_type} is not set")
+
+
+# ============================================================================
+# DEPRECATED TYPES
+# ============================================================================
+
+
+class HibachiApiError(BadHttpStatus):
+    """Deprecated - use hibachi_xyz.errors.ExchangeError and subclasses"""
+
+    status_code: int
+    message: str
+
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message

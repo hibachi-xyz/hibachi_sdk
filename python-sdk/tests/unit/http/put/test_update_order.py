@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.executors.interface import HttpResponse
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
 
@@ -23,7 +24,7 @@ def test_update_order(mock_http_client, test_data):
     # Mock get_order_details call
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=order_details,
+            output=HttpResponse(status=200, body=order_details),
             call_validation=lambda call: call.function_name == "send_authorized_request"
             and call.arg_pack[0] == "GET"
             and "/trade/order" in call.arg_pack[1],
@@ -33,7 +34,7 @@ def test_update_order(mock_http_client, test_data):
     # Mock exchange_info call (needed for __get_contract)
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=exchange_info,
+            output=HttpResponse(status=200, body=exchange_info),
             call_validation=lambda call: call.function_name == "send_simple_request"
             and call.arg_pack == ("/market/exchange-info",),
         )
@@ -42,7 +43,7 @@ def test_update_order(mock_http_client, test_data):
     # Mock send_authorized_request call for update
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=update_response,
+            output=HttpResponse(status=200, body=update_response),
             call_validation=lambda call: call.function_name == "send_authorized_request"
             and call.arg_pack[0:2] == ("PUT", "/trade/order")
             and call.arg_pack[2] is not None,

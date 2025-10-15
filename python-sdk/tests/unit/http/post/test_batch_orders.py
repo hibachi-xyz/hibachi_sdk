@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.executors.interface import HttpResponse
 from hibachi_xyz.types import (
     CancelOrderBatchResponse,
     CreateOrder,
@@ -26,7 +27,7 @@ def test_batch_orders(mock_http_client, test_data):
     # Only the first order triggers exchange_info (sets self.future_contracts)
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=exchange_info,
+            output=HttpResponse(status=200, body=exchange_info),
             call_validation=lambda call: call.function_name == "send_simple_request"
             and call.arg_pack == ("/market/exchange-info",),
         )
@@ -35,7 +36,7 @@ def test_batch_orders(mock_http_client, test_data):
     # Mock send_authorized_request call for batch
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=batch_response,
+            output=HttpResponse(status=200, body=batch_response),
             call_validation=lambda call: call.function_name == "send_authorized_request"
             and call.arg_pack[0:2] == ("POST", "/trade/orders")
             and call.arg_pack[2] is not None,
@@ -161,7 +162,7 @@ def test_partial_failure(mock_http_client):
     # Mock send_authorized_request call for batch
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=PARTIAL_FAILURE_BODY,
+            output=HttpResponse(status=200, body=PARTIAL_FAILURE_BODY),
         )
     )
     response = client.batch_orders(

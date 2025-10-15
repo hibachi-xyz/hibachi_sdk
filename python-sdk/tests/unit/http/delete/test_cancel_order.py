@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.executors.interface import HttpResponse
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
 
@@ -16,7 +17,7 @@ def test_cancel_order(mock_http_client, test_data):
     # Mock send_authorized_request call for cancel
     mock_http.stage_output(
         MockSuccessfulOutput(
-            output=payload,
+            output=HttpResponse(status=200, body=payload),
             call_validation=lambda call: call.function_name == "send_authorized_request"
             and call.arg_pack[0:2] == ("DELETE", "/trade/order")
             and call.arg_pack[2] is not None,

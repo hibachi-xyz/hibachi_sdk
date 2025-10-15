@@ -1,3 +1,10 @@
+"""
+Helper utilities for the Hibachi Python SDK.
+
+This module contains utility functions for serialization, deserialization,
+API response handling, WebSocket management, and display formatting.
+"""
+
 import asyncio
 import inspect
 import logging
@@ -12,7 +19,6 @@ from typing import Any, Callable, Dict, TypeVar, get_args, get_origin
 import orjson
 from prettyprinter import cpprint
 
-# TODO spellcheck
 from hibachi_xyz.errors import (
     DeserializationError,
     MaintanenceOutage,
@@ -36,19 +42,41 @@ from hibachi_xyz.types import (
 
 log = logging.getLogger(__name__)
 
+
+# ============================================================================
+# CONSTANTS
+# ============================================================================
+
 DEFAULT_API_URL: str = "https://api.hibachi.xyz"
 DEFAULT_DATA_API_URL: str = "https://data-api.hibachi.xyz"
 
 
+# ============================================================================
+# CLIENT IDENTIFICATION
+# ============================================================================
+
+
 @lru_cache(maxsize=1)
 def get_hibachi_client() -> str:
+    """Get the Hibachi client identification string."""
     import hibachi_xyz
 
     return f"HibachiPythonSDK/{hibachi_xyz.__version__}"
 
 
+# ============================================================================
+# REFLECTION UTILITIES
+# ============================================================================
+
+
 @lru_cache(maxsize=1)
 def _required_fields(signature: inspect.Signature) -> list[str]:
+    """
+    Extract list of required parameter names from a function signature.
+
+    Returns parameter names that have no default value and are positional
+    or keyword parameters.
+    """
     return [
         name
         for name, param in signature.parameters.items()
@@ -62,6 +90,138 @@ def _required_fields(signature: inspect.Signature) -> list[str]:
     ]
 
 
+@lru_cache(maxsize=1)
+def _required_nullable_fields(signature: inspect.Signature) -> list[str]:
+    """
+    Return names of parameters that are required and whose annotation allows None.
+
+    This is useful for determining which fields should be explicitly set to None
+    when constructing objects from partial data.
+    """
+    required_nullable: list[str] = []
+    for name, param in signature.parameters.items():
+        # only return required fields
+        if name not in _required_fields(signature):
+            continue
+
+        # can only handle annotated fields
+        ann = param.annotation
+        if ann is inspect._empty:
+            continue
+
+        origin, args = get_origin(ann), get_args(ann)
+
+        # annotation is None
+        if ann is NoneType:
+            required_nullable.append(name)
+        # annotation is a Union including None
+        elif origin is not None and NoneType in args:
+            required_nullable.append(name)
+
+    return required_nullable
+
+
+# ============================================================================
+# OBJECT CONSTRUCTION
+# ============================================================================
+
+T = TypeVar("T")
+
+
+def create_with(
+    func: Callable[..., T], data: Dict[str, Any], *, implicit_null: bool = False
+) -> T:
+    """
+    Create an object from a dictionary, filtering to only valid parameters.
+
+    This allows constructing objects from API responses that may contain
+    additional fields beyond what the constructor expects, making the SDK
+    more resilient to API changes.
+
+    Args:
+        func: Constructor or factory function to call
+        data: Dictionary of data to pass as kwargs
+        implicit_null: If True, add explicit None values for required nullable fields
+
+    Returns:
+        Instance created by calling func with filtered data
+    """
+    sig = inspect.signature(func)
+    valid_keys = sig.parameters.keys()
+    filtered_data = {k: v for k, v in data.items() if k in valid_keys}
+    if implicit_null:
+        missing_fields = (
+            field
+            for field in _required_nullable_fields(sig)
+            if field not in filtered_data
+        )
+        filtered_data.update({field: None for field in missing_fields})
+
+    return func(**filtered_data)
+
+
+# ============================================================================
+# SERIALIZATION / DESERIALIZATION
+# ============================================================================
+
+
+def decimal_as_str(obj: object) -> str:
+    """
+    Custom JSON serializer for Decimal objects.
+
+    Converts Decimal to string to preserve precision in JSON serialization.
+    """
+    if isinstance(obj, Decimal):
+        return str(obj)
+
+    raise TypeError
+
+
+def serialize_request(request: Json | None) -> bytes | None:
+    """
+    Serialize a request object to JSON bytes.
+
+    Uses orjson for fast serialization with custom Decimal handling.
+
+    Args:
+        request: Request data to serialize
+
+    Returns:
+        JSON bytes or None if request is None
+
+    Raises:
+        SerializationError: If serialization fails
+    """
+    if request is None:
+        return None
+    try:
+        return orjson.dumps(request, default=decimal_as_str)
+    except Exception as e:
+        raise SerializationError(f"Failed to serialize {request=}") from e
+
+
+def deserialize_response(response_body: bytes, url: str) -> Json:
+    """
+    Deserialize a JSON response body.
+
+    Args:
+        response_body: Response bytes to deserialize
+        url: URL that was requested (for error messages)
+
+    Returns:
+        Deserialized JSON object or array
+
+    Raises:
+        DeserializationError: If deserialization fails
+    """
+    try:
+        return orjson.loads(response_body)  # type: ignore
+    except Exception as e:
+        raise DeserializationError(
+            f"Failed to parse JSON response from {url}: {e}"
+        ) from e
+
+
 def deserialize_batch_response_order(
     data: JsonObject,
 ) -> BatchResponseOrder:
@@ -73,6 +233,12 @@ def deserialize_batch_response_order(
     - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
     - If only 'orderId' is present -> UpdateOrderBatchResponse
     - If only 'nonce' is present -> CancelOrderBatchResponse
+
+    Args:
+        data: JSON object to deserialize
+
+    Returns:
+        Appropriate batch response type
 
     Raises:
         DeserializationError: If the data cannot be deserialized into any known type
@@ -99,59 +265,14 @@ def deserialize_batch_response_order(
         ) from e
 
 
-@lru_cache(maxsize=1)
-def _required_nullable_fields(signature: inspect.Signature) -> list[str]:
-    """Return names of parameters that are required and whose annotation allows None."""
-    required_nullable: list[str] = []
-    for name, param in signature.parameters.items():
-        # only return required fields
-        if name not in _required_fields(signature):
-            continue
-
-        # can only handle annotated fields
-        ann = param.annotation
-        if ann is inspect._empty:
-            continue
-
-        origin, args = get_origin(ann), get_args(ann)
-
-        # annotation is None
-        if ann is NoneType:
-            required_nullable.append(name)
-        # annotation is a Union including None
-        elif origin is not None and NoneType in args:
-            required_nullable.append(name)
-
-    return required_nullable
-
-
-def decimal_as_str(obj: object) -> str:
-    if isinstance(obj, Decimal):
-        return str(obj)
-
-    raise TypeError
-
-
-def serialize_request(request: Json | None) -> bytes | None:
-    if request is None:
-        return None
-    try:
-        return orjson.dumps(request, default=decimal_as_str)
-    except Exception as e:
-        raise SerializationError(f"Failed to serialize {request=}") from e
-
-
-def deserialize_response(response_body: bytes, url: str) -> Json:
-    try:
-        return orjson.loads(response_body)  # type: ignore
-    except Exception as e:
-        raise DeserializationError(
-            f"Failed to parse JSON response from {url}: {e}"
-        ) from e
+# ============================================================================
+# MAINTENANCE WINDOW HANDLING
+# ============================================================================
 
 
 def check_maintenance_window(response: JsonObject) -> None:
-    """Check API response for maintenance status and raise exception if found.
+    """
+    Check API response for maintenance status and raise exception if found.
 
     This function inspects an API response for a status field indicating exchange health.
     The exchange can be in one of three states:
@@ -231,113 +352,17 @@ def check_maintenance_window(response: JsonObject) -> None:
     raise MaintanenceOutage(". ".join(message_parts))
 
 
-# allow an object to be created from any superset of the required args
-# intending to future proof against updates adding fields
-T = TypeVar("T")
-
-
-def create_with(
-    func: Callable[..., T], data: Dict[str, Any], *, implicit_null: bool = False
-) -> T:
-    sig = inspect.signature(func)
-    valid_keys = sig.parameters.keys()
-    filtered_data = {k: v for k, v in data.items() if k in valid_keys}
-    if implicit_null:
-        missing_fields = (
-            field
-            for field in _required_nullable_fields(sig)
-            if field not in filtered_data
-        )
-        filtered_data.update({field: None for field in missing_fields})
-
-    return func(**filtered_data)
-
-
-# TODO note this is based on wall time and can drift, server side we're using NTP with chrony AWS Time Sunc Service. If this is far off in the client from our server value it will not function as expected
-# TODO this should be able to return a float but api server currently can't handle that
-def absolute_creation_deadline(relative_creation_deadline: Decimal) -> int:
-    return int(relative_creation_deadline + Decimal(time()))
-
-
-async def connect_with_retry(
-    web_url: str, headers: list[tuple[str, str]] | None = None
-) -> WsConnection:
-    """Establish WebSocket connection with retry logic"""
-    max_retries = 10
-    retry_count = 0
-    retry_delay = 1
-    executor = WebsocketsWsExecutor()
-
-    while retry_count < max_retries:
-        try:
-            # Convert headers list to dict for executor
-            headers_dict = dict(headers) if headers else None
-            websocket = await executor.connect(web_url, headers_dict)
-            return websocket
-        except Exception as e:
-            retry_count += 1
-            if retry_count >= max_retries:
-                raise Exception(
-                    f"Failed to connect after {max_retries} attempts: {str(e)}"
-                )
-
-            log.warning(
-                "Connection attempt %d failed: %s. Retrying in %d seconds...",
-                retry_count,
-                str(e),
-                retry_delay,
-            )
-            await asyncio.sleep(retry_delay)
-            retry_delay *= 2  # Exponential backoff
-
-    # This shouldn't be reached due to the exception in the loop
-    return websocket
-
-
-def print_data(response: Any) -> None:
-    if is_dataclass(response) and not isinstance(response, type):
-        cpprint(asdict(response))
-    else:
-        cpprint(response)
-
-
-def get_withdrawal_fee_for_amount(
-    exchange_info: ExchangeInfo, amount: HibachiNumericInput
-) -> int | float:
-    """
-    Calculate the instant withdrawal fee for a given amount.
-
-    Args:
-        exchange_info: The exchange information
-        amount: Withdrawal amount
-
-    Returns:
-        Decimal: Fee percentage for the withdrawal
-    """
-    amount = numeric_to_decimal(amount)
-    fees = exchange_info.feeConfig.instantWithdrawalFees
-    # Sort fees by threshold (highest first)
-    sorted_fees = sorted(fees, key=lambda x: x[0], reverse=True)
-
-    for threshold, fee in sorted_fees:
-        if amount >= threshold:
-            return fee
-
-    # Default to highest fee if amount is below all thresholds
-    return sorted_fees[-1][1]
-
-
 def get_next_maintenance_window(
     exchange_info: ExchangeInfo,
 ) -> MaintenanceWindow | None:
     """
-    Get the next maintenance window if any exists.
+    Get the next scheduled maintenance window if any exists.
 
     Args:
-        exchange_info: The exchange information
+        exchange_info: The exchange information containing maintenance windows
 
     Returns:
-        Optional[Dict | None: Details about the next maintenance window or None if none exists
+        Details about the next maintenance window or None if none exists
     """
     windows = exchange_info.maintenanceWindow
     if not windows:
@@ -362,7 +387,7 @@ def format_maintenance_window(window_info: MaintenanceWindow | None) -> str:
         window_info: Maintenance window information from get_next_maintenance_window
 
     Returns:
-        str: Formatted string with maintenance window details
+        Formatted string with maintenance window details
     """
     if window_info is None:
         return "No upcoming maintenance windows scheduled."
@@ -396,3 +421,136 @@ def format_maintenance_window(window_info: MaintenanceWindow | None) -> str:
         f"for a duration of {duration_str}. "
         f"Reason: {window_info.note}."
     )
+
+
+# ============================================================================
+# WEBSOCKET CONNECTION UTILITIES
+# ============================================================================
+
+
+async def connect_with_retry(
+    web_url: str, headers: list[tuple[str, str]] | None = None
+) -> WsConnection:
+    """
+    Establish WebSocket connection with exponential backoff retry logic.
+
+    Attempts to connect up to 10 times with exponentially increasing delays
+    between attempts (starting at 1 second, doubling each time).
+
+    Args:
+        web_url: WebSocket URL to connect to
+        headers: Optional list of header tuples to send
+
+    Returns:
+        Established WebSocket connection
+
+    Raises:
+        Exception: If connection fails after all retry attempts
+    """
+    max_retries = 10
+    retry_count = 0
+    retry_delay = 1
+    executor = WebsocketsWsExecutor()
+
+    while retry_count < max_retries:
+        try:
+            # Convert headers list to dict for executor
+            headers_dict = dict(headers) if headers else None
+            websocket = await executor.connect(web_url, headers_dict)
+            return websocket
+        except Exception as e:
+            retry_count += 1
+            if retry_count >= max_retries:
+                raise Exception(
+                    f"Failed to connect after {max_retries} attempts: {str(e)}"
+                )
+
+            log.warning(
+                "Connection attempt %d failed: %s. Retrying in %d seconds...",
+                retry_count,
+                str(e),
+                retry_delay,
+            )
+            await asyncio.sleep(retry_delay)
+            retry_delay *= 2  # Exponential backoff
+
+    raise RuntimeError("Unreachable")  # satisfies mypy
+
+
+# ============================================================================
+# EXCHANGE INFORMATION UTILITIES
+# ============================================================================
+
+
+def get_withdrawal_fee_for_amount(
+    exchange_info: ExchangeInfo, amount: HibachiNumericInput
+) -> int | float:
+    """
+    Calculate the instant withdrawal fee for a given amount.
+
+    Fees are tiered based on withdrawal amount. This function finds the
+    appropriate fee tier for the given amount.
+
+    Args:
+        exchange_info: The exchange information containing fee tiers
+        amount: Withdrawal amount
+
+    Returns:
+        Fee percentage/amount for the withdrawal
+    """
+    amount = numeric_to_decimal(amount)
+    fees = exchange_info.feeConfig.instantWithdrawalFees
+    # Sort fees by threshold (highest first)
+    sorted_fees = sorted(fees, key=lambda x: x[0], reverse=True)
+
+    for threshold, fee in sorted_fees:
+        if amount >= threshold:
+            return fee
+
+    # Default to highest fee if amount is below all thresholds
+    return sorted_fees[-1][1]
+
+
+# ============================================================================
+# TIME UTILITIES
+# ============================================================================
+
+
+def absolute_creation_deadline(relative_creation_deadline: Decimal) -> int:
+    """
+    Convert a relative creation deadline (in seconds) to an absolute timestamp.
+
+    Note: This is based on wall time and can drift. Server-side uses NTP with
+    chrony AWS Time Sync Service. If client time is significantly off from
+    server time, this may not function as expected.
+
+    TODO: This should be able to return a float but API server currently can't handle that
+
+    Args:
+        relative_creation_deadline: Deadline in seconds from now
+
+    Returns:
+        Unix timestamp as integer
+    """
+    return int(relative_creation_deadline + Decimal(time()))
+
+
+# ============================================================================
+# DISPLAY UTILITIES
+# ============================================================================
+
+
+def print_data(response: Any) -> None:
+    """
+    Pretty-print response data, handling dataclasses specially.
+
+    Dataclass instances are converted to dictionaries before printing
+    for better formatting.
+
+    Args:
+        response: Data to print
+    """
+    if is_dataclass(response) and not isinstance(response, type):
+        cpprint(asdict(response))
+    else:
+        cpprint(response)
