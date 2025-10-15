@@ -6,12 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "hibachi_xyz"
 version = "0.2.0"
 authors = [
- { name = "Hibachi Engineer" }
+  {name = "Hibachi Engineer"}
 ]
 description = "Hibachi SDK for accessing the API"
 readme = "README.md"
 requires-python = ">=3.13,<4"
-license = "MIT" 
+license = "MIT"
 dependencies = [
   "eth_keys == 0.6.1",
   "requests == 2.32.3",
@@ -23,7 +23,7 @@ dependencies = [
   "pip-system-certs",
   "aiohttp>=3.12.15,<4.0.0",
   "orjson>=3.10.0,<4.0.0",
-  "types-requests>=2.32.4.20250913,<3.0.0.0",
+  "types-requests>=2.32.4.20250913,<3.0.0.0"
 ]
 
 [project.optional-dependencies]
@@ -32,41 +32,12 @@ dev = [
   "pytest-asyncio",
   "pytest-timeout",
   "mypy",
-  "ruff",
+  "ruff"
 ]
-
-[tool.poetry.group.dev.dependencies]
-pytest = "*"
-pytest-asyncio = "*"
-pytest-timeout = "*"
-mypy = "*"
-ruff = "*"
-ipython = "^9.6.0"
 
 [project.urls]
 Homepage = "https://github.com/hibachi-xyz/yule-os"
 Issues = "https://github.com/hibachi-xyz/yule-os/issues"
-
-[tool.ruff]
-# Target Python 3.13+
-target-version = "py313"
-
-[tool.ruff.format]
-# Use double quotes for strings
-quote-style = "double"
-# Use spaces for indentation
-indent-style = "space"
-# Respect magic trailing commas
-skip-magic-trailing-comma = false
-# Unix-style line endings
-line-ending = "lf"
-# Enable auto-detection of the appropriate line ending
-docstring-code-format = false
-
-[tool.ruff.lint]
-# Enable pycodestyle (E), Pyflakes (F), and isort (I) rules
-select = ["E", "F", "I"]
-ignore = ["E501"]  # Ignore line too long
 
 [tool.mypy]
 python_version = "3.13"
@@ -85,16 +56,128 @@ disallow_any_generics = true
 disallow_subclassing_any = true
 disallow_untyped_calls = true
 exclude = [
-    # TODO cleanup
-    "examples/",
-    "tests/", 
+  # TODO cleanup
+  "examples/",
+  "tests/"
 ]
 
 [[tool.mypy.overrides]]
 module = [
-    "eth_keys.*",
-    "prettyprinter.*",
-    "toml.*",
-    "pydoc_markdown.*",
+  "eth_keys.*",
+  "prettyprinter.*",
+  "toml.*",
+  "pydoc_markdown.*"
 ]
 ignore_missing_imports = true
+
+[tool.poetry.group.dev.dependencies]
+pytest = "*"
+pytest-asyncio = "*"
+pytest-timeout = "*"
+mypy = "*"
+ruff = "*"
+ipython = "^9.6.0"
+sphinx = "^8.2.3"
+sphinx-autobuild = "^2025.8.25"
+sphinx-rtd-theme = "^3.0.2"
+toml-sort = "^0.24.3"
+rstcheck = "^6.2.5"
+pydoclint = "^0.7.3"
+poethepoet = "^0.37.0"
+
+[tool.ruff]
+# Target Python 3.13+
+target-version = "py313"
+
+[tool.ruff.format]
+# Use double quotes for strings
+quote-style = "double"
+# Use spaces for indentation
+indent-style = "space"
+# Respect magic trailing commas
+skip-magic-trailing-comma = false
+# Unix-style line endings
+line-ending = "lf"
+# Enable auto-detection of the appropriate line ending
+docstring-code-format = false
+
+[tool.ruff.lint]
+select = [
+  "E", # pycodestyle (E)
+  "F", # Pyflakes (F)
+  "I", # isort (I)
+  "D", # pydocstyle (D)
+]
+ignore = [
+  "E501",  # line too long
+]
+
+# Use Google docstring convention
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Do not require docstrings for tests, examples or docs infra
+"tests/**/*.py" = ["D"]
+"examples/**/*.py" = ["D"]
+"docs/**/*.py" = ["D"]
+
+# TODO add to ruff once supported
+[tool.pydoclint]
+style = "google"
+
+# Core checks
+check-args = true
+check-returns = true
+check-raises = true
+
+# Privacy
+ignore-private = true
+
+# Type hints (DON'T duplicate them in docstrings!)
+arg-type-hints-in-docstring = false
+return-type-hints-in-docstring = false
+check-return-types = false
+
+# Init docstrings (allow them instead of forcing merge with class docs)
+allow-init-docstring = true
+
+# Return sections (don't require for void functions)
+require-return-section-when-returning-nothing = false
+
+# Exception checking (skip checking raises - too many false positives from nested calls)
+skip-checking-raises = true
+
+# Strictness
+strict = true
+
+# Exclusions
+exclude = '(tests/|examples/|docs/)'
+
+# Run all pre-build checks that are also enforced in CI
+[tool.poe.tasks]
+# readonly checks
+ruff_format_check = "ruff format --check"
+ruff_check  = "ruff check"
+mypy        = "mypy ."
+pydoclint   = "pydoclint ./hibachi_xyz/"
+docs        = "make -C docs"
+
+# writing linters
+ruff_format_fix = "ruff format"
+ruff_check_fix  = "ruff check --fix"
+
+# Runs all checks that pre-build in CI runs
+check = [
+  "ruff_format_check",
+  "ruff_check",
+  "mypy",
+  "pydoclint",
+  "docs",
+]
+
+# Runs all simple linting / fixes from static tools
+lint = [
+  "ruff_format_fix",
+  "ruff_check_fix",
+]

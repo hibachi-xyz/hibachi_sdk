@@ -47,19 +47,32 @@ class ExchangeError(BaseError):
 
 
 class MaintanenceOutage(ExchangeError):
-    """Raised when exchange cannot handle response due to maintanence"""
+    """Raised when exchange cannot handle response due to maintanence."""
 
     def __init__(self, message: str):
+        """Initialize a MaintanenceOutage error.
+
+        Args:
+            message: Description of the maintenance outage error.
+
+        """
         super().__init__(message)
 
 
 class BadHttpStatus(ExchangeError):
-    """Raised when response status from exchange is not 2XX"""
+    """Raised when response status from exchange is not 2XX."""
 
     status_code: int
     message: str
 
     def __init__(self, status_code: int, message: str):
+        """Initialize a BadHttpStatus error.
+
+        Args:
+            status_code: The HTTP status code returned by the server.
+            message: Description of the HTTP error.
+
+        """
         self.status_code = status_code
         self.message = message
 
@@ -68,18 +81,26 @@ class BadHttpStatus(ExchangeError):
 
 
 class InternalServerError(BadHttpStatus):
+    """Raised when the server returns a 500 Internal Server Error."""
+
     pass
 
 
 class BadGateway(BadHttpStatus):
+    """Raised when the server returns a 502 Bad Gateway error."""
+
     pass
 
 
 class ServiceUnavailable(BadHttpStatus):
+    """Raised when the server returns a 503 Service Unavailable error."""
+
     pass
 
 
 class GatewayTimeout(BadHttpStatus):
+    """Raised when the server returns a 504 Gateway Timeout error."""
+
     pass
 
 
@@ -87,22 +108,32 @@ class GatewayTimeout(BadHttpStatus):
 
 
 class BadRequest(BadHttpStatus):
+    """Raised when the server returns a 400 Bad Request error."""
+
     pass
 
 
 class NotFound(BadHttpStatus):
+    """Raised when the server returns a 404 Not Found error."""
+
     pass
 
 
 class RateLimited(BadHttpStatus):
+    """Raised when the server returns a 429 Rate Limited error."""
+
     pass
 
 
 class Unauthorized(BadHttpStatus):
+    """Raised when the server returns a 401 Unauthorized error."""
+
     pass
 
 
 class Forbidden(BadHttpStatus):
+    """Raised when the server returns a 403 Forbidden error."""
+
     pass
 
 
@@ -154,6 +185,13 @@ class HttpConnectionError(TransportError):
     """Raised when a connection cannot be established or is lost."""
 
     def __init__(self, message: str, url: str | None = None):
+        """Initialize an HttpConnectionError.
+
+        Args:
+            message: Description of the connection error.
+            url: The URL that failed to connect, if available.
+
+        """
         self.message = message
         self.url = url
         if url:
@@ -166,6 +204,13 @@ class TransportTimeoutError(TransportError):
     """Raised when a request or connection times out."""
 
     def __init__(self, message: str, timeout_seconds: float | None = None):
+        """Initialize a TransportTimeoutError.
+
+        Args:
+            message: Description of the timeout error.
+            timeout_seconds: The timeout duration in seconds, if available.
+
+        """
         self.message = message
         self.timeout_seconds = timeout_seconds
         if timeout_seconds:
@@ -178,6 +223,13 @@ class WebSocketConnectionError(TransportError):
     """Raised when WebSocket connection fails or is closed unexpectedly."""
 
     def __init__(self, message: str, url: str | None = None):
+        """Initialize a WebSocketConnectionError.
+
+        Args:
+            message: Description of the WebSocket connection error.
+            url: The WebSocket URL that failed to connect, if available.
+
+        """
         self.message = message
         self.url = url
         if url:
@@ -190,6 +242,12 @@ class WebSocketMessageError(TransportError):
     """Raised when there's an error processing a WebSocket message."""
 
     def __init__(self, message: str):
+        """Initialize a WebSocketMessageError.
+
+        Args:
+            message: Description of the WebSocket message processing error.
+
+        """
         self.message = message
         super().__init__(message)
 
@@ -198,6 +256,12 @@ class DeserializationError(TransportError):
     """Raised when response data cannot be deserialized/decoded."""
 
     def __init__(self, message: str):
+        """Initialize a DeserializationError.
+
+        Args:
+            message: Description of the deserialization error.
+
+        """
         self.message = message
         super().__init__(message)
 
@@ -206,6 +270,12 @@ class SerializationError(TransportError):
     """Raised when request data cannot be serialized/encoded."""
 
     def __init__(self, message: str):
+        """Initialize a SerializationError.
+
+        Args:
+            message: Description of the serialization error.
+
+        """
         self.message = message
         super().__init__(message)
 
@@ -243,6 +313,12 @@ class MissingCredentialsError(ValidationError):
     """Raised when required authentication credentials are missing."""
 
     def __init__(self, credential_type: str = "API key"):
+        """Initialize a MissingCredentialsError.
+
+        Args:
+            credential_type: The type of credential that is missing (default: "API key").
+
+        """
         self.credential_type = credential_type
         super().__init__(f"{credential_type} is not set")
 
@@ -253,11 +329,18 @@ class MissingCredentialsError(ValidationError):
 
 
 class HibachiApiError(BadHttpStatus):
-    """Deprecated - use hibachi_xyz.errors.ExchangeError and subclasses"""
+    """Deprecated - use hibachi_xyz.errors.ExchangeError and subclasses."""
 
     status_code: int
     message: str
 
     def __init__(self, status_code: int, message: str):
+        """Initialize a HibachiApiError (deprecated).
+
+        Args:
+            status_code: The HTTP status code returned by the server.
+            message: Description of the API error.
+
+        """
         self.status_code = status_code
         self.message = message

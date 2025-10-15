@@ -1,6 +1,4 @@
-"""
-Connection utilities for WebSocket connections.
-"""
+"""Connection utilities for WebSocket connections."""
 
 import asyncio
 import logging
@@ -17,8 +15,7 @@ async def connect_with_retry(
     max_retries: int = 10,
     retry_delay: int = 1,
 ) -> WsConnection:
-    """
-    Establish WebSocket connection with exponential backoff retry logic.
+    """Establish WebSocket connection with exponential backoff retry logic.
 
     Attempts to connect up to max_retries times with exponentially increasing delays
     between attempts (starting at retry_delay seconds, doubling each time).
@@ -35,6 +32,7 @@ async def connect_with_retry(
 
     Raises:
         Exception: If connection fails after all retry attempts
+
     """
     if executor is None:
         from hibachi_xyz.executors.defaults import DEFAULT_WS_EXECUTOR

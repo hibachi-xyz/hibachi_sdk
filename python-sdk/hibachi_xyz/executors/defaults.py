@@ -1,3 +1,9 @@
+"""Default executor configurations.
+
+This module defines the default HTTP and WebSocket executor implementations
+used by the Hibachi SDK when no custom executor is provided.
+"""
+
 from typing import Type
 
 from hibachi_xyz.executors.interface import HttpExecutor, WsExecutor

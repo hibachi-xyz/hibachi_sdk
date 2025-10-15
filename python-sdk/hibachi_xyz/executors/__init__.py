@@ -1,3 +1,10 @@
+"""HTTP and WebSocket executor implementations.
+
+This package provides pluggable HTTP and WebSocket client implementations
+for the Hibachi SDK, supporting multiple underlying libraries like requests,
+httpx, websockets, and aiohttp.
+"""
+
 from hibachi_xyz.executors.aiohttp import AiohttpWsExecutor
 from hibachi_xyz.executors.defaults import DEFAULT_HTTP_EXECUTOR, DEFAULT_WS_EXECUTOR
 from hibachi_xyz.executors.httpx import HttpxHttpExecutor

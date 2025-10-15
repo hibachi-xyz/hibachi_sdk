@@ -1,3 +1,9 @@
+"""Environment configuration setup utilities.
+
+This module provides functions for loading environment variables from .env files
+and configuring the SDK for local development.
+"""
+
 import logging
 import os
 from pathlib import Path
@@ -8,6 +14,23 @@ log = logging.getLogger(__name__)
 
 
 def setup_environment() -> tuple[str, str, str, int, str, str, str]:
+    """Load and return environment variables for Hibachi API configuration.
+
+    Loads environment variables from a .env file if present, otherwise falls
+    back to system environment variables. Reads environment-specific variables
+    based on the ENVIRONMENT variable (defaults to 'production').
+
+    Returns:
+        A tuple containing:
+            - api_endpoint: The main API endpoint URL
+            - data_api_endpoint: The data API endpoint URL
+            - api_key: The API authentication key
+            - account_id: The account ID as an integer
+            - private_key: The private key for signing
+            - public_key: The public key
+            - dst_public_key: The destination public key for transfers
+
+    """
     # Load the .env file if it exists
     env_file_path = Path(".env")
     if env_file_path.exists():
