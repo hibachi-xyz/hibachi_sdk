@@ -6,9 +6,9 @@ raised by this library inherit from BaseError.
 Exception Hierarchy
 -------------------
 BaseError
-├── ExchangeError - API server returned an error response
-├── TransportError - Network/protocol-level errors during transmission
-└── ValidationError - Client-side input validation failures
+    - ExchangeError - API server returned an error response.
+    - TransportError - Network/protocol-level errors during transmission.
+    - ValidationError - Client-side input validation failures.
 """
 
 
@@ -38,9 +38,9 @@ class ExchangeError(BaseError):
     condition (e.g., invalid request, rate limit exceeded, authorization failure).
 
     ExchangeError indicates that:
-    - The network connection succeeded
-    - The request was properly formatted and transmitted
-    - A server processed the request and returned an error response
+        - The network connection succeeded
+        - The request was properly formatted and transmitted
+        - A server processed the request and returned an error response
     """
 
     pass
@@ -151,31 +151,31 @@ class TransportError(BaseError):
     data.
 
     TransportError indicates that:
-    - The error occurred in the process of transporting data
-    - Valid application-level data was not successfully exchanged
-    - The error could be transient and may succeed on retry
+        - The error occurred in the process of transporting data
+        - Valid application-level data was not successfully exchanged
+        - The error could be transient and may succeed on retry
 
     Common causes include:
 
     Local stack errors (before transmission):
-    - Serialization failures (unable to encode data)
-    - TLS/SSL certificate errors
-    - Local socket/file descriptor exhaustion
-    - DNS resolution failures
-    - Proxy configuration errors
+        - Serialization failures (unable to encode data)
+        - TLS/SSL certificate errors
+        - Local socket/file descriptor exhaustion
+        - DNS resolution failures
+        - Proxy configuration errors
 
     Network errors (during transmission):
-    - Connection timeouts
-    - Connection refused or dropped
-    - Network unreachable
-    - TLS/SSL handshake failures
-    - Read/write timeouts
+        - Connection timeouts
+        - Connection refused or dropped
+        - Network unreachable
+        - TLS/SSL handshake failures
+        - Read/write timeouts
 
     Protocol/data handling errors (after transmission):
-    - Malformed protocol responses
-    - Unexpected connection closure
-    - WebSocket connection drops
-    - Deserialization failures (malformed or corrupt data)
+        - Malformed protocol responses
+        - Unexpected connection closure
+        - WebSocket connection drops
+        - Deserialization failures (malformed or corrupt data)
     """
 
     pass
@@ -294,16 +294,16 @@ class ValidationError(BaseError):
     invalid types, out-of-range values, or malformed data.
 
     ValidationError indicates that:
-    - No network request was attempted
-    - The error is due to invalid input from the caller
-    - The error can be fixed by correcting the input parameters
+        - No network request was attempted
+        - The error is due to invalid input from the caller
+        - The error can be fixed by correcting the input parameters
 
     Common causes include:
-    - Missing required parameters
-    - Invalid parameter types (e.g., string instead of number)
-    - Out-of-range values
-    - Malformed identifiers or formats
-    - Mutually exclusive parameters specified together
+        - Missing required parameters
+        - Invalid parameter types (e.g., string instead of number)
+        - Out-of-range values
+        - Malformed identifiers or formats
+        - Mutually exclusive parameters specified together
     """
 
     pass

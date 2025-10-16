@@ -390,8 +390,8 @@ class HibachiApiClient:
         """Set the private key for signing requests.
 
         Supports two formats:
-        - Ethereum private key (hex string with or without 0x prefix) for wallet accounts
-        - HMAC key (non-hex string) for web accounts
+            - Ethereum private key (hex string with or without 0x prefix) for wallet accounts
+            - HMAC key (non-hex string) for web accounts
 
         Args:
             private_key: The private key as a hex string (with/without 0x) or HMAC key
@@ -984,7 +984,7 @@ class HibachiApiClient:
         """Create and sign the payload for a transfer request.
 
         Args:
-            nonce: Unique nonce for this transfer
+            nonce: Unique nonce for this transfer (defaults to current epoch timestamp in μs)
             coin: The coin to transfer (e.g., "USDT")
             quantity: The amount to transfer
             dst_account_public_key: Destination account's public key
@@ -1250,7 +1250,7 @@ class HibachiApiClient:
             tpsl: Take-profit/stop-loss configuration (optional)
 
         Returns:
-            tuple[Nonce, OrderId]: Tuple containing the nonce and order ID
+            tuple[Nonce, OrderId]: Tuple containing the nonce (defaults to current epoch timestamp in μs) and order ID
 
         Raises:
             ValueError: If both twap_config and trigger_price are set, or if twap_config and tpsl are set
@@ -1353,7 +1353,7 @@ class HibachiApiClient:
             tpsl: Take-profit/stop-loss configuration (optional)
 
         Returns:
-            tuple[Nonce, OrderId]: Tuple containing the nonce and order ID
+            tuple[Nonce, OrderId]: Tuple containing the nonce (defaults to current epoch timestamp in μs) and order ID
 
         Raises:
             DeserializationError: If the API response cannot be parsed
@@ -1448,7 +1448,7 @@ class HibachiApiClient:
             order_flags: Additional order flags (optional)
 
         Returns:
-            tuple[Nonce, OrderId]: The nonce and order ID of the parent order
+            tuple[Nonce, OrderId]: The nonce (defaults to current epoch timestamp in μs) and order ID of the parent order
 
         Raises:
             DeserializationError: If the API response cannot be parsed
@@ -1597,7 +1597,7 @@ class HibachiApiClient:
             price: Updated limit price (optional)
             trigger_price: Updated trigger price (optional)
             creation_deadline: Deadline in seconds for update (optional)
-            nonce: Custom nonce for the update (optional, generated if not provided)
+            nonce: Custom nonce for the update (optional, defaults to current epoch timestamp in μs)
 
         Returns:
             Dict[str, Any]: The signed request data ready to send to the API
@@ -1983,7 +1983,7 @@ class HibachiApiClient:
 
         Args:
             contract: The future contract metadata
-            nonce: The nonce for this order
+            nonce: The nonce for this order (defaults to current epoch timestamp in μs)
             quantity: The order quantity
             side: The order side (BID or ASK)
             max_fees_percent: Maximum fees as a percentage
@@ -2033,7 +2033,7 @@ class HibachiApiClient:
         """Create the request data for placing an order.
 
         Args:
-            nonce: Unique nonce for this order
+            nonce: Unique nonce for this order (defaults to current epoch timestamp in μs)
             symbol: Trading symbol
             quantity: Order quantity
             side: Order side (BID/ASK)
@@ -2105,7 +2105,7 @@ class HibachiApiClient:
 
         Args:
             order_id: The ID of the order to update
-            nonce: Unique nonce for this update
+            nonce: Unique nonce for this update (defaults to current epoch timestamp in μs)
             symbol: Trading symbol
             quantity: Updated order quantity
             side: Order side (BID/ASK)

@@ -221,10 +221,10 @@ def deserialize_batch_response_order(
     """Deserialize a batch response order based on which fields are present.
 
     Logic:
-    - If 'errorCode' is present -> ErrorBatchResponse
-    - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
-    - If only 'orderId' is present -> UpdateOrderBatchResponse
-    - If only 'nonce' is present -> CancelOrderBatchResponse
+        - If 'errorCode' is present -> ErrorBatchResponse
+        - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
+        - If only 'orderId' is present -> UpdateOrderBatchResponse
+        - If only 'nonce' is present -> CancelOrderBatchResponse
 
     Args:
         data: JSON object to deserialize
@@ -268,9 +268,9 @@ def check_maintenance_window(response: JsonObject) -> None:
 
     This function inspects an API response for a status field indicating exchange health.
     The exchange can be in one of three states:
-    - NORMAL: Exchange is operating normally (no exception raised)
-    - SCHEDULED_MAINTENANCE: Exchange is undergoing scheduled maintenance with known timing
-    - UNSCHEDULED_MAINTENANCE: Exchange is undergoing unscheduled maintenance
+        - NORMAL: Exchange is operating normally (no exception raised)
+        - SCHEDULED_MAINTENANCE: Exchange is undergoing scheduled maintenance with known timing
+        - UNSCHEDULED_MAINTENANCE: Exchange is undergoing unscheduled maintenance
 
     When any MAINTENANCE status is detected, a MaintanenceOutage exception is raised with
     details about the maintenance window timing (if available for scheduled maintenance).
@@ -279,8 +279,7 @@ def check_maintenance_window(response: JsonObject) -> None:
         response: JSON response from the API containing potential maintenance information
 
     Raises:
-        MaintanenceOutage: If status is anything other than "NORMAL",
-            with a message containing human-readable UTC timestamps for scheduled windows
+        MaintanenceOutage: If status is anything other than "NORMAL", with a message containing human-readable UTC timestamps for scheduled windows
 
     """
     # Only return early if status is NORMAL

@@ -21,7 +21,7 @@ def setup_environment() -> tuple[str, str, str, int, str, str, str]:
     based on the ENVIRONMENT variable (defaults to 'production').
 
     Returns:
-        A tuple containing:
+        Tuple:
             - api_endpoint: The main API endpoint URL
             - data_api_endpoint: The data API endpoint URL
             - api_key: The API authentication key

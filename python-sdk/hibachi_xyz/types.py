@@ -671,10 +671,10 @@ def deserialize_batch_response_order(
     """Deserialize a batch response order based on which fields are present.
 
     Logic:
-    - If 'errorCode' is present -> ErrorBatchResponse
-    - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
-    - If only 'orderId' is present -> UpdateOrderBatchResponse
-    - If only 'nonce' is present -> CancelOrderBatchResponse
+        - If 'errorCode' is present -> ErrorBatchResponse
+        - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
+        - If only 'orderId' is present -> UpdateOrderBatchResponse
+        - If only 'nonce' is present -> CancelOrderBatchResponse
 
     Args:
         data: JSON object containing the batch response order data.
@@ -1231,7 +1231,7 @@ class TransferRequest:
             accountId: Source account ID initiating the transfer.
             coin: Coin/token symbol to transfer.
             fees: Transfer fees (converted to Decimal).
-            nonce: Unique nonce for the transfer.
+            nonce: Unique nonce for the transfer (defaults to current epoch timestamp in μs).
             quantity: Amount to transfer (converted to Decimal).
             dstPublicKey: Destination account public key.
             signature: Cryptographic signature for the transfer.
@@ -1513,7 +1513,7 @@ class OrderModifyParams:
             price: Updated order price (converted to Decimal).
             side: Order side (BID/ASK/BUY/SELL).
             maxFeesPercent: Maximum fees as percentage (converted to Decimal).
-            nonce: Optional nonce for the modification.
+            nonce: Optional nonce for the modification (defaults to current epoch timestamp in μs).
 
         """
         self.orderId = orderId
