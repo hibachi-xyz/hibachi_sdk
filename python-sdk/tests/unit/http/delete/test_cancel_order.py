@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.errors import ValidationError
 from hibachi_xyz.executors.interface import HttpResponse
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
@@ -31,3 +32,11 @@ def test_cancel_order(mock_http_client, test_data):
         assert response["orderId"] == payload["orderId"]
     if nonce:
         assert response["nonce"] == payload["nonce"]
+
+
+def test_cancel_order_no_identifier(mock_http_client):
+    """Test that calling cancel_order without order_id or nonce raises ValidationError."""
+    client, mock_http = mock_http_client
+
+    with pytest.raises(ValidationError):
+        client.cancel_order(order_id=None, nonce=None)

@@ -10,6 +10,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from hibachi_xyz.errors import ValidationError
+
 log = logging.getLogger(__name__)
 
 
@@ -56,9 +58,14 @@ def setup_environment() -> tuple[str, str, str, int, str, str, str]:
         "https://data-api.hibachi.xyz",
     )
     api_key = os.environ.get(f"HIBACHI_API_KEY_{environment.upper()}", "your-api-key")
-    account_id = int(
-        os.environ.get(f"HIBACHI_ACCOUNT_ID_{environment.upper()}", "your-account-id")
-    )
+    try:
+        account_id = int(
+            os.environ.get(f"HIBACHI_ACCOUNT_ID_{environment.upper()}", "0")
+        )
+    except ValueError as e:
+        raise ValidationError(
+            f"Invalid HIBACHI_ACCOUNT_ID_{environment.upper()}: {e}"
+        ) from e
     private_key = os.environ.get(
         f"HIBACHI_PRIVATE_KEY_{environment.upper()}", "your-private"
     )

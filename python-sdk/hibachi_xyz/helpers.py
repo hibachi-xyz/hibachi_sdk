@@ -167,7 +167,7 @@ def decimal_as_str(obj: object) -> str:
     if isinstance(obj, Decimal):
         return str(obj)
 
-    raise TypeError
+    raise SerializationError(f"Unexpected type for {obj=} type={type(obj)}")
 
 
 def serialize_request(request: Json | None) -> bytes | None:

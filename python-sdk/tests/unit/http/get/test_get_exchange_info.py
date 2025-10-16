@@ -1,5 +1,6 @@
 import pytest
 
+from hibachi_xyz.errors import DeserializationError
 from hibachi_xyz.executors.interface import HttpResponse
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
@@ -88,3 +89,29 @@ def test_get_exchange_info(mock_http_client, test_data):
 
     # Status assertion
     assert info.status == payload["status"]
+
+
+def test_get_exchange_info_deserialization_error(mock_http_client):
+    """Test that malformed response raises DeserializationError."""
+    client, mock_http = mock_http_client
+
+    # Malformed response with status NORMAL but missing status in feeConfig
+    malformed_payload = {
+        "status": "NORMAL",
+        "feeConfig": {},  # Empty dict missing required fields
+        "futureContracts": [],
+        "maintenanceWindow": [],
+        "instantWithdrawalLimit": {"lowerLimit": "0", "upperLimit": "0"},
+    }
+
+    mock_http.stage_output(
+        MockSuccessfulOutput(
+            output=HttpResponse(status=200, body=malformed_payload),
+            call_validation=lambda call: call.function_name == "send_simple_request",
+        )
+    )
+
+    with pytest.raises(DeserializationError) as exc_info:
+        client.get_exchange_info()
+
+    assert "Received invalid response" in str(exc_info.value)

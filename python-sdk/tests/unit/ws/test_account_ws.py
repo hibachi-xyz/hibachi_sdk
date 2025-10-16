@@ -6,7 +6,12 @@ import orjson
 import pytest
 
 from hibachi_xyz.api_ws_account import HibachiWSAccountClient
-from hibachi_xyz.errors import ValidationError, WebSocketConnectionError
+from hibachi_xyz.errors import (
+    SerializationError,
+    ValidationError,
+    WebSocketConnectionError,
+    WebSocketMessageError,
+)
 from hibachi_xyz.types import Json
 from tests.mock_executors import (
     MockExceptionOutput,
@@ -155,7 +160,9 @@ async def test_ping_without_listen_key():
 
     await client.connect()
 
-    with pytest.raises(ValueError, match="Cannot send ping: listenKey not initialized"):
+    with pytest.raises(
+        ValidationError, match="Cannot send ping: listenKey not initialized"
+    ):
         await client.ping()
 
     await client.disconnect()
@@ -348,4 +355,117 @@ async def test_message_id_increments():
     third_id = client.message_id
     assert third_id == 3
 
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_stream_start_serialization_error():
+    """Test that SerializationError is raised when stream.start message serialization fails."""
+
+    harness = MockWsHarness()
+    client = HibachiWSAccountClient(
+        api_key="test_key",
+        account_id="12345",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+
+    # Inject a non-serializable object into the client's _next_message_id method
+    # to cause serialization to fail
+    original_next_message_id = client._next_message_id
+
+    def failing_next_message_id():
+        # Return a lambda which is not JSON serializable
+        return lambda: "not_serializable"
+
+    client._next_message_id = failing_next_message_id
+
+    with pytest.raises(
+        SerializationError, match="Failed to serialize stream.start message"
+    ):
+        await client.stream_start()
+
+    client._next_message_id = original_next_message_id
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_stream_start_websocket_message_error():
+    """Test that WebSocketMessageError is raised when stream.start send fails."""
+    harness = MockWsHarness()
+    client = HibachiWSAccountClient(
+        api_key="test_key",
+        account_id="12345",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+    mock_websocket = harness.connections[0]
+
+    # Mock the send method to raise an exception
+    original_send = mock_websocket.send
+
+    async def failing_send(*args, **kwargs):
+        raise RuntimeError("Mock send failure")
+
+    mock_websocket.send = failing_send
+
+    with pytest.raises(
+        WebSocketMessageError, match="Failed to send stream.start message"
+    ):
+        await client.stream_start()
+
+    # Restore original send
+    mock_websocket.send = original_send
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_ping_serialization_error():
+    """Test that SerializationError is raised when ping message serialization fails."""
+    harness = MockWsHarness()
+    client = HibachiWSAccountClient(
+        api_key="test_key",
+        account_id="12345",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+    # Set listenKey to a lambda which is not JSON serializable
+    client.listenKey = lambda: "not_serializable"
+
+    with pytest.raises(SerializationError, match="Failed to serialize ping message"):
+        await client.ping()
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_ping_websocket_message_error():
+    """Test that WebSocketMessageError is raised when ping send fails."""
+    harness = MockWsHarness()
+    client = HibachiWSAccountClient(
+        api_key="test_key",
+        account_id="12345",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+    mock_websocket = harness.connections[0]
+    client.listenKey = "test_listen_key"
+
+    # Mock the send method to raise an exception
+    original_send = mock_websocket.send
+
+    async def failing_send(*args, **kwargs):
+        raise ConnectionError("Mock send failure")
+
+    mock_websocket.send = failing_send
+
+    with pytest.raises(WebSocketMessageError, match="Failed to send ping message"):
+        await client.ping()
+
+    # Restore original send
+    mock_websocket.send = original_send
     await client.disconnect()

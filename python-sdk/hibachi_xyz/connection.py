@@ -3,6 +3,7 @@
 import asyncio
 import logging
 
+from hibachi_xyz.errors import TransportError, WebSocketConnectionError
 from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 
 log = logging.getLogger(__name__)
@@ -13,7 +14,8 @@ async def connect_with_retry(
     headers: list[tuple[str, str]] | None = None,
     executor: WsExecutor | None = None,
     max_retries: int = 10,
-    retry_delay: int = 1,
+    retry_delay: float = 1,
+    backoff_factor: float = 1.5,
 ) -> WsConnection:
     """Establish WebSocket connection with exponential backoff retry logic.
 
@@ -26,6 +28,7 @@ async def connect_with_retry(
         executor: Optional WebSocket executor to use for connection
         max_retries: Maximum number of connection attempts (default: 10)
         retry_delay: Initial retry delay in seconds (default: 1)
+        backoff_factor: Factor to increase retry_delay with each retry
 
     Returns:
         Established WebSocket connection
@@ -49,7 +52,7 @@ async def connect_with_retry(
         except Exception as e:
             retry_count += 1
             if retry_count >= max_retries:
-                raise Exception(
+                raise WebSocketConnectionError(
                     f"Failed to connect after {max_retries} attempts: {str(e)}"
                 )
 
@@ -60,6 +63,6 @@ async def connect_with_retry(
                 retry_delay,
             )
             await asyncio.sleep(retry_delay)
-            retry_delay *= 2  # Exponential backoff
+            retry_delay *= backoff_factor  # Exponential backoff
 
-    raise RuntimeError("Unreachable")  # satisfies mypy
+    raise TransportError("Unreachable. Contact Hibachi support")
