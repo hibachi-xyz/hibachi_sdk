@@ -27,6 +27,14 @@ class HttpExecutor(ABC):
     api_key: str | None = None
 
     @abstractmethod
+    def __init__(
+        self,
+        api_url: str,
+        data_api_url: str,
+        api_key: str | None,
+    ): ...
+
+    @abstractmethod
     def send_authorized_request(
         self,
         method: str,

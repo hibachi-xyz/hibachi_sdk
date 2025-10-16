@@ -5,7 +5,6 @@ This module contains utility functions for serialization, deserialization,
 API response handling, WebSocket management, and display formatting.
 """
 
-import asyncio
 import inspect
 import logging
 from dataclasses import asdict, is_dataclass
@@ -24,8 +23,6 @@ from hibachi_xyz.errors import (
     MaintanenceOutage,
     SerializationError,
 )
-from hibachi_xyz.executors.interface import WsConnection
-from hibachi_xyz.executors.websockets import WebsocketsWsExecutor
 from hibachi_xyz.types import (
     BatchResponseOrder,
     CancelOrderBatchResponse,
@@ -421,60 +418,6 @@ def format_maintenance_window(window_info: MaintenanceWindow | None) -> str:
         f"for a duration of {duration_str}. "
         f"Reason: {window_info.note}."
     )
-
-
-# ============================================================================
-# WEBSOCKET CONNECTION UTILITIES
-# ============================================================================
-
-
-async def connect_with_retry(
-    web_url: str, headers: list[tuple[str, str]] | None = None
-) -> WsConnection:
-    """
-    Establish WebSocket connection with exponential backoff retry logic.
-
-    Attempts to connect up to 10 times with exponentially increasing delays
-    between attempts (starting at 1 second, doubling each time).
-
-    Args:
-        web_url: WebSocket URL to connect to
-        headers: Optional list of header tuples to send
-
-    Returns:
-        Established WebSocket connection
-
-    Raises:
-        Exception: If connection fails after all retry attempts
-    """
-    max_retries = 10
-    retry_count = 0
-    retry_delay = 1
-    executor = WebsocketsWsExecutor()
-
-    while retry_count < max_retries:
-        try:
-            # Convert headers list to dict for executor
-            headers_dict = dict(headers) if headers else None
-            websocket = await executor.connect(web_url, headers_dict)
-            return websocket
-        except Exception as e:
-            retry_count += 1
-            if retry_count >= max_retries:
-                raise Exception(
-                    f"Failed to connect after {max_retries} attempts: {str(e)}"
-                )
-
-            log.warning(
-                "Connection attempt %d failed: %s. Retrying in %d seconds...",
-                retry_count,
-                str(e),
-                retry_delay,
-            )
-            await asyncio.sleep(retry_delay)
-            retry_delay *= 2  # Exponential backoff
-
-    raise RuntimeError("Unreachable")  # satisfies mypy
 
 
 # ============================================================================

@@ -22,6 +22,7 @@ from hibachi_xyz.types import Json
 
 
 class HttpxHttpExecutor(HttpExecutor):
+    @override
     def __init__(
         self,
         api_url: str = DEFAULT_API_URL,

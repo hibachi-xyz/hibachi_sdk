@@ -4,14 +4,10 @@ import time
 
 import orjson
 
+from hibachi_xyz.connection import connect_with_retry
 from hibachi_xyz.errors import ValidationError, WebSocketConnectionError
-from hibachi_xyz.executors import WsConnection
-from hibachi_xyz.helpers import (
-    DEFAULT_API_URL,
-    connect_with_retry,
-    create_with,
-    get_hibachi_client,
-)
+from hibachi_xyz.executors import DEFAULT_WS_EXECUTOR, WsConnection, WsExecutor
+from hibachi_xyz.helpers import DEFAULT_API_URL, create_with, get_hibachi_client
 from hibachi_xyz.types import (
     AccountSnapshot,
     AccountStreamStartResult,
@@ -29,6 +25,7 @@ class HibachiWSAccountClient:
         api_key: str,
         account_id: str,
         api_endpoint: str = DEFAULT_API_URL,
+        executor: WsExecutor | None = None,
     ):
         self.api_endpoint = api_endpoint.replace("https://", "wss://") + "/ws/account"
         self._websocket: WsConnection | None = None
@@ -37,6 +34,9 @@ class HibachiWSAccountClient:
         self.account_id = int(account_id)
         self.listenKey: str | None = None
         self._event_handlers: dict[str, list[WsEventHandler]] = {}
+        self._executor: WsExecutor = (
+            executor if executor is not None else DEFAULT_WS_EXECUTOR()
+        )
 
     @property
     def websocket(self) -> WsConnection:
@@ -56,6 +56,7 @@ class HibachiWSAccountClient:
             web_url=self.api_endpoint
             + f"?accountId={self.account_id}&hibachiClient={get_hibachi_client()}",
             headers=[("Authorization", self.api_key)],
+            executor=self._executor,
         )
 
     def _next_message_id(self) -> int:
