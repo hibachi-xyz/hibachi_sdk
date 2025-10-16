@@ -1,0 +1,516 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hibachi_xyz.errors &mdash; hibachi_xyz 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hibachi_xyz
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../hibachi_xyz.html">hibachi_xyz package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hibachi_xyz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hibachi_xyz.errors</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hibachi_xyz.errors</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Exception hierarchy for the Hibachi SDK.</span>
+
+<span class="sd">This module defines the public exception hierarchy for the entire SDK. All exceptions</span>
+<span class="sd">raised by this library inherit from BaseError.</span>
+
+<span class="sd">Exception Hierarchy</span>
+<span class="sd">-------------------</span>
+<span class="sd">BaseError</span>
+<span class="sd">    - ExchangeError - API server returned an error response.</span>
+<span class="sd">    - TransportError - Network/protocol-level errors during transmission.</span>
+<span class="sd">    - ValidationError - Client-side input validation failures.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="BaseError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.BaseError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base exception for all Hibachi SDK errors.</span>
+
+<span class="sd">    All exceptions raised by this library inherit from this class, allowing users</span>
+<span class="sd">    to catch all SDK-related errors with a single except clause.</span>
+
+<span class="sd">    This exception should not be raised directly. Use one of the specific subclasses</span>
+<span class="sd">    instead (ExchangeError, TransportError, ValidationError).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># EXCHANGE ERROR</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="ExchangeError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.ExchangeError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExchangeError</span><span class="p">(</span><span class="n">BaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised when the API server returns an error response.</span>
+
+<span class="sd">    This exception is raised when a request successfully reaches the API server</span>
+<span class="sd">    and the server returns a valid response, but that response indicates an error</span>
+<span class="sd">    condition (e.g., invalid request, rate limit exceeded, authorization failure).</span>
+
+<span class="sd">    ExchangeError indicates that:</span>
+<span class="sd">        - The network connection succeeded</span>
+<span class="sd">        - The request was properly formatted and transmitted</span>
+<span class="sd">        - A server processed the request and returned an error response</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="MaintanenceOutage">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.MaintanenceOutage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaintanenceOutage</span><span class="p">(</span><span class="n">ExchangeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when exchange cannot handle response due to maintanence.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a MaintanenceOutage error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Description of the maintenance outage error.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="BadHttpStatus">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.BadHttpStatus">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BadHttpStatus</span><span class="p">(</span><span class="n">ExchangeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when response status from exchange is not 2XX.&quot;&quot;&quot;</span>
+
+    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a BadHttpStatus error.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            status_code: The HTTP status code returned by the server.</span>
+<span class="sd">            message: Description of the HTTP error.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span></div>
+
+
+
+<span class="c1">## 5xx status errors - unexpected - should be reported</span>
+
+
+<div class="viewcode-block" id="InternalServerError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.InternalServerError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InternalServerError</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 500 Internal Server Error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="BadGateway">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.BadGateway">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BadGateway</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 502 Bad Gateway error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="ServiceUnavailable">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.ServiceUnavailable">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ServiceUnavailable</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 503 Service Unavailable error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="GatewayTimeout">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.GatewayTimeout">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GatewayTimeout</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 504 Gateway Timeout error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<span class="c1">## 4xx status errors</span>
+
+
+<div class="viewcode-block" id="BadRequest">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.BadRequest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BadRequest</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 400 Bad Request error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="NotFound">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.NotFound">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotFound</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 404 Not Found error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="RateLimited">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.RateLimited">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RateLimited</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 429 Rate Limited error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="Unauthorized">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.Unauthorized">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Unauthorized</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 401 Unauthorized error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="Forbidden">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.Forbidden">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Forbidden</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 403 Forbidden error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># TRANSPORT ERROR</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="TransportError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.TransportError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransportError</span><span class="p">(</span><span class="n">BaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for errors in the process of transporting data to/from the API server.</span>
+
+<span class="sd">    This exception is raised when there&#39;s a problem in the process of transporting</span>
+<span class="sd">    data to or from the API server, either in the local networking stack before data</span>
+<span class="sd">    is sent, during transmission over the network, or when receiving and processing</span>
+<span class="sd">    data.</span>
+
+<span class="sd">    TransportError indicates that:</span>
+<span class="sd">        - The error occurred in the process of transporting data</span>
+<span class="sd">        - Valid application-level data was not successfully exchanged</span>
+<span class="sd">        - The error could be transient and may succeed on retry</span>
+
+<span class="sd">    Common causes include:</span>
+
+<span class="sd">    Local stack errors (before transmission):</span>
+<span class="sd">        - Serialization failures (unable to encode data)</span>
+<span class="sd">        - TLS/SSL certificate errors</span>
+<span class="sd">        - Local socket/file descriptor exhaustion</span>
+<span class="sd">        - DNS resolution failures</span>
+<span class="sd">        - Proxy configuration errors</span>
+
+<span class="sd">    Network errors (during transmission):</span>
+<span class="sd">        - Connection timeouts</span>
+<span class="sd">        - Connection refused or dropped</span>
+<span class="sd">        - Network unreachable</span>
+<span class="sd">        - TLS/SSL handshake failures</span>
+<span class="sd">        - Read/write timeouts</span>
+
+<span class="sd">    Protocol/data handling errors (after transmission):</span>
+<span class="sd">        - Malformed protocol responses</span>
+<span class="sd">        - Unexpected connection closure</span>
+<span class="sd">        - WebSocket connection drops</span>
+<span class="sd">        - Deserialization failures (malformed or corrupt data)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="HttpConnectionError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.HttpConnectionError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HttpConnectionError</span><span class="p">(</span><span class="n">TransportError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a connection cannot be established or is lost.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an HttpConnectionError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Description of the connection error.</span>
+<span class="sd">            url: The URL that failed to connect, if available.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2"> (url: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="TransportTimeoutError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.TransportTimeoutError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransportTimeoutError</span><span class="p">(</span><span class="n">TransportError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when a request or connection times out.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a TransportTimeoutError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Description of the timeout error.</span>
+<span class="sd">            timeout_seconds: The timeout duration in seconds, if available.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout_seconds</span> <span class="o">=</span> <span class="n">timeout_seconds</span>
+        <span class="k">if</span> <span class="n">timeout_seconds</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2"> (timeout: </span><span class="si">{</span><span class="n">timeout_seconds</span><span class="si">}</span><span class="s2">s)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketConnectionError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.WebSocketConnectionError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketConnectionError</span><span class="p">(</span><span class="n">TransportError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when WebSocket connection fails or is closed unexpectedly.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a WebSocketConnectionError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Description of the WebSocket connection error.</span>
+<span class="sd">            url: The WebSocket URL that failed to connect, if available.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="k">if</span> <span class="n">url</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2"> (url: </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketMessageError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.WebSocketMessageError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketMessageError</span><span class="p">(</span><span class="n">TransportError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when there&#39;s an error processing a WebSocket message.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a WebSocketMessageError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Description of the WebSocket message processing error.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="DeserializationError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.DeserializationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeserializationError</span><span class="p">(</span><span class="n">TransportError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when response data cannot be deserialized/decoded.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a DeserializationError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Description of the deserialization error.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="SerializationError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.SerializationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SerializationError</span><span class="p">(</span><span class="n">TransportError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when request data cannot be serialized/encoded.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a SerializationError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Description of the serialization error.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># TRANSPORT ERROR</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="ValidationError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.ValidationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidationError</span><span class="p">(</span><span class="n">BaseError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exception raised for client-side input validation failures.</span>
+
+<span class="sd">    This exception is raised when input parameters fail validation checks before</span>
+<span class="sd">    any request is sent to the API server. ValidationError indicates a problem</span>
+<span class="sd">    with the arguments provided to SDK methods, such as missing required fields,</span>
+<span class="sd">    invalid types, out-of-range values, or malformed data.</span>
+
+<span class="sd">    ValidationError indicates that:</span>
+<span class="sd">        - No network request was attempted</span>
+<span class="sd">        - The error is due to invalid input from the caller</span>
+<span class="sd">        - The error can be fixed by correcting the input parameters</span>
+
+<span class="sd">    Common causes include:</span>
+<span class="sd">        - Missing required parameters</span>
+<span class="sd">        - Invalid parameter types (e.g., string instead of number)</span>
+<span class="sd">        - Out-of-range values</span>
+<span class="sd">        - Malformed identifiers or formats</span>
+<span class="sd">        - Mutually exclusive parameters specified together</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<div class="viewcode-block" id="MissingCredentialsError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.MissingCredentialsError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingCredentialsError</span><span class="p">(</span><span class="n">ValidationError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when required authentication credentials are missing.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">credential_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;API key&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a MissingCredentialsError.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            credential_type: The type of credential that is missing (default: &quot;API key&quot;).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">credential_type</span> <span class="o">=</span> <span class="n">credential_type</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">credential_type</span><span class="si">}</span><span class="s2"> is not set&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># DEPRECATED TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="HibachiApiError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.HibachiApiError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HibachiApiError</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated - use hibachi_xyz.errors.ExchangeError and subclasses.&quot;&quot;&quot;</span>
+
+    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a HibachiApiError (deprecated).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            status_code: The HTTP status code returned by the server.</span>
+<span class="sd">            message: Description of the API error.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Hibachi Engineering Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

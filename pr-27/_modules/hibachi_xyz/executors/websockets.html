@@ -1,0 +1,261 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hibachi_xyz.executors.websockets &mdash; hibachi_xyz 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            hibachi_xyz
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../hibachi_xyz.html">hibachi_xyz package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hibachi_xyz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hibachi_xyz.executors.websockets</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hibachi_xyz.executors.websockets</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;WebSocket executor implementation using websockets.</span>
+
+<span class="sd">This module provides WebSocket connection handling using the websockets library,</span>
+<span class="sd">serving as the default WebSocket executor for the Hibachi SDK.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">websockets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">websockets.asyncio.client</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientConnection</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.errors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DeserializationError</span><span class="p">,</span>
+    <span class="n">TransportError</span><span class="p">,</span>
+    <span class="n">WebSocketConnectionError</span><span class="p">,</span>
+    <span class="n">WebSocketMessageError</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.executors.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">WsConnection</span><span class="p">,</span> <span class="n">WsExecutor</span>
+
+
+<div class="viewcode-block" id="WebsocketsWsConnection">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.websockets.WebsocketsWsConnection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebsocketsWsConnection</span><span class="p">(</span><span class="n">WsConnection</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;WebSocket connection implementation using websockets.</span>
+
+<span class="sd">    Wraps a websockets ClientConnection for WebSocket communication.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">:</span> <span class="n">ClientConnection</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a WebSocket connection wrapper.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ws: The underlying websockets ClientConnection instance to wrap.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ws</span> <span class="o">=</span> <span class="n">ws</span>
+
+<div class="viewcode-block" id="WebsocketsWsConnection.send">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.websockets.WebsocketsWsConnection.send">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serialized_body</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Send a message over the WebSocket connection.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            serialized_body: The serialized message string to send.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            WebSocketConnectionError: If the connection is closed while sending.</span>
+<span class="sd">            WebSocketMessageError: If sending the message fails for any other reason.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">serialized_body</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">websockets</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ConnectionClosed</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebSocketConnectionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;WebSocket connection closed while sending message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebSocketMessageError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to send WebSocket message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+
+
+<div class="viewcode-block" id="WebsocketsWsConnection.recv">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.websockets.WebsocketsWsConnection.recv">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">recv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Receive a message from the WebSocket connection.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The received message as a UTF-8 decoded string.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            WebSocketConnectionError: If the connection is closed while receiving.</span>
+<span class="sd">            DeserializationError: If the message cannot be decoded as UTF-8.</span>
+<span class="sd">            WebSocketMessageError: If receiving the message fails for any other reason.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ws</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">msg</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">msg</span>
+        <span class="k">except</span> <span class="n">websockets</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ConnectionClosed</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebSocketConnectionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;WebSocket connection closed while receiving message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DeserializationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Failed to decode WebSocket message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebSocketMessageError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Failed to receive WebSocket message: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+
+
+<div class="viewcode-block" id="WebsocketsWsConnection.close">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.websockets.WebsocketsWsConnection.close">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the WebSocket connection gracefully.&quot;&quot;&quot;</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ws</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WebsocketsWsExecutor">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.websockets.WebsocketsWsExecutor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebsocketsWsExecutor</span><span class="p">(</span><span class="n">WsExecutor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;WebSocket executor implementation using websockets.</span>
+
+<span class="sd">    Establishes WebSocket connections using the websockets library.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WebsocketsWsExecutor.connect">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.websockets.WebsocketsWsExecutor.connect">[docs]</a>
+    <span class="nd">@override</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">web_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WsConnection</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Establish a WebSocket connection to the specified URL.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            web_url: The WebSocket URL to connect to (ws:// or wss://).</span>
+<span class="sd">            headers: Optional dictionary of additional HTTP headers to send during</span>
+<span class="sd">                the handshake. Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A WsConnection instance wrapping the established connection.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            WebSocketConnectionError: If the URL is invalid, the handshake fails,</span>
+<span class="sd">                or the connection cannot be established.</span>
+<span class="sd">            TransportError: If an unexpected error occurs during connection.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="n">ws</span> <span class="o">=</span> <span class="k">await</span> <span class="n">websockets</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">web_url</span><span class="p">,</span> <span class="n">additional_headers</span><span class="o">=</span><span class="n">headers</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">WebsocketsWsConnection</span><span class="p">(</span><span class="n">ws</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">websockets</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidURI</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebSocketConnectionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Invalid WebSocket URL: </span><span class="si">{</span><span class="n">web_url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">web_url</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="p">(</span>
+            <span class="n">websockets</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidHandshake</span><span class="p">,</span>
+            <span class="n">websockets</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">InvalidStatus</span><span class="p">,</span>
+        <span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebSocketConnectionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;WebSocket handshake failed for </span><span class="si">{</span><span class="n">web_url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">web_url</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="ne">TimeoutError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">WebSocketConnectionError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Failed to connect to WebSocket at </span><span class="si">{</span><span class="n">web_url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">web_url</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unexpected error connecting to WebSocket at </span><span class="si">{</span><span class="n">web_url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Hibachi Engineering Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

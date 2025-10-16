@@ -1,0 +1,510 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hibachi_xyz.api_ws_trade &mdash; hibachi_xyz 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hibachi_xyz
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../hibachi_xyz.html">hibachi_xyz package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hibachi_xyz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hibachi_xyz.api_ws_trade</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hibachi_xyz.api_ws_trade</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;WebSocket client for trade operations.</span>
+
+<span class="sd">This module provides the HibachiWSTradeClient for placing, modifying, and</span>
+<span class="sd">canceling orders via WebSocket connections with lower latency than HTTP.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Self</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">orjson</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.api</span><span class="w"> </span><span class="kn">import</span> <span class="n">HibachiApiClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">connect_with_retry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">ValidationError</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.executors</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_WS_EXECUTOR</span><span class="p">,</span> <span class="n">WsConnection</span><span class="p">,</span> <span class="n">WsExecutor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DEFAULT_API_URL</span><span class="p">,</span>
+    <span class="n">DEFAULT_DATA_API_URL</span><span class="p">,</span>
+    <span class="n">create_with</span><span class="p">,</span>
+    <span class="n">get_hibachi_client</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EnableCancelOnDisconnectParams</span><span class="p">,</span>
+    <span class="n">Nonce</span><span class="p">,</span>
+    <span class="n">Order</span><span class="p">,</span>
+    <span class="n">OrderPlaceParams</span><span class="p">,</span>
+    <span class="n">OrdersBatchParams</span><span class="p">,</span>
+    <span class="n">OrdersStatusResponse</span><span class="p">,</span>
+    <span class="n">OrderStatusResponse</span><span class="p">,</span>
+    <span class="n">Side</span><span class="p">,</span>
+    <span class="n">WebSocketResponse</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HibachiWSTradeClient</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Trade Websocket Client is used to place, modify and cancel orders.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            import asyncio</span>
+<span class="sd">            import os</span>
+<span class="sd">            from hibachi_xyz import HibachiWSTradeClient, print_data</span>
+<span class="sd">            from dotenv import load_dotenv</span>
+
+<span class="sd">            load_dotenv()</span>
+
+<span class="sd">            account_id = int(os.environ.get(&#39;HIBACHI_ACCOUNT_ID&#39;, &quot;your-account-id&quot;))</span>
+<span class="sd">            private_key = os.environ.get(&#39;HIBACHI_PRIVATE_KEY&#39;, &quot;your-private&quot;)</span>
+<span class="sd">            api_key = os.environ.get(&#39;HIBACHI_API_KEY&#39;, &quot;your-api-key&quot;)</span>
+<span class="sd">            public_key = os.environ.get(&#39;HIBACHI_PUBLIC_KEY&#39;, &quot;your-public&quot;)</span>
+
+<span class="sd">            async def main():</span>
+<span class="sd">                client = HibachiWSTradeClient(</span>
+<span class="sd">                    api_key=api_key,</span>
+<span class="sd">                    account_id=account_id,</span>
+<span class="sd">                    account_public_key=public_key,</span>
+<span class="sd">                    private_key=private_key</span>
+<span class="sd">                )</span>
+
+<span class="sd">                await client.connect()</span>
+<span class="sd">                orders = await client.get_orders_status()</span>
+<span class="sd">                first_order = orders.result[0]</span>
+
+<span class="sd">                # single order</span>
+<span class="sd">                order = await client.get_order_status(first_order.orderId)</span>
+<span class="sd">                print_data(order)</span>
+
+<span class="sd">                # client.api.set_private_key(private_key)</span>
+<span class="sd">                modify_result = await client.modify_order(</span>
+<span class="sd">                    order=order.result,</span>
+<span class="sd">                    quantity=float(&quot;0.002&quot;),</span>
+<span class="sd">                    price=str(float(&quot;93500.0&quot;)),</span>
+<span class="sd">                    side=order.result.side,</span>
+<span class="sd">                    maxFeesPercent=float(&quot;0.00045&quot;),</span>
+<span class="sd">                )</span>
+
+<span class="sd">                print_data(modify_result)</span>
+
+<span class="sd">            asyncio.run(main())</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">account_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">account_public_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">api_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_API_URL</span><span class="p">,</span>
+        <span class="n">data_api_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_DATA_API_URL</span><span class="p">,</span>
+        <span class="n">private_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">executor</span><span class="p">:</span> <span class="n">WsExecutor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Hibachi WebSocket trade client.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_key: Your API key for authentication</span>
+<span class="sd">            account_id: Your Hibachi account ID (int or numeric string)</span>
+<span class="sd">            account_public_key: Your account&#39;s public key</span>
+<span class="sd">            api_url: Base URL for the Hibachi API (default: production URL)</span>
+<span class="sd">            data_api_url: Base URL for the data API (default: production data URL)</span>
+<span class="sd">            private_key: Private key for signing requests (hex string with or without 0x prefix,</span>
+<span class="sd">                or HMAC key for web accounts)</span>
+<span class="sd">            executor: Custom WebSocket executor (optional, uses default if not provided)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_endpoint</span> <span class="o">=</span> <span class="n">api_url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_endpoint</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">api_endpoint</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;https://&quot;</span><span class="p">,</span> <span class="s2">&quot;wss://&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/ws/trade&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_websocket</span><span class="p">:</span> <span class="n">WsConnection</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># random id start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">api_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">account_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">account_id</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">account_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">account_id</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">account_public_key</span> <span class="o">=</span> <span class="n">account_public_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="p">:</span> <span class="n">WsExecutor</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">executor</span> <span class="k">if</span> <span class="n">executor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">DEFAULT_WS_EXECUTOR</span><span class="p">()</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">HibachiApiClient</span><span class="p">(</span>
+            <span class="n">api_url</span><span class="o">=</span><span class="n">api_url</span><span class="p">,</span>
+            <span class="n">data_api_url</span><span class="o">=</span><span class="n">data_api_url</span><span class="p">,</span>
+            <span class="n">account_id</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">account_id</span><span class="p">,</span>
+            <span class="n">api_key</span><span class="o">=</span><span class="n">api_key</span><span class="p">,</span>
+            <span class="n">private_key</span><span class="o">=</span><span class="n">private_key</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">websocket</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WsConnection</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the WebSocket connection.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Active WebSocket connection.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValidationError: If no connection exists. Call connect() first.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_websocket</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span> <span class="kn">from</span><span class="w"> </span><span class="nn">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;No existing ws connection. Call `connect` first&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_websocket</span>
+
+<div class="viewcode-block" id="HibachiWSTradeClient.connect">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.connect">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Establish WebSocket connection with retry logic.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_websocket</span> <span class="o">=</span> <span class="k">await</span> <span class="n">connect_with_retry</span><span class="p">(</span>
+            <span class="n">web_url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">api_endpoint</span>
+            <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;?accountId=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">account_id</span><span class="si">}</span><span class="s2">&amp;hibachiClient=</span><span class="si">{</span><span class="n">get_hibachi_client</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="p">[(</span><span class="s2">&quot;Authorization&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">)],</span>
+            <span class="n">executor</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.place_order">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.place_order">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">place_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">OrderPlaceParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Nonce</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Place a new order.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time_ns</span><span class="p">()</span> <span class="o">//</span> <span class="mi">1_000</span>
+        <span class="n">side</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">side</span>
+        <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">BUY</span><span class="p">:</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">BID</span>
+        <span class="k">elif</span> <span class="n">side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">SELL</span><span class="p">:</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">ASK</span>
+
+        <span class="n">prepare_packet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">_create_order_request_data</span><span class="p">(</span>
+            <span class="n">nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">,</span>
+            <span class="n">symbol</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">symbol</span><span class="p">,</span>
+            <span class="n">quantity</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">quantity</span><span class="p">,</span>
+            <span class="n">side</span><span class="o">=</span><span class="n">side</span><span class="p">,</span>
+            <span class="n">max_fees_percent</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">maxFeesPercent</span><span class="p">,</span>
+            <span class="n">trigger_price</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">trigger_price</span><span class="p">,</span>
+            <span class="n">price</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">price</span><span class="p">,</span>
+            <span class="n">creation_deadline</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">creation_deadline</span><span class="p">,</span>
+            <span class="n">twap_config</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">twap_config</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">prepare_packet</span><span class="p">[</span><span class="s2">&quot;accountId&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">account_id</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;order.place&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">prepare_packet</span><span class="p">,</span>
+            <span class="s2">&quot;signature&quot;</span><span class="p">:</span> <span class="n">prepare_packet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;signature&quot;</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;ws place_order -------------------------------------------&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Response data: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_data</span><span class="p">)</span>
+
+        <span class="c1"># response_data[&quot;result&quot;] = OrderPlaceResponseResult(**response_data[&quot;result&quot;])</span>
+        <span class="c1"># nonce: Nonce = prepare_packet.get(&quot;nonce&quot;)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">nonce</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">response_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;result&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;orderId&quot;</span><span class="p">)))</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.cancel_order">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.cancel_order">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cancel_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orderId</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WebSocketResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancel an existing order.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">prepare_packet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">_cancel_order_request_data</span><span class="p">(</span>
+            <span class="n">order_id</span><span class="o">=</span><span class="n">orderId</span><span class="p">,</span> <span class="n">nonce</span><span class="o">=</span><span class="n">nonce</span>
+        <span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;prepare_packet -------------------------------------------&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Prepare packet: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">prepare_packet</span><span class="p">)</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;order.cancel&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;orderId&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">orderId</span><span class="p">),</span>
+                <span class="s2">&quot;accountId&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account_id</span><span class="p">),</span>
+                <span class="c1"># &quot;nonce&quot;: str(nonce)</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;signature&quot;</span><span class="p">:</span> <span class="n">prepare_packet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;signature&quot;</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Response data: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">create_with</span><span class="p">(</span><span class="n">WebSocketResponse</span><span class="p">,</span> <span class="n">response_data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.modify_order">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.modify_order">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">modify_order</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">price</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">side</span><span class="p">:</span> <span class="n">Side</span><span class="p">,</span>
+        <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">nonce</span><span class="p">:</span> <span class="n">Nonce</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WebSocketResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Modify an existing order.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">prepare_packet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">_update_order_generate_sig</span><span class="p">(</span>
+            <span class="n">order</span><span class="p">,</span>
+            <span class="n">side</span><span class="o">=</span><span class="n">side</span><span class="p">,</span>
+            <span class="n">max_fees_percent</span><span class="o">=</span><span class="n">maxFeesPercent</span><span class="p">,</span>
+            <span class="n">quantity</span><span class="o">=</span><span class="n">quantity</span><span class="p">,</span>
+            <span class="n">price</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">price</span><span class="p">),</span>
+            <span class="n">trigger_price</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">triggerPrice</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">triggerPrice</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">order</span><span class="o">.</span><span class="n">triggerPrice</span><span class="p">,</span>
+            <span class="n">nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">signature</span> <span class="o">=</span> <span class="n">prepare_packet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;signature&quot;</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">prepare_packet</span><span class="p">[</span><span class="s2">&quot;signature&quot;</span><span class="p">]</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;order.modify&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">prepare_packet</span><span class="p">,</span>
+            <span class="s2">&quot;signature&quot;</span><span class="p">:</span> <span class="n">signature</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">&quot;error&quot;</span> <span class="ow">in</span> <span class="n">response_data</span> <span class="ow">and</span> <span class="n">response_data</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Error modifying order: </span><span class="si">{</span><span class="n">response_data</span><span class="p">[</span><span class="s1">&#39;error&#39;</span><span class="p">][</span><span class="s1">&#39;message&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">create_with</span><span class="p">(</span><span class="n">WebSocketResponse</span><span class="p">,</span> <span class="n">response_data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.get_order_status">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.get_order_status">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_order_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orderId</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OrderStatusResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get status of a specific order.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;order.status&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;orderId&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">orderId</span><span class="p">),</span> <span class="s2">&quot;accountId&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account_id</span><span class="p">)},</span>
+        <span class="p">}</span>
+
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Response data: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_data</span><span class="p">)</span>
+
+        <span class="n">response_data</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Order</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">OrderStatusResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.get_orders_status">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.get_orders_status">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">get_orders_status</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OrdersStatusResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get status of all orders.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;orders.status&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;accountId&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">account_id</span><span class="p">)},</span>
+        <span class="p">}</span>
+
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="n">response_data</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">Order</span><span class="p">(</span><span class="o">**</span><span class="n">order</span><span class="p">)</span> <span class="k">for</span> <span class="n">order</span> <span class="ow">in</span> <span class="n">response_data</span><span class="p">[</span><span class="s2">&quot;result&quot;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">OrdersStatusResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.cancel_all_orders">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.cancel_all_orders">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">cancel_all_orders</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cancel all orders.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time_ns</span><span class="p">()</span> <span class="o">//</span> <span class="mi">1_000</span>
+
+        <span class="n">signed_packet</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">api</span><span class="o">.</span><span class="n">_cancel_order_request_data</span><span class="p">(</span><span class="n">order_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">)</span>
+
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;orders.cancel&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;accountId&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">account_id</span><span class="p">,</span>
+                <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="n">nonce</span><span class="p">,</span>
+                <span class="c1"># &quot;contractId&quot;: 2 # TODO: get contract id</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;signature&quot;</span><span class="p">:</span> <span class="n">signed_packet</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;signature&quot;</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Response data: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">response_data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">response_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">response_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">200</span>  <span class="c1"># type: ignore</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.batch_orders">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.batch_orders">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">batch_orders</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">OrdersBatchParams</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WebSocketResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute multiple order operations in a single request.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;orders.batch&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">asdict</span><span class="p">(</span><span class="n">params</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WebSocketResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.enable_cancel_on_disconnect">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.enable_cancel_on_disconnect">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">enable_cancel_on_disconnect</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">EnableCancelOnDisconnectParams</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WebSocketResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Enable automatic order cancellation on WebSocket disconnect.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">message_id</span><span class="p">,</span>
+            <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;orders.enableCancelOnDisconnect&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">asdict</span><span class="p">(</span><span class="n">params</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">orjson</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">message</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">websocket</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+        <span class="n">response_data</span> <span class="o">=</span> <span class="n">orjson</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">WebSocketResponse</span><span class="p">(</span><span class="o">**</span><span class="n">response_data</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="HibachiWSTradeClient.disconnect">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.disconnect">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">disconnect</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the WebSocket connection.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_websocket</span><span class="p">:</span>
+            <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_websocket</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_websocket</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Hibachi Engineering Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

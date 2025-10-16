@@ -1,0 +1,295 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hibachi_xyz.executors.interface &mdash; hibachi_xyz 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            hibachi_xyz
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../hibachi_xyz.html">hibachi_xyz package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">hibachi_xyz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hibachi_xyz.executors.interface</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hibachi_xyz.executors.interface</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Abstract interfaces for HTTP and WebSocket executors.</span>
+
+<span class="sd">This module defines the abstract base classes that all HTTP and WebSocket</span>
+<span class="sd">executor implementations must follow, enabling pluggable transport layers.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">JsonObject</span>
+
+
+<div class="viewcode-block" id="HttpResponse">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.HttpResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HttpResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Container for HTTP response data.</span>
+
+<span class="sd">    Encapsulates the status code, body, and headers from an HTTP response.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">body</span><span class="p">:</span> <span class="n">JsonObject</span>
+    <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;headers&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">body</span><span class="p">:</span> <span class="n">JsonObject</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an HTTP response object.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            status: The HTTP status code of the response.</span>
+<span class="sd">            body: The JSON response body. Defaults to an empty dict if None.</span>
+<span class="sd">            headers: Optional HTTP response headers as key-value pairs.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">body</span> <span class="k">if</span> <span class="n">body</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">headers</span> <span class="o">=</span> <span class="n">headers</span></div>
+
+
+
+<div class="viewcode-block" id="HttpExecutor">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.HttpExecutor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HttpExecutor</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for HTTP request executors.</span>
+
+<span class="sd">    Defines the interface for sending both authenticated and unauthenticated HTTP requests.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">api_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">data_api_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the HTTP executor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            api_url: The base API URL for making requests.</span>
+<span class="sd">            data_api_url: The data API URL for data-specific requests.</span>
+<span class="sd">            api_key: Optional API key for authentication.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span>
+
+<div class="viewcode-block" id="HttpExecutor.send_authorized_request">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.HttpExecutor.send_authorized_request">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_authorized_request</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">json</span><span class="p">:</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HttpResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Send an authorized HTTP request with API key authentication.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            method: The HTTP method (e.g., &#39;GET&#39;, &#39;POST&#39;, &#39;PUT&#39;, &#39;DELETE&#39;).</span>
+<span class="sd">            path: The URL path for the request.</span>
+<span class="sd">            json: Optional JSON payload to send with the request.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An HttpResponse object containing the status, body, and headers.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="HttpExecutor.send_simple_request">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.HttpExecutor.send_simple_request">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_simple_request</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HttpResponse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Send a simple HTTP GET request without authentication.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path: The URL path for the request.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An HttpResponse object containing the status, body, and headers.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WsConnection">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.WsConnection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WsConnection</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for WebSocket connection wrappers.</span>
+
+<span class="sd">    Defines the interface for WebSocket communication operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WsConnection.send">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.WsConnection.send">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">send</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">serialized_body</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Send a message through the WebSocket connection.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            serialized_body: The serialized message body to send.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="WsConnection.recv">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.WsConnection.recv">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">recv</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Receive a message from the WebSocket connection.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The received message as a string.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+
+
+<div class="viewcode-block" id="WsConnection.close">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.WsConnection.close">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close the WebSocket connection.&quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WsExecutor">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.WsExecutor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WsExecutor</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for WebSocket connection executors.</span>
+
+<span class="sd">    Defines the interface for establishing WebSocket connections.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WsExecutor.connect">
+<a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.interface.WsExecutor.connect">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">connect</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">web_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">headers</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WsConnection</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Establish a WebSocket connection.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            web_url: The WebSocket URL to connect to.</span>
+<span class="sd">            headers: Optional headers to include in the connection handshake.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A WsConnection object representing the established connection.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Hibachi Engineering Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

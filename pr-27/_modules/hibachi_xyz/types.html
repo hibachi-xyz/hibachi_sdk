@@ -1,0 +1,2035 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>hibachi_xyz.types &mdash; hibachi_xyz 0.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            hibachi_xyz
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../hibachi_xyz.html">hibachi_xyz package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">hibachi_xyz</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">hibachi_xyz.types</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for hibachi_xyz.types</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Type definitions for the Hibachi Python SDK.</span>
+
+<span class="sd">This module contains type definitions, enums, and dataclasses used throughout</span>
+<span class="sd">the SDK, organized into logical sections for clarity.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">decimal</span><span class="w"> </span><span class="kn">import</span> <span class="n">Decimal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">Coroutine</span><span class="p">,</span>
+    <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">List</span><span class="p">,</span>
+    <span class="n">Self</span><span class="p">,</span>
+    <span class="n">TypeAlias</span><span class="p">,</span>
+    <span class="n">Union</span><span class="p">,</span>
+    <span class="n">overload</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.errors</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ExchangeError</span><span class="p">,</span>
+    <span class="n">HibachiApiError</span><span class="p">,</span>  <span class="c1"># noqa: F401</span>
+    <span class="n">ValidationError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># TYPE ALIASES</span>
+<span class="c1"># ============================================================================</span>
+
+<span class="c1"># Core ID types</span>
+<span class="n">Nonce</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span>
+<span class="n">OrderId</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">int</span>
+
+<span class="c1"># JSON type hierarchy</span>
+<span class="n">JsonObject</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;JsonValue&quot;</span><span class="p">]</span>
+<span class="n">JsonArray</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">list</span><span class="p">[</span><span class="s2">&quot;JsonValue&quot;</span><span class="p">]</span>
+<span class="n">JsonValue</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="kc">None</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">JsonObject</span> <span class="o">|</span> <span class="n">JsonArray</span>
+<span class="c1"># Although JsonArray is technically first class json and can be root, for the purposes of this SDK we decode responses as dict only</span>
+<span class="n">Json</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">JsonObject</span>
+
+<span class="c1"># Hibachi input types</span>
+<span class="n">HibachiIntegralInput</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span>
+<span class="n">HibachiNumericInput</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span>
+
+<span class="c1"># WebSocket event handler</span>
+<span class="n">WsEventHandler</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Json</span><span class="p">],</span> <span class="n">Coroutine</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]</span>
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># NUMERIC CONVERSION UTILITIES</span>
+<span class="c1"># ============================================================================</span>
+
+<span class="n">DECIMAL_PATTERN</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^\d+(\.\d+)?$&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="full_precision_string">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.full_precision_string">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">full_precision_string</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a numeric input to a full precision string representation.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">DECIMAL_PATTERN</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid numeric input </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">n</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid numeric input type </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">format</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="s2">&quot;f&quot;</span><span class="p">)</span></div>
+
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">numeric_to_decimal</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Decimal</span><span class="p">:</span> <span class="o">...</span>
+
+
+<span class="nd">@overload</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">numeric_to_decimal</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="numeric_to_decimal">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.numeric_to_decimal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">numeric_to_decimal</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert various numeric input types to Decimal, or None if input is None.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">n</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">DECIMAL_PATTERN</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid numeric input </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Decimal</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">Decimal</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">Decimal</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid numeric input type </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">n</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># CORE ENUMS</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="Interval">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Interval">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Interval</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Time intervals for klines/candlestick data.&quot;&quot;&quot;</span>
+
+    <span class="n">ONE_MINUTE</span> <span class="o">=</span> <span class="s2">&quot;1min&quot;</span>
+    <span class="n">FIVE_MINUTES</span> <span class="o">=</span> <span class="s2">&quot;5min&quot;</span>
+    <span class="n">FIFTEEN_MINUTES</span> <span class="o">=</span> <span class="s2">&quot;15min&quot;</span>
+    <span class="n">ONE_HOUR</span> <span class="o">=</span> <span class="s2">&quot;1h&quot;</span>
+    <span class="n">FOUR_HOURS</span> <span class="o">=</span> <span class="s2">&quot;4h&quot;</span>
+    <span class="n">ONE_DAY</span> <span class="o">=</span> <span class="s2">&quot;1d&quot;</span>
+    <span class="n">ONE_WEEK</span> <span class="o">=</span> <span class="s2">&quot;1w&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Side">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Side">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Side</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order side (buy/sell).&quot;&quot;&quot;</span>
+
+    <span class="n">BID</span> <span class="o">=</span> <span class="s2">&quot;BID&quot;</span>
+    <span class="n">ASK</span> <span class="o">=</span> <span class="s2">&quot;ASK&quot;</span>
+    <span class="n">SELL</span> <span class="o">=</span> <span class="s2">&quot;SELL&quot;</span>
+    <span class="n">BUY</span> <span class="o">=</span> <span class="s2">&quot;BUY&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="OrderType">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order type.&quot;&quot;&quot;</span>
+
+    <span class="n">LIMIT</span> <span class="o">=</span> <span class="s2">&quot;LIMIT&quot;</span>
+    <span class="n">MARKET</span> <span class="o">=</span> <span class="s2">&quot;MARKET&quot;</span></div>
+
+    <span class="c1"># SCHEDULED_TWAP = &quot;SCHEDULED_TWAP&quot;</span>
+
+
+<div class="viewcode-block" id="OrderStatus">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderStatus">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order status.&quot;&quot;&quot;</span>
+
+    <span class="n">PENDING</span> <span class="o">=</span> <span class="s2">&quot;PENDING&quot;</span>
+    <span class="n">CHILD_PENDING</span> <span class="o">=</span> <span class="s2">&quot;CHILD_PENDING&quot;</span>
+    <span class="n">FILLED</span> <span class="o">=</span> <span class="s2">&quot;FILLED&quot;</span>
+    <span class="n">CANCELLED</span> <span class="o">=</span> <span class="s2">&quot;CANCELLED&quot;</span>
+    <span class="n">REJECTED</span> <span class="o">=</span> <span class="s2">&quot;REJECTED&quot;</span>
+    <span class="n">SCHEDULED_TWAP</span> <span class="o">=</span> <span class="s2">&quot;SCHEDULED_TWAP&quot;</span>
+    <span class="n">PLACED</span> <span class="o">=</span> <span class="s2">&quot;PLACED&quot;</span>
+    <span class="n">PARTIALLY_FILLED</span> <span class="o">=</span> <span class="s2">&quot;PARTIALLY_FILLED&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="OrderFlags">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderFlags">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderFlags</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order execution flags.&quot;&quot;&quot;</span>
+
+    <span class="n">PostOnly</span> <span class="o">=</span> <span class="s2">&quot;POST_ONLY&quot;</span>
+    <span class="n">Ioc</span> <span class="o">=</span> <span class="s2">&quot;IOC&quot;</span>
+    <span class="n">ReduceOnly</span> <span class="o">=</span> <span class="s2">&quot;REDUCE_ONLY&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="TriggerDirection">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TriggerDirection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TriggerDirection</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Trigger direction for conditional orders.&quot;&quot;&quot;</span>
+
+    <span class="n">HIGH</span> <span class="o">=</span> <span class="s2">&quot;HIGH&quot;</span>
+    <span class="n">LOW</span> <span class="o">=</span> <span class="s2">&quot;LOW&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="TakerSide">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TakerSide">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TakerSide</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Taker side in a trade.&quot;&quot;&quot;</span>
+
+    <span class="n">Buy</span> <span class="o">=</span> <span class="s2">&quot;Buy&quot;</span>
+    <span class="n">Sell</span> <span class="o">=</span> <span class="s2">&quot;Sell&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketSubscriptionTopic">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketSubscriptionTopic">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketSubscriptionTopic</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;WebSocket subscription topics.&quot;&quot;&quot;</span>
+
+    <span class="n">MARK_PRICE</span> <span class="o">=</span> <span class="s2">&quot;mark_price&quot;</span>
+    <span class="n">SPOT_PRICE</span> <span class="o">=</span> <span class="s2">&quot;spot_price&quot;</span>
+    <span class="n">FUNDING_RATE_ESTIMATION</span> <span class="o">=</span> <span class="s2">&quot;funding_rate_estimation&quot;</span>
+    <span class="n">TRADES</span> <span class="o">=</span> <span class="s2">&quot;trades&quot;</span>
+    <span class="n">KLINES</span> <span class="o">=</span> <span class="s2">&quot;klines&quot;</span>
+    <span class="n">ORDERBOOK</span> <span class="o">=</span> <span class="s2">&quot;orderbook&quot;</span>
+    <span class="n">ASK_BID_PRICE</span> <span class="o">=</span> <span class="s2">&quot;ask_bid_price&quot;</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># ORDER CONFIGURATION TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="OrderIdVariant">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderIdVariant">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderIdVariant</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents either a nonce or order_id for order identification.&quot;&quot;&quot;</span>
+
+    <span class="n">nonce</span><span class="p">:</span> <span class="n">Nonce</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="n">OrderId</span> <span class="o">|</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="OrderIdVariant.from_nonce">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderIdVariant.from_nonce">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_nonce</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">nonce</span><span class="p">:</span> <span class="n">Nonce</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an OrderIdVariant from a nonce.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nonce: The nonce value to use for order identification.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            OrderIdVariant instance with nonce set and order_id as None.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If nonce is None.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">nonce</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;nonce cannot be None&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">nonce</span><span class="o">=</span><span class="n">nonce</span><span class="p">,</span> <span class="n">order_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrderIdVariant.from_order_id">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderIdVariant.from_order_id">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_order_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">order_id</span><span class="p">:</span> <span class="n">OrderId</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create an OrderIdVariant from an order_id.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            order_id: The order ID value to use for order identification.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            OrderIdVariant instance with order_id set and nonce as None.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If order_id is None.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">order_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;order_id cannot be None&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">nonce</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order_id</span><span class="o">=</span><span class="n">order_id</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OrderIdVariant.to_dict">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderIdVariant.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert OrderIdVariant to dictionary representation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with either &#39;nonce&#39; or &#39;orderId&#39; key and string value.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If both nonce and order_id are None.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">nonce</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nonce</span><span class="p">)}</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">order_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;orderId&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">order_id</span><span class="p">)}</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Empty OrderIdVariant: no nonce or order_id set&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TWAPQuantityMode">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TWAPQuantityMode">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TWAPQuantityMode</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;TWAP quantity distribution mode.&quot;&quot;&quot;</span>
+
+    <span class="n">FIXED</span> <span class="o">=</span> <span class="s2">&quot;FIXED&quot;</span>
+    <span class="n">RANDOM</span> <span class="o">=</span> <span class="s2">&quot;RANDOM&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="TWAPConfig">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TWAPConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TWAPConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for TWAP (Time-Weighted Average Price) orders.&quot;&quot;&quot;</span>
+
+    <span class="n">duration_minutes</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">quantity_mode</span><span class="p">:</span> <span class="n">TWAPQuantityMode</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">duration_minutes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">quantity_mode</span><span class="p">:</span> <span class="n">TWAPQuantityMode</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize TWAP configuration.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            duration_minutes: Total duration for TWAP execution in minutes.</span>
+<span class="sd">            quantity_mode: Quantity distribution mode (FIXED or RANDOM).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">duration_minutes</span> <span class="o">=</span> <span class="n">duration_minutes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity_mode</span> <span class="o">=</span> <span class="n">quantity_mode</span>
+
+<div class="viewcode-block" id="TWAPConfig.to_dict">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TWAPConfig.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert TWAP configuration to dictionary representation.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with &#39;twapDurationMinutes&#39; and &#39;twapQuantityMode&#39; keys.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;twapDurationMinutes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">duration_minutes</span><span class="p">,</span>
+            <span class="s2">&quot;twapQuantityMode&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantity_mode</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="TPSLConfig">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TPSLConfig">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TPSLConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for Take-Profit/Stop-Loss orders.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TPSLConfig.Type">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TPSLConfig.Type">[docs]</a>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Type</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;TP/SL order type.&quot;&quot;&quot;</span>
+
+        <span class="n">TP</span> <span class="o">=</span> <span class="s2">&quot;TP&quot;</span>
+        <span class="n">SL</span> <span class="o">=</span> <span class="s2">&quot;SL&quot;</span></div>
+
+
+<div class="viewcode-block" id="TPSLConfig.Leg">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TPSLConfig.Leg">[docs]</a>
+    <span class="nd">@dataclass</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Leg</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Individual TP/SL leg configuration.&quot;&quot;&quot;</span>
+
+        <span class="n">order_type</span><span class="p">:</span> <span class="s2">&quot;TPSLConfig.Type&quot;</span>
+        <span class="n">price</span><span class="p">:</span> <span class="n">Decimal</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an empty TP/SL configuration.</span>
+
+<span class="sd">        The configuration starts with no legs. Use add_take_profit() and</span>
+<span class="sd">        add_stop_loss() methods to add individual TP/SL legs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TPSLConfig</span><span class="o">.</span><span class="n">Leg</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="TPSLConfig.add_take_profit">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TPSLConfig.add_take_profit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_take_profit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span> <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a take-profit leg to the configuration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">TPSLConfig</span><span class="o">.</span><span class="n">Leg</span><span class="p">(</span>
+                <span class="n">order_type</span><span class="o">=</span><span class="n">TPSLConfig</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">TP</span><span class="p">,</span>
+                <span class="n">price</span><span class="o">=</span><span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">price</span><span class="p">),</span>
+                <span class="n">quantity</span><span class="o">=</span><span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+<div class="viewcode-block" id="TPSLConfig.add_stop_loss">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TPSLConfig.add_stop_loss">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_stop_loss</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span> <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Self</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a stop-loss leg to the configuration.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">legs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">TPSLConfig</span><span class="o">.</span><span class="n">Leg</span><span class="p">(</span>
+                <span class="n">order_type</span><span class="o">=</span><span class="n">TPSLConfig</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">SL</span><span class="p">,</span>
+                <span class="n">price</span><span class="o">=</span><span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">price</span><span class="p">),</span>
+                <span class="n">quantity</span><span class="o">=</span><span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_as_requests</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">parent_symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">parent_quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">parent_side</span><span class="p">:</span> <span class="s2">&quot;Side&quot;</span><span class="p">,</span>
+        <span class="n">parent_nonce</span><span class="p">:</span> <span class="n">Nonce</span><span class="p">,</span>
+        <span class="n">max_fees_percent</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;CreateOrder&quot;</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert TP/SL configuration to a list of order requests.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parent_symbol: Symbol of the parent order.</span>
+<span class="sd">            parent_quantity: Quantity of the parent order.</span>
+<span class="sd">            parent_side: Side (BID/ASK) of the parent order.</span>
+<span class="sd">            parent_nonce: Nonce of the parent order for linking.</span>
+<span class="sd">            max_fees_percent: Maximum fees as a percentage.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of CreateOrder instances representing the TP/SL legs.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">order_requests</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">leg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">legs</span><span class="p">:</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">BID</span> <span class="k">if</span> <span class="n">parent_side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">ASK</span> <span class="k">else</span> <span class="n">Side</span><span class="o">.</span><span class="n">ASK</span>
+            <span class="n">trigger_direction</span> <span class="o">=</span> <span class="n">TriggerDirection</span><span class="o">.</span><span class="n">HIGH</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">leg</span><span class="o">.</span><span class="n">order_type</span> <span class="o">==</span> <span class="n">TPSLConfig</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">TP</span> <span class="ow">and</span> <span class="n">parent_side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">ASK</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">leg</span><span class="o">.</span><span class="n">order_type</span> <span class="o">==</span> <span class="n">TPSLConfig</span><span class="o">.</span><span class="n">Type</span><span class="o">.</span><span class="n">SL</span> <span class="ow">and</span> <span class="n">parent_side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">BID</span>
+            <span class="p">):</span>
+                <span class="n">trigger_direction</span> <span class="o">=</span> <span class="n">TriggerDirection</span><span class="o">.</span><span class="n">LOW</span>
+
+            <span class="n">order_requests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">CreateOrder</span><span class="p">(</span>
+                    <span class="n">symbol</span><span class="o">=</span><span class="n">parent_symbol</span><span class="p">,</span>
+                    <span class="n">side</span><span class="o">=</span><span class="n">side</span><span class="p">,</span>
+                    <span class="n">quantity</span><span class="o">=</span><span class="n">leg</span><span class="o">.</span><span class="n">quantity</span> <span class="ow">or</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">parent_quantity</span><span class="p">),</span>
+                    <span class="n">max_fees_percent</span><span class="o">=</span><span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">max_fees_percent</span><span class="p">),</span>
+                    <span class="n">trigger_price</span><span class="o">=</span><span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">max_fees_percent</span><span class="p">),</span>
+                    <span class="n">trigger_direction</span><span class="o">=</span><span class="n">trigger_direction</span><span class="p">,</span>
+                    <span class="n">parent_order</span><span class="o">=</span><span class="n">OrderIdVariant</span><span class="o">.</span><span class="n">from_nonce</span><span class="p">(</span><span class="n">parent_nonce</span><span class="p">),</span>
+                    <span class="n">order_flags</span><span class="o">=</span><span class="n">OrderFlags</span><span class="o">.</span><span class="n">ReduceOnly</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">order_requests</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># ORDER TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="Order">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Order">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Order</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an order in the exchange.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">availableQuantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">contractId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">creationTime</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">finishTime</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">numOrdersRemaining</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">numOrdersTotal</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">orderFlags</span><span class="p">:</span> <span class="n">OrderFlags</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">orderType</span><span class="p">:</span> <span class="n">OrderType</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">quantityMode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">OrderStatus</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">totalQuantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">triggerPrice</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">availableQuantity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">orderType</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">side</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">numOrdersRemaining</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">numOrdersTotal</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">quantityMode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">finishTime</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">price</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">totalQuantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">creationTime</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">contractId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">orderFlags</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">triggerPrice</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an Order instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            accountId: Account ID associated with the order.</span>
+<span class="sd">            availableQuantity: Remaining quantity available for the order.</span>
+<span class="sd">            orderId: Unique order identifier (string or int).</span>
+<span class="sd">            orderType: Type of order (LIMIT, MARKET, etc.).</span>
+<span class="sd">            side: Order side (BID, ASK, BUY, SELL).</span>
+<span class="sd">            status: Current status of the order.</span>
+<span class="sd">            symbol: Trading symbol for the order.</span>
+<span class="sd">            numOrdersRemaining: Number of child orders remaining (for TWAP).</span>
+<span class="sd">            numOrdersTotal: Total number of child orders (for TWAP).</span>
+<span class="sd">            quantityMode: Quantity distribution mode (for TWAP).</span>
+<span class="sd">            finishTime: Timestamp when the order finished (if completed).</span>
+<span class="sd">            price: Limit price for the order.</span>
+<span class="sd">            totalQuantity: Total quantity of the order.</span>
+<span class="sd">            creationTime: Timestamp when the order was created.</span>
+<span class="sd">            contractId: Contract ID associated with the order.</span>
+<span class="sd">            orderFlags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).</span>
+<span class="sd">            triggerPrice: Trigger price for conditional orders.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accountId</span> <span class="o">=</span> <span class="n">accountId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">availableQuantity</span> <span class="o">=</span> <span class="n">availableQuantity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">contractId</span> <span class="o">=</span> <span class="n">contractId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creationTime</span> <span class="o">=</span> <span class="n">creationTime</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">finishTime</span> <span class="o">=</span> <span class="n">finishTime</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numOrdersRemaining</span> <span class="o">=</span> <span class="n">numOrdersRemaining</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">numOrdersTotal</span> <span class="o">=</span> <span class="n">numOrdersTotal</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orderId</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">orderId</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orderType</span> <span class="o">=</span> <span class="n">OrderType</span><span class="p">(</span><span class="n">orderType</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">price</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantityMode</span> <span class="o">=</span> <span class="n">quantityMode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="p">(</span><span class="n">side</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">OrderStatus</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">totalQuantity</span> <span class="o">=</span> <span class="n">totalQuantity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triggerPrice</span> <span class="o">=</span> <span class="n">triggerPrice</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orderFlags</span> <span class="o">=</span> <span class="n">OrderFlags</span><span class="p">(</span><span class="n">orderFlags</span><span class="p">)</span> <span class="k">if</span> <span class="n">orderFlags</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="CreateOrder">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.CreateOrder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CreateOrder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Request to create a new order.&quot;&quot;&quot;</span>
+
+    <span class="n">action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;place&quot;</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">max_fees_percent</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">price</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">trigger_price</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">trigger_direction</span><span class="p">:</span> <span class="n">TriggerDirection</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">twap_config</span><span class="p">:</span> <span class="n">TWAPConfig</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">creation_deadline</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">parent_order</span><span class="p">:</span> <span class="n">OrderIdVariant</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">order_flags</span><span class="p">:</span> <span class="n">OrderFlags</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">side</span><span class="p">:</span> <span class="n">Side</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">max_fees_percent</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trigger_price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">twap_config</span><span class="p">:</span> <span class="n">TWAPConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">creation_deadline</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parent_order</span><span class="p">:</span> <span class="n">OrderIdVariant</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">order_flags</span><span class="p">:</span> <span class="n">OrderFlags</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trigger_direction</span><span class="p">:</span> <span class="n">TriggerDirection</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a CreateOrder request.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            symbol: Trading symbol for the order.</span>
+<span class="sd">            side: Order side (BID/ASK, BUY/SELL normalized to BID/ASK).</span>
+<span class="sd">            quantity: Order quantity (converted to Decimal).</span>
+<span class="sd">            max_fees_percent: Maximum fees as percentage (converted to Decimal).</span>
+<span class="sd">            price: Limit price for the order (converted to Decimal).</span>
+<span class="sd">            trigger_price: Trigger price for conditional orders (converted to Decimal).</span>
+<span class="sd">            twap_config: TWAP configuration for time-weighted execution.</span>
+<span class="sd">            creation_deadline: Deadline for order creation (converted to Decimal).</span>
+<span class="sd">            parent_order: Parent order reference for linked orders.</span>
+<span class="sd">            order_flags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).</span>
+<span class="sd">            trigger_direction: Trigger direction (HIGH/LOW) for conditional orders.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">BUY</span><span class="p">:</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">BID</span>
+        <span class="k">elif</span> <span class="n">side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">SELL</span><span class="p">:</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">ASK</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side</span> <span class="o">=</span> <span class="n">side</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_fees_percent</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">max_fees_percent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trigger_price</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">trigger_price</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">twap_config</span> <span class="o">=</span> <span class="n">twap_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creation_deadline</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">creation_deadline</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_order</span> <span class="o">=</span> <span class="n">parent_order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order_flags</span> <span class="o">=</span> <span class="n">order_flags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trigger_direction</span> <span class="o">=</span> <span class="n">trigger_direction</span></div>
+
+
+
+<div class="viewcode-block" id="UpdateOrder">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.UpdateOrder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">UpdateOrder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Request to update an existing order.&quot;&quot;&quot;</span>
+
+    <span class="n">action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;modify&quot;</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="c1"># needed for creating the signature</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="c1"># needed for creating the signature</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">max_fees_percent</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">price</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">trigger_price</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">parent_order</span><span class="p">:</span> <span class="n">OrderIdVariant</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">order_flags</span><span class="p">:</span> <span class="n">OrderFlags</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">creation_deadline</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">side</span><span class="p">:</span> <span class="n">Side</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">max_fees_percent</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trigger_price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">creation_deadline</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">parent_order</span><span class="p">:</span> <span class="n">OrderIdVariant</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">order_flags</span><span class="p">:</span> <span class="n">OrderFlags</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an UpdateOrder request.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            order_id: ID of the order to update.</span>
+<span class="sd">            symbol: Trading symbol (required for signature).</span>
+<span class="sd">            side: Order side (BID/ASK, BUY/SELL normalized to BID/ASK).</span>
+<span class="sd">            quantity: Updated order quantity (converted to Decimal).</span>
+<span class="sd">            max_fees_percent: Maximum fees as percentage (converted to Decimal).</span>
+<span class="sd">            price: Updated limit price (converted to Decimal).</span>
+<span class="sd">            trigger_price: Updated trigger price (converted to Decimal).</span>
+<span class="sd">            creation_deadline: Deadline for order update (converted to Decimal).</span>
+<span class="sd">            parent_order: Parent order reference for linked orders.</span>
+<span class="sd">            order_flags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">BUY</span><span class="p">:</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">BID</span>
+        <span class="k">elif</span> <span class="n">side</span> <span class="o">==</span> <span class="n">Side</span><span class="o">.</span><span class="n">SELL</span><span class="p">:</span>
+            <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">ASK</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">order_id</span> <span class="o">=</span> <span class="n">order_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side</span> <span class="o">=</span> <span class="n">side</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_fees_percent</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">max_fees_percent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trigger_price</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">trigger_price</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creation_deadline</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">creation_deadline</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_order</span> <span class="o">=</span> <span class="n">parent_order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order_flags</span> <span class="o">=</span> <span class="n">order_flags</span></div>
+
+
+
+<div class="viewcode-block" id="CancelOrder">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.CancelOrder">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CancelOrder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Request to cancel an order.&quot;&quot;&quot;</span>
+
+    <span class="n">action</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cancel&quot;</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a CancelOrder request.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            order_id: ID of the order to cancel.</span>
+<span class="sd">            nonce: Nonce of the order to cancel.</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">            Either order_id or nonce should be provided to identify the order.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order_id</span> <span class="o">=</span> <span class="n">order_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonce</span> <span class="o">=</span> <span class="n">nonce</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># BATCH ORDER RESPONSE TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="CreateOrderBatchResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.CreateOrderBatchResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CreateOrderBatchResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Success response to a create order request.&quot;&quot;&quot;</span>
+
+    <span class="n">nonce</span><span class="p">:</span> <span class="n">Nonce</span>
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">creationTime</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">creationTimeNsPartial</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="UpdateOrderBatchResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.UpdateOrderBatchResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UpdateOrderBatchResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Success response to an update order request.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="CancelOrderBatchResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.CancelOrderBatchResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CancelOrderBatchResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Success response to a cancel order request.&quot;&quot;&quot;</span>
+
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="ErrorBatchResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.ErrorBatchResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ErrorBatchResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Error response for batch operations.&quot;&quot;&quot;</span>
+
+    <span class="n">errorCode</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+
+<div class="viewcode-block" id="ErrorBatchResponse.as_exception">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.ErrorBatchResponse.as_exception">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">as_exception</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExchangeError</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert error response to an ExchangeError exception.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            ExchangeError instance with formatted error details.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ExchangeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Action failed: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">errorCode</span><span class="si">=}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span><span class="si">=}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">=}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<span class="n">BatchResponseOrder</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">CreateOrderBatchResponse</span>
+    <span class="o">|</span> <span class="n">UpdateOrderBatchResponse</span>
+    <span class="o">|</span> <span class="n">CancelOrderBatchResponse</span>
+    <span class="o">|</span> <span class="n">ErrorBatchResponse</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="deserialize_batch_response_order">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.deserialize_batch_response_order">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">deserialize_batch_response_order</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">JsonObject</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchResponseOrder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deserialize a batch response order based on which fields are present.</span>
+
+<span class="sd">    Logic:</span>
+<span class="sd">        - If &#39;errorCode&#39; is present -&gt; ErrorBatchResponse</span>
+<span class="sd">        - If both &#39;nonce&#39; and &#39;orderId&#39; are present -&gt; CreateOrderBatchResponse</span>
+<span class="sd">        - If only &#39;orderId&#39; is present -&gt; UpdateOrderBatchResponse</span>
+<span class="sd">        - If only &#39;nonce&#39; is present -&gt; CancelOrderBatchResponse</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: JSON object containing the batch response order data.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Appropriate batch response type based on the fields present in data.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        DeserializationError: If the data cannot be deserialized into any known type.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeserializationError</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.helpers</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_with</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>  <span class="c1"># snapshot keys once</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">del</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;errorCode&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">create_with</span><span class="p">(</span><span class="n">ErrorBatchResponse</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;nonce&quot;</span> <span class="ow">in</span> <span class="n">data</span> <span class="ow">and</span> <span class="s2">&quot;orderId&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">create_with</span><span class="p">(</span><span class="n">CreateOrderBatchResponse</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;orderId&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">create_with</span><span class="p">(</span><span class="n">UpdateOrderBatchResponse</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="s2">&quot;nonce&quot;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">create_with</span><span class="p">(</span><span class="n">CancelOrderBatchResponse</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DeserializationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown batch response order format - missing required fields: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">DeserializationError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Failed to deserialize batch response order: </span><span class="si">{</span><span class="n">data</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+
+
+
+<div class="viewcode-block" id="BatchResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.BatchResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing multiple order operations.&quot;&quot;&quot;</span>
+
+    <span class="n">orders</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BatchResponseOrder</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="PendingOrdersResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.PendingOrdersResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PendingOrdersResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing pending orders.&quot;&quot;&quot;</span>
+
+    <span class="n">orders</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Order</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># EXCHANGE INFORMATION TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="FeeConfig">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.FeeConfig">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FeeConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fee configuration for the exchange.&quot;&quot;&quot;</span>
+
+    <span class="n">depositFees</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">instantWithdrawDstPublicKey</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">instantWithdrawalFees</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]</span>
+    <span class="n">tradeMakerFeeRate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tradeTakerFeeRate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">transferFeeRate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">withdrawalFees</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="FutureContract">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.FutureContract">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FutureContract</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Future contract specification.&quot;&quot;&quot;</span>
+
+    <span class="n">displayName</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">minNotional</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">minOrderSize</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orderbookGranularities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">initialMarginRate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">maintenanceMarginRate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">settlementDecimals</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">settlementSymbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">stepSize</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tickSize</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">underlyingDecimals</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">underlyingSymbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">marketCloseTimestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">marketOpenTimestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">marketCreationTimestamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="WithdrawalLimit">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WithdrawalLimit">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithdrawalLimit</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Withdrawal limits.&quot;&quot;&quot;</span>
+
+    <span class="n">lowerLimit</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">upperLimit</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="MaintenanceWindow">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.MaintenanceWindow">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaintenanceWindow</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scheduled maintenance window.&quot;&quot;&quot;</span>
+
+    <span class="n">begin</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">end</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="ExchangeInfo">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.ExchangeInfo">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExchangeInfo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Exchange configuration and status information.&quot;&quot;&quot;</span>
+
+    <span class="n">feeConfig</span><span class="p">:</span> <span class="n">FeeConfig</span>
+    <span class="n">futureContracts</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">FutureContract</span><span class="p">]</span>
+    <span class="n">instantWithdrawalLimit</span><span class="p">:</span> <span class="n">WithdrawalLimit</span>
+    <span class="n">maintenanceWindow</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">MaintenanceWindow</span><span class="p">]</span>
+    <span class="c1"># can be NORMAL, MAINTENANCE</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="CrossChainAsset">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.CrossChainAsset">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CrossChainAsset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cross-chain asset information.&quot;&quot;&quot;</span>
+
+    <span class="n">chain</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">exchangeRateFromUSDT</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">exchangeRateToUSDT</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">instantWithdrawalLowerLimitInUSDT</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">instantWithdrawalUpperLimitInUSDT</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="TradingTier">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TradingTier">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TradingTier</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Trading tier information.&quot;&quot;&quot;</span>
+
+    <span class="n">level</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">lowerThreshold</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">upperThreshold</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="MarketInfo">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.MarketInfo">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MarketInfo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Market information for a specific contract.&quot;&quot;&quot;</span>
+
+    <span class="n">category</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">markPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">price24hAgo</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">priceLatest</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="Market">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Market">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Market</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Market combining contract and info.&quot;&quot;&quot;</span>
+
+    <span class="n">contract</span><span class="p">:</span> <span class="n">FutureContract</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">MarketInfo</span></div>
+
+
+
+<div class="viewcode-block" id="InventoryResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.InventoryResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InventoryResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete inventory information response.&quot;&quot;&quot;</span>
+
+    <span class="n">crossChainAssets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">CrossChainAsset</span><span class="p">]</span>
+    <span class="n">feeConfig</span><span class="p">:</span> <span class="n">FeeConfig</span>
+    <span class="n">markets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Market</span><span class="p">]</span>
+    <span class="n">tradingTiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">TradingTier</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># MARKET DATA TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="FundingRateEstimation">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.FundingRateEstimation">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FundingRateEstimation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Estimated funding rate information.&quot;&quot;&quot;</span>
+
+    <span class="n">estimatedFundingRate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nextFundingTimestamp</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="PriceResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.PriceResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PriceResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Price information for a symbol.&quot;&quot;&quot;</span>
+
+    <span class="n">askPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">bidPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">fundingRateEstimation</span><span class="p">:</span> <span class="n">FundingRateEstimation</span>
+    <span class="n">markPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">spotPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tradePrice</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="StatsResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.StatsResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">StatsResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;24-hour statistics for a symbol.&quot;&quot;&quot;</span>
+
+    <span class="n">high24h</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">low24h</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">volume24h</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="Trade">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Trade">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Trade</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Individual trade information.&quot;&quot;&quot;</span>
+
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">takerSide</span><span class="p">:</span> <span class="n">TakerSide</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="TradesResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TradesResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TradesResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing recent trades.&quot;&quot;&quot;</span>
+
+    <span class="n">trades</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Trade</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="Kline">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Kline">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Kline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Candlestick/kline data.&quot;&quot;&quot;</span>
+
+    <span class="n">close</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">high</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">low</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="nb">open</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">volumeNotional</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="KlinesResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.KlinesResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">KlinesResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing kline data.&quot;&quot;&quot;</span>
+
+    <span class="n">klines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Kline</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="OpenInterestResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OpenInterestResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OpenInterestResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Open interest information.&quot;&quot;&quot;</span>
+
+    <span class="n">totalQuantity</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="OrderBookLevel">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderBookLevel">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderBookLevel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Single orderbook price level.&quot;&quot;&quot;</span>
+
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="OrderBook">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderBook">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderBook</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Orderbook containing bid and ask levels.&quot;&quot;&quot;</span>
+
+    <span class="n">ask</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OrderBookLevel</span><span class="p">]</span>
+    <span class="n">bid</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OrderBookLevel</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># ACCOUNT TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="Asset">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Asset">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Asset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Asset balance information.&quot;&quot;&quot;</span>
+
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="Position">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Position">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Position</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Position information.&quot;&quot;&quot;</span>
+
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">entryNotional</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">markPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">notionalValue</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">openPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unrealizedFundingPnl</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">unrealizedTradingPnl</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="AccountInfo">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.AccountInfo">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AccountInfo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete account information.&quot;&quot;&quot;</span>
+
+    <span class="n">assets</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Asset</span><span class="p">]</span>
+    <span class="n">balance</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">maximalWithdraw</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">numFreeTransfersRemaining</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Position</span><span class="p">]</span>
+    <span class="n">totalOrderNotional</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">totalPositionNotional</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">totalUnrealizedFundingPnl</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">totalUnrealizedPnl</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">totalUnrealizedTradingPnl</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tradeMakerFeeRate</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">tradeTakerFeeRate</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="AccountSnapshot">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.AccountSnapshot">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AccountSnapshot</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Snapshot of account state.&quot;&quot;&quot;</span>
+
+    <span class="n">account_id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">balance</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">positions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Position</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="AccountTrade">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.AccountTrade">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AccountTrade</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Individual account trade record.&quot;&quot;&quot;</span>
+
+    <span class="n">askAccountId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">askOrderId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">bidAccountId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">bidOrderId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">fee</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">orderType</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">realizedPnl</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">side</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="AccountTradesResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.AccountTradesResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AccountTradesResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing account trades.&quot;&quot;&quot;</span>
+
+    <span class="n">trades</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AccountTrade</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="Settlement">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Settlement">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Settlement</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Settlement information.&quot;&quot;&quot;</span>
+
+    <span class="n">direction</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">indexPrice</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">settledAmount</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="SettlementsResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.SettlementsResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SettlementsResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing settlements.&quot;&quot;&quot;</span>
+
+    <span class="n">settlements</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Settlement</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># CAPITAL MANAGEMENT TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="CapitalBalance">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.CapitalBalance">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CapitalBalance</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Account capital balance.&quot;&quot;&quot;</span>
+
+    <span class="n">balance</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="Transaction">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.Transaction">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Transaction</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transaction record.&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">assetId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">timestampSec</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">transactionType</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">transactionHash</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">etaTsSec</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">blockNumber</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">chain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">instantWithdrawalChain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">instantWithdrawalToken</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">isInstantWithdrawal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">withdrawalAddress</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">receivingAccountId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">receivingAddress</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">srcAccountId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">srcAddress</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">assetId</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">timestampSec</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">transactionType</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">transactionHash</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">token</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">etaTsSec</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">blockNumber</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">chain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">instantWithdrawalChain</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">instantWithdrawalToken</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">isInstantWithdrawal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">withdrawalAddress</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">receivingAddress</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">receivingAccountId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">srcAccountId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">srcAddress</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a Transaction instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            id: Unique transaction identifier.</span>
+<span class="sd">            assetId: Asset identifier for the transaction.</span>
+<span class="sd">            quantity: Transaction amount.</span>
+<span class="sd">            status: Current status of the transaction.</span>
+<span class="sd">            timestampSec: Transaction timestamp in seconds.</span>
+<span class="sd">            transactionType: Type of transaction (deposit, withdrawal, transfer).</span>
+<span class="sd">            transactionHash: Blockchain transaction hash.</span>
+<span class="sd">            token: Token symbol.</span>
+<span class="sd">            etaTsSec: Estimated time of arrival in seconds.</span>
+<span class="sd">            blockNumber: Blockchain block number.</span>
+<span class="sd">            chain: Blockchain network name.</span>
+<span class="sd">            instantWithdrawalChain: Chain used for instant withdrawal.</span>
+<span class="sd">            instantWithdrawalToken: Token used for instant withdrawal.</span>
+<span class="sd">            isInstantWithdrawal: Whether this is an instant withdrawal.</span>
+<span class="sd">            withdrawalAddress: Destination address for withdrawal.</span>
+<span class="sd">            receivingAddress: Receiving address for transfer.</span>
+<span class="sd">            receivingAccountId: Receiving account ID for internal transfer.</span>
+<span class="sd">            srcAccountId: Source account ID for internal transfer.</span>
+<span class="sd">            srcAddress: Source address for transfer.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assetId</span> <span class="o">=</span> <span class="n">assetId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">quantity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestampSec</span> <span class="o">=</span> <span class="n">timestampSec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transactionType</span> <span class="o">=</span> <span class="n">transactionType</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transactionHash</span> <span class="o">=</span> <span class="n">transactionHash</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">token</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">etaTsSec</span> <span class="o">=</span> <span class="n">etaTsSec</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blockNumber</span> <span class="o">=</span> <span class="n">blockNumber</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chain</span> <span class="o">=</span> <span class="n">chain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instantWithdrawalChain</span> <span class="o">=</span> <span class="n">instantWithdrawalChain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">instantWithdrawalToken</span> <span class="o">=</span> <span class="n">instantWithdrawalToken</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">isInstantWithdrawal</span> <span class="o">=</span> <span class="n">isInstantWithdrawal</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">withdrawalAddress</span> <span class="o">=</span> <span class="n">withdrawalAddress</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receivingAddress</span> <span class="o">=</span> <span class="n">receivingAddress</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">receivingAccountId</span> <span class="o">=</span> <span class="n">receivingAccountId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srcAccountId</span> <span class="o">=</span> <span class="n">srcAccountId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">srcAddress</span> <span class="o">=</span> <span class="n">srcAddress</span></div>
+
+
+
+<div class="viewcode-block" id="CapitalHistory">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.CapitalHistory">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CapitalHistory</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transaction history.&quot;&quot;&quot;</span>
+
+    <span class="n">transactions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Transaction</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="WithdrawRequest">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WithdrawRequest">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithdrawRequest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Withdrawal request.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">coin</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">withdrawAddress</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">network</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">maxFees</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">signature</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">coin</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">withdrawAddress</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">network</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">maxFees</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">signature</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a WithdrawRequest instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            accountId: Account ID initiating the withdrawal.</span>
+<span class="sd">            coin: Coin/token symbol to withdraw.</span>
+<span class="sd">            withdrawAddress: Destination withdrawal address.</span>
+<span class="sd">            network: Blockchain network for the withdrawal.</span>
+<span class="sd">            quantity: Amount to withdraw (converted to Decimal).</span>
+<span class="sd">            maxFees: Maximum withdrawal fees (converted to Decimal).</span>
+<span class="sd">            signature: Cryptographic signature for the withdrawal.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accountId</span> <span class="o">=</span> <span class="n">accountId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coin</span> <span class="o">=</span> <span class="n">coin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">withdrawAddress</span> <span class="o">=</span> <span class="n">withdrawAddress</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network</span> <span class="o">=</span> <span class="n">network</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxFees</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">maxFees</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signature</span> <span class="o">=</span> <span class="n">signature</span></div>
+
+
+
+<div class="viewcode-block" id="WithdrawResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WithdrawResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WithdrawResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Withdrawal response.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="TransferRequest">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TransferRequest">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransferRequest</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transfer request.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">coin</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">fees</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">dstPublicKey</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">signature</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">coin</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">fees</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">dstPublicKey</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">signature</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a TransferRequest instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            accountId: Source account ID initiating the transfer.</span>
+<span class="sd">            coin: Coin/token symbol to transfer.</span>
+<span class="sd">            fees: Transfer fees (converted to Decimal).</span>
+<span class="sd">            nonce: Unique nonce for the transfer (defaults to current epoch timestamp in μs).</span>
+<span class="sd">            quantity: Amount to transfer (converted to Decimal).</span>
+<span class="sd">            dstPublicKey: Destination account public key.</span>
+<span class="sd">            signature: Cryptographic signature for the transfer.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accountId</span> <span class="o">=</span> <span class="n">accountId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">coin</span> <span class="o">=</span> <span class="n">coin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fees</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">fees</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonce</span> <span class="o">=</span> <span class="n">nonce</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dstPublicKey</span> <span class="o">=</span> <span class="n">dstPublicKey</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">signature</span> <span class="o">=</span> <span class="n">signature</span></div>
+
+
+
+<div class="viewcode-block" id="TransferResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.TransferResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransferResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transfer response.&quot;&quot;&quot;</span>
+
+    <span class="n">status</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="DepositInfo">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.DepositInfo">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DepositInfo</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deposit information.&quot;&quot;&quot;</span>
+
+    <span class="n">depositAddressEvm</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># WEBSOCKET TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="WebSocketSubscription">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketSubscription">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketSubscription</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;WebSocket subscription configuration.&quot;&quot;&quot;</span>
+
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">topic</span><span class="p">:</span> <span class="n">WebSocketSubscriptionTopic</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketMarketSubscriptionListResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketMarketSubscriptionListResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketMarketSubscriptionListResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;List of WebSocket subscriptions.&quot;&quot;&quot;</span>
+
+    <span class="n">subscriptions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WebSocketSubscription</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic WebSocket response.&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">subscriptions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WebSocketSubscription</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketEvent">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketEvent">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketEvent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;WebSocket event notification.&quot;&quot;&quot;</span>
+
+    <span class="n">account</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">event</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># WebSocket Request Parameter Types</span>
+
+
+<div class="viewcode-block" id="WebSocketOrderCancelParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketOrderCancelParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketOrderCancelParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for WebSocket order cancellation.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketOrderModifyParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketOrderModifyParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketOrderModifyParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for WebSocket order modification.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketOrderStatusParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketOrderStatusParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketOrderStatusParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for WebSocket order status query.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketOrdersStatusParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketOrdersStatusParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketOrdersStatusParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for WebSocket orders status query.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketOrdersCancelParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketOrdersCancelParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketOrdersCancelParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for WebSocket bulk order cancellation.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">contractId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketBatchOrder">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketBatchOrder">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketBatchOrder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;WebSocket batch order operation.&quot;&quot;&quot;</span>
+
+    <span class="n">action</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orderType</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">side</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">signature</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updatedQuantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updatedPrice</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketOrdersBatchParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketOrdersBatchParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketOrdersBatchParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for WebSocket batch order operations.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orders</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">WebSocketBatchOrder</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketStreamStartParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketStreamStartParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketStreamStartParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters to start WebSocket stream.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketStreamPingParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketStreamPingParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketStreamPingParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for WebSocket stream ping.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">listenKey</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="WebSocketStreamStopParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.WebSocketStreamStopParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">WebSocketStreamStopParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters to stop WebSocket stream.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">listenKey</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="AccountStreamStartResult">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.AccountStreamStartResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AccountStreamStartResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result from starting account stream.&quot;&quot;&quot;</span>
+
+    <span class="n">accountSnapshot</span><span class="p">:</span> <span class="n">AccountSnapshot</span>
+    <span class="n">listenKey</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># REST API PARAMETER TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="OrderPlaceParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderPlaceParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderPlaceParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for placing an order via REST.&quot;&quot;&quot;</span>
+
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="n">orderType</span><span class="p">:</span> <span class="n">OrderType</span>
+    <span class="n">price</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">trigger_price</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">twap_config</span><span class="p">:</span> <span class="n">TWAPConfig</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">orderFlags</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">creation_deadline</span><span class="p">:</span> <span class="n">Decimal</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">trigger_direction</span><span class="p">:</span> <span class="n">TriggerDirection</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">side</span><span class="p">:</span> <span class="n">Side</span><span class="p">,</span>
+        <span class="n">orderType</span><span class="p">:</span> <span class="n">OrderType</span><span class="p">,</span>
+        <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trigger_price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">twap_config</span><span class="p">:</span> <span class="n">TWAPConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">orderFlags</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">creation_deadline</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trigger_direction</span><span class="p">:</span> <span class="n">TriggerDirection</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize OrderPlaceParams for placing an order via REST.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            symbol: Trading symbol for the order.</span>
+<span class="sd">            quantity: Order quantity (converted to Decimal).</span>
+<span class="sd">            side: Order side (BID/ASK/BUY/SELL).</span>
+<span class="sd">            orderType: Type of order (LIMIT/MARKET).</span>
+<span class="sd">            maxFeesPercent: Maximum fees as percentage (converted to Decimal).</span>
+<span class="sd">            price: Limit price for the order (converted to Decimal).</span>
+<span class="sd">            trigger_price: Trigger price for conditional orders (converted to Decimal).</span>
+<span class="sd">            twap_config: TWAP configuration for time-weighted execution.</span>
+<span class="sd">            orderFlags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).</span>
+<span class="sd">            creation_deadline: Deadline timestamp for order creation.</span>
+<span class="sd">            trigger_direction: Trigger direction (HIGH/LOW) for conditional orders.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side</span> <span class="o">=</span> <span class="n">side</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orderType</span> <span class="o">=</span> <span class="n">orderType</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trigger_price</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">trigger_price</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">twap_config</span> <span class="o">=</span> <span class="n">twap_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxFeesPercent</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">maxFeesPercent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orderFlags</span> <span class="o">=</span> <span class="n">orderFlags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">creation_deadline</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">creation_deadline</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">trigger_direction</span> <span class="o">=</span> <span class="n">trigger_direction</span></div>
+
+
+
+<div class="viewcode-block" id="OrderCancelParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderCancelParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderCancelParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for canceling an order.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="OrderModifyParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderModifyParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderModifyParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for modifying an order.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">price</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="n">Decimal</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">quantity</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">price</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">side</span><span class="p">:</span> <span class="n">Side</span><span class="p">,</span>
+        <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="n">HibachiNumericInput</span><span class="p">,</span>
+        <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize OrderModifyParams for modifying an order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            orderId: ID of the order to modify.</span>
+<span class="sd">            accountId: Account ID that owns the order.</span>
+<span class="sd">            symbol: Trading symbol of the order.</span>
+<span class="sd">            quantity: Updated order quantity (converted to Decimal).</span>
+<span class="sd">            price: Updated order price (converted to Decimal).</span>
+<span class="sd">            side: Order side (BID/ASK/BUY/SELL).</span>
+<span class="sd">            maxFeesPercent: Maximum fees as percentage (converted to Decimal).</span>
+<span class="sd">            nonce: Optional nonce for the modification (defaults to current epoch timestamp in μs).</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orderId</span> <span class="o">=</span> <span class="n">orderId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accountId</span> <span class="o">=</span> <span class="n">accountId</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">symbol</span> <span class="o">=</span> <span class="n">symbol</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">price</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">price</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">side</span> <span class="o">=</span> <span class="n">side</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxFeesPercent</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">maxFeesPercent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nonce</span> <span class="o">=</span> <span class="n">nonce</span></div>
+
+
+
+<div class="viewcode-block" id="OrderStatusParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderStatusParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderStatusParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for querying order status.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="OrdersStatusParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrdersStatusParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrdersStatusParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for querying all orders status.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="OrdersCancelParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrdersCancelParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrdersCancelParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for bulk order cancellation.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">contractId</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="BatchOrder">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.BatchOrder">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BatchOrder</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Batch order operation.&quot;&quot;&quot;</span>
+
+    <span class="n">action</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">orderType</span><span class="p">:</span> <span class="n">OrderType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">quantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">maxFeesPercent</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updatedQuantity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">updatedPrice</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">signature</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="OrdersBatchParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrdersBatchParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrdersBatchParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters for batch order operations.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orders</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BatchOrder</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="EnableCancelOnDisconnectParams">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.EnableCancelOnDisconnectParams">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnableCancelOnDisconnectParams</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameters to enable cancel-on-disconnect.&quot;&quot;&quot;</span>
+
+    <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># REST API RESPONSE TYPES</span>
+<span class="c1"># ============================================================================</span>
+
+
+<div class="viewcode-block" id="OrderResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Order information in response.&quot;&quot;&quot;</span>
+
+    <span class="n">accountId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">availableQuantity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">orderType</span><span class="p">:</span> <span class="n">OrderType</span>
+    <span class="n">price</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">side</span><span class="p">:</span> <span class="n">Side</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">OrderStatus</span>
+    <span class="n">symbol</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">totalQuantity</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="OrderPlaceResponseResult">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderPlaceResponseResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderPlaceResponseResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of order placement.&quot;&quot;&quot;</span>
+
+    <span class="n">orderId</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+
+<div class="viewcode-block" id="OrderPlaceResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderPlaceResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderPlaceResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response from placing an order.&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">OrderPlaceResponseResult</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<div class="viewcode-block" id="OrdersStatusResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrdersStatusResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrdersStatusResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing multiple order statuses.&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Order</span><span class="p">]</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="OrderStatusResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.types.OrderStatusResponse">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrderStatusResponse</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Response containing single order status.&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">result</span><span class="p">:</span> <span class="n">Order</span>
+    <span class="n">status</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Hibachi Engineering Team.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
