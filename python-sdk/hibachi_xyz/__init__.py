@@ -1,3 +1,10 @@
+"""Hibachi Python SDK.
+
+This module provides a Python SDK for interacting with the Hibachi XYZ
+cryptocurrency exchange API, including HTTP and WebSocket clients for trading,
+market data, and account management.
+"""
+
 import logging
 from importlib.metadata import version
 from pathlib import Path

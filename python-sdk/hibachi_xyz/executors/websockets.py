@@ -1,3 +1,9 @@
+"""WebSocket executor implementation using websockets.
+
+This module provides WebSocket connection handling using the websockets library,
+serving as the default WebSocket executor for the Hibachi SDK.
+"""
+
 from typing import override
 
 import websockets
@@ -13,11 +19,32 @@ from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 
 
 class WebsocketsWsConnection(WsConnection):
+    """WebSocket connection implementation using websockets.
+
+    Wraps a websockets ClientConnection for WebSocket communication.
+    """
+
     def __init__(self, ws: ClientConnection):
+        """Initialize a WebSocket connection wrapper.
+
+        Args:
+            ws: The underlying websockets ClientConnection instance to wrap.
+
+        """
         self._ws = ws
 
     @override
     async def send(self, serialized_body: str) -> None:
+        """Send a message over the WebSocket connection.
+
+        Args:
+            serialized_body: The serialized message string to send.
+
+        Raises:
+            WebSocketConnectionError: If the connection is closed while sending.
+            WebSocketMessageError: If sending the message fails for any other reason.
+
+        """
         try:
             await self._ws.send(serialized_body)
         except websockets.exceptions.ConnectionClosed as e:
@@ -29,6 +56,17 @@ class WebsocketsWsConnection(WsConnection):
 
     @override
     async def recv(self) -> str:
+        """Receive a message from the WebSocket connection.
+
+        Returns:
+            The received message as a UTF-8 decoded string.
+
+        Raises:
+            WebSocketConnectionError: If the connection is closed while receiving.
+            DeserializationError: If the message cannot be decoded as UTF-8.
+            WebSocketMessageError: If receiving the message fails for any other reason.
+
+        """
         try:
             msg = await self._ws.recv()
             if isinstance(msg, bytes):
@@ -49,14 +87,36 @@ class WebsocketsWsConnection(WsConnection):
 
     @override
     async def close(self) -> None:
+        """Close the WebSocket connection gracefully."""
         await self._ws.close()
 
 
 class WebsocketsWsExecutor(WsExecutor):
+    """WebSocket executor implementation using websockets.
+
+    Establishes WebSocket connections using the websockets library.
+    """
+
     @override
     async def connect(
         self, web_url: str, headers: dict[str, str] | None = None
     ) -> WsConnection:
+        """Establish a WebSocket connection to the specified URL.
+
+        Args:
+            web_url: The WebSocket URL to connect to (ws:// or wss://).
+            headers: Optional dictionary of additional HTTP headers to send during
+                the handshake. Defaults to None.
+
+        Returns:
+            A WsConnection instance wrapping the established connection.
+
+        Raises:
+            WebSocketConnectionError: If the URL is invalid, the handshake fails,
+                or the connection cannot be established.
+            TransportError: If an unexpected error occurs during connection.
+
+        """
         try:
             headers = headers or {}
             ws = await websockets.connect(web_url, additional_headers=headers)

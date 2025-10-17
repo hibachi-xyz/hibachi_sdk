@@ -10,3 +10,5 @@ __pycache__
 .env.local*
 /dev_ws*
 **/dist/*
+**/.DS_Store
+**/Thumbs.db

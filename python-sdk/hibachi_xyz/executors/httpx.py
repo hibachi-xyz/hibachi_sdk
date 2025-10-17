@@ -1,3 +1,9 @@
+"""HTTP executor implementation using httpx.
+
+This module provides HTTP request handling using the httpx library,
+supporting both sync and async operations for the Hibachi SDK.
+"""
+
 from typing import override
 
 import httpx
@@ -22,6 +28,11 @@ from hibachi_xyz.types import Json
 
 
 class HttpxHttpExecutor(HttpExecutor):
+    """HTTP executor implementation using httpx.
+
+    Provides synchronous HTTP request execution using the httpx library.
+    """
+
     @override
     def __init__(
         self,
@@ -29,6 +40,15 @@ class HttpxHttpExecutor(HttpExecutor):
         data_api_url: str = DEFAULT_DATA_API_URL,
         api_key: str | None = None,
     ):
+        """Initialize the HTTPX HTTP executor.
+
+        Args:
+            api_url: The base URL for the Hibachi API. Defaults to DEFAULT_API_URL.
+            data_api_url: The base URL for the Hibachi Data API. Defaults to DEFAULT_DATA_API_URL.
+            api_key: Optional API key for authenticated requests. If not provided,
+                authorized requests will fail with a ValidationError.
+
+        """
         self.api_url = api_url
         self.data_api_url = data_api_url
         self.api_key = api_key
@@ -36,6 +56,20 @@ class HttpxHttpExecutor(HttpExecutor):
 
     @override
     def send_simple_request(self, path: str) -> HttpResponse:
+        """Send a simple unauthenticated GET request to the Data API.
+
+        Args:
+            path: The API endpoint path to request (will be appended to data_api_url).
+
+        Returns:
+            HttpResponse containing the status code and deserialized response body.
+
+        Raises:
+            TransportTimeoutError: If the request times out.
+            HttpConnectionError: If there is a connection or network error.
+            TransportError: If any other transport-level error occurs.
+
+        """
         url = f"{self.data_api_url}{path}"
         try:
             response = self.client.get(
@@ -69,6 +103,24 @@ class HttpxHttpExecutor(HttpExecutor):
         path: str,
         json: Json | None = None,
     ) -> HttpResponse:
+        """Send an authenticated request to the API.
+
+        Args:
+            method: The HTTP method to use (e.g., 'GET', 'POST', 'PUT', 'DELETE').
+            path: The API endpoint path to request (will be appended to api_url).
+            json: Optional JSON data to include in the request body. Defaults to None.
+
+        Returns:
+            HttpResponse containing the status code and deserialized response body.
+
+        Raises:
+            ValidationError: If the api_key is not set.
+            TransportTimeoutError: If the request times out.
+            HttpConnectionError: If there is a connection or network error.
+            TransportError: If any other transport-level error occurs.
+            ExchangeError: If an exchange-specific error occurs (re-raised).
+
+        """
         if self.api_key is None:
             raise ValidationError("api_key is not set")
 
@@ -106,5 +158,5 @@ class HttpxHttpExecutor(HttpExecutor):
         )
 
     def __del__(self) -> None:
-        """Cleanup the httpx client when the executor is destroyed"""
+        """Cleanup the httpx client when the executor is destroyed."""
         self.client.close()

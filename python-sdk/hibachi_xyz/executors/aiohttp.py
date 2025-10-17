@@ -1,3 +1,9 @@
+"""WebSocket executor implementation using aiohttp.
+
+This module provides WebSocket connection handling using the aiohttp library,
+supporting async WebSocket operations for the Hibachi SDK.
+"""
+
 import asyncio
 from typing import override
 
@@ -13,11 +19,32 @@ from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 
 
 class AiohttpWsConnection(WsConnection):
+    """WebSocket connection implementation using aiohttp.
+
+    Wraps an aiohttp ClientWebSocketResponse for WebSocket communication.
+    """
+
     def __init__(self, ws: aiohttp.ClientWebSocketResponse):
+        """Initialize an AiohttpWsConnection wrapper.
+
+        Args:
+            ws: The aiohttp ClientWebSocketResponse object to wrap.
+
+        """
         self._ws = ws
 
     @override
     async def send(self, serialized_body: str) -> None:
+        """Send a message through the WebSocket connection.
+
+        Args:
+            serialized_body: The serialized message string to send.
+
+        Raises:
+            WebSocketConnectionError: If the connection is lost while sending.
+            WebSocketMessageError: If sending the message fails for any other reason.
+
+        """
         try:
             await self._ws.send_str(serialized_body)
         except ConnectionError as e:
@@ -29,6 +56,18 @@ class AiohttpWsConnection(WsConnection):
 
     @override
     async def recv(self) -> str:
+        """Receive a message from the WebSocket connection.
+
+        Returns:
+            The received message as a string.
+
+        Raises:
+            WebSocketConnectionError: If the WebSocket is closed or encounters an error.
+            WebSocketMessageError: If an unexpected message type is received.
+            DeserializationError: If decoding the message fails.
+            TransportError: If receiving the message fails for any other reason.
+
+        """
         try:
             msg = await self._ws.receive()
             if msg.type == aiohttp.WSMsgType.TEXT:
@@ -56,17 +95,42 @@ class AiohttpWsConnection(WsConnection):
 
     @override
     async def close(self) -> None:
+        """Close the WebSocket connection."""
         await self._ws.close()
 
 
 class AiohttpWsExecutor(WsExecutor):
+    """WebSocket executor implementation using aiohttp.
+
+    Manages aiohttp ClientSession and establishes WebSocket connections.
+    """
+
     def __init__(self) -> None:
+        """Initialize an AiohttpWsExecutor.
+
+        The executor manages an aiohttp ClientSession for WebSocket connections.
+        """
         self._session: aiohttp.ClientSession | None = None
 
     @override
     async def connect(
         self, web_url: str, headers: dict[str, str] | None = None
     ) -> WsConnection:
+        """Connect to a WebSocket endpoint.
+
+        Args:
+            web_url: The WebSocket URL to connect to.
+            headers: Optional dictionary of HTTP headers to send with the connection request.
+
+        Returns:
+            A WsConnection instance wrapping the established WebSocket connection.
+
+        Raises:
+            WebSocketConnectionError: If the WebSocket handshake fails, connection fails,
+                or the connection times out.
+            TransportError: If an unexpected error occurs during connection.
+
+        """
         try:
             if self._session is None:
                 self._session = aiohttp.ClientSession()
@@ -91,6 +155,7 @@ class AiohttpWsExecutor(WsExecutor):
             ) from e
 
     async def close(self) -> None:
+        """Close the executor and its underlying aiohttp session."""
         if self._session is not None:
             await self._session.close()
             self._session = None

@@ -1,5 +1,4 @@
-"""
-Type definitions for the Hibachi Python SDK.
+"""Type definitions for the Hibachi Python SDK.
 
 This module contains type definitions, enums, and dataclasses used throughout
 the SDK, organized into logical sections for clarity.
@@ -188,17 +187,50 @@ class OrderIdVariant:
 
     @classmethod
     def from_nonce(cls, nonce: Nonce) -> Self:
+        """Create an OrderIdVariant from a nonce.
+
+        Args:
+            nonce: The nonce value to use for order identification.
+
+        Returns:
+            OrderIdVariant instance with nonce set and order_id as None.
+
+        Raises:
+            ValueError: If nonce is None.
+
+        """
         if nonce is None:
             raise ValueError("nonce cannot be None")
         return cls(nonce=nonce, order_id=None)
 
     @classmethod
     def from_order_id(cls, order_id: OrderId) -> Self:
+        """Create an OrderIdVariant from an order_id.
+
+        Args:
+            order_id: The order ID value to use for order identification.
+
+        Returns:
+            OrderIdVariant instance with order_id set and nonce as None.
+
+        Raises:
+            ValueError: If order_id is None.
+
+        """
         if order_id is None:
             raise ValueError("order_id cannot be None")
         return cls(nonce=None, order_id=order_id)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert OrderIdVariant to dictionary representation.
+
+        Returns:
+            Dictionary with either 'nonce' or 'orderId' key and string value.
+
+        Raises:
+            ValueError: If both nonce and order_id are None.
+
+        """
         if self.nonce is not None:
             return {"nonce": str(self.nonce)}
         elif self.order_id is not None:
@@ -220,10 +252,23 @@ class TWAPConfig:
     quantity_mode: TWAPQuantityMode
 
     def __init__(self, duration_minutes: int, quantity_mode: TWAPQuantityMode):
+        """Initialize TWAP configuration.
+
+        Args:
+            duration_minutes: Total duration for TWAP execution in minutes.
+            quantity_mode: Quantity distribution mode (FIXED or RANDOM).
+
+        """
         self.duration_minutes = duration_minutes
         self.quantity_mode = quantity_mode
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert TWAP configuration to dictionary representation.
+
+        Returns:
+            Dictionary with 'twapDurationMinutes' and 'twapQuantityMode' keys.
+
+        """
         return {
             "twapDurationMinutes": self.duration_minutes,
             "twapQuantityMode": self.quantity_mode.value,
@@ -248,6 +293,11 @@ class TPSLConfig:
         quantity: Decimal | None
 
     def __init__(self) -> None:
+        """Initialize an empty TP/SL configuration.
+
+        The configuration starts with no legs. Use add_take_profit() and
+        add_stop_loss() methods to add individual TP/SL legs.
+        """
         self.legs: List[TPSLConfig.Leg] = []
 
     def add_take_profit(
@@ -285,7 +335,19 @@ class TPSLConfig:
         parent_nonce: Nonce,
         max_fees_percent: HibachiNumericInput,
     ) -> List["CreateOrder"]:
-        """Convert TP/SL configuration to a list of order requests."""
+        """Convert TP/SL configuration to a list of order requests.
+
+        Args:
+            parent_symbol: Symbol of the parent order.
+            parent_quantity: Quantity of the parent order.
+            parent_side: Side (BID/ASK) of the parent order.
+            parent_nonce: Nonce of the parent order for linking.
+            max_fees_percent: Maximum fees as a percentage.
+
+        Returns:
+            List of CreateOrder instances representing the TP/SL legs.
+
+        """
         order_requests = []
         for leg in self.legs:
             side = Side.BID if parent_side == Side.ASK else Side.ASK
@@ -357,6 +419,28 @@ class Order:
         orderFlags: str | None = None,
         triggerPrice: str | None = None,
     ):
+        """Initialize an Order instance.
+
+        Args:
+            accountId: Account ID associated with the order.
+            availableQuantity: Remaining quantity available for the order.
+            orderId: Unique order identifier (string or int).
+            orderType: Type of order (LIMIT, MARKET, etc.).
+            side: Order side (BID, ASK, BUY, SELL).
+            status: Current status of the order.
+            symbol: Trading symbol for the order.
+            numOrdersRemaining: Number of child orders remaining (for TWAP).
+            numOrdersTotal: Total number of child orders (for TWAP).
+            quantityMode: Quantity distribution mode (for TWAP).
+            finishTime: Timestamp when the order finished (if completed).
+            price: Limit price for the order.
+            totalQuantity: Total quantity of the order.
+            creationTime: Timestamp when the order was created.
+            contractId: Contract ID associated with the order.
+            orderFlags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).
+            triggerPrice: Trigger price for conditional orders.
+
+        """
         self.accountId = accountId
         self.availableQuantity = availableQuantity
         self.contractId = contractId
@@ -406,6 +490,22 @@ class CreateOrder:
         order_flags: OrderFlags | None = None,
         trigger_direction: TriggerDirection | None = None,
     ):
+        """Initialize a CreateOrder request.
+
+        Args:
+            symbol: Trading symbol for the order.
+            side: Order side (BID/ASK, BUY/SELL normalized to BID/ASK).
+            quantity: Order quantity (converted to Decimal).
+            max_fees_percent: Maximum fees as percentage (converted to Decimal).
+            price: Limit price for the order (converted to Decimal).
+            trigger_price: Trigger price for conditional orders (converted to Decimal).
+            twap_config: TWAP configuration for time-weighted execution.
+            creation_deadline: Deadline for order creation (converted to Decimal).
+            parent_order: Parent order reference for linked orders.
+            order_flags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).
+            trigger_direction: Trigger direction (HIGH/LOW) for conditional orders.
+
+        """
         if side == Side.BUY:
             side = Side.BID
         elif side == Side.SELL:
@@ -454,6 +554,21 @@ class UpdateOrder:
         parent_order: OrderIdVariant | None = None,
         order_flags: OrderFlags | None = None,
     ):
+        """Initialize an UpdateOrder request.
+
+        Args:
+            order_id: ID of the order to update.
+            symbol: Trading symbol (required for signature).
+            side: Order side (BID/ASK, BUY/SELL normalized to BID/ASK).
+            quantity: Updated order quantity (converted to Decimal).
+            max_fees_percent: Maximum fees as percentage (converted to Decimal).
+            price: Updated limit price (converted to Decimal).
+            trigger_price: Updated trigger price (converted to Decimal).
+            creation_deadline: Deadline for order update (converted to Decimal).
+            parent_order: Parent order reference for linked orders.
+            order_flags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).
+
+        """
         if side == Side.BUY:
             side = Side.BID
         elif side == Side.SELL:
@@ -479,6 +594,16 @@ class CancelOrder:
     nonce: int | None
 
     def __init__(self, order_id: int | None = None, nonce: int | None = None):
+        """Initialize a CancelOrder request.
+
+        Args:
+            order_id: ID of the order to cancel.
+            nonce: Nonce of the order to cancel.
+
+        Note:
+            Either order_id or nonce should be provided to identify the order.
+
+        """
         self.order_id = order_id
         self.nonce = nonce
 
@@ -521,6 +646,12 @@ class ErrorBatchResponse:
     status: str
 
     def as_exception(self) -> ExchangeError:
+        """Convert error response to an ExchangeError exception.
+
+        Returns:
+            ExchangeError instance with formatted error details.
+
+        """
         return ExchangeError(
             f"Action failed: {self.errorCode=} {self.status=} {self.message=}"
         )
@@ -537,17 +668,23 @@ BatchResponseOrder: TypeAlias = (
 def deserialize_batch_response_order(
     data: JsonObject,
 ) -> BatchResponseOrder:
-    """
-    Deserialize a batch response order based on which fields are present.
+    """Deserialize a batch response order based on which fields are present.
 
     Logic:
-    - If 'errorCode' is present -> ErrorBatchResponse
-    - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
-    - If only 'orderId' is present -> UpdateOrderBatchResponse
-    - If only 'nonce' is present -> CancelOrderBatchResponse
+        - If 'errorCode' is present -> ErrorBatchResponse
+        - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
+        - If only 'orderId' is present -> UpdateOrderBatchResponse
+        - If only 'nonce' is present -> CancelOrderBatchResponse
+
+    Args:
+        data: JSON object containing the batch response order data.
+
+    Returns:
+        Appropriate batch response type based on the fields present in data.
 
     Raises:
-        DeserializationError: If the data cannot be deserialized into any known type
+        DeserializationError: If the data cannot be deserialized into any known type.
+
     """
     from hibachi_xyz.errors import DeserializationError
     from hibachi_xyz.helpers import create_with
@@ -964,6 +1101,30 @@ class Transaction:
         srcAccountId: int | None = None,
         srcAddress: str | None = None,
     ):
+        """Initialize a Transaction instance.
+
+        Args:
+            id: Unique transaction identifier.
+            assetId: Asset identifier for the transaction.
+            quantity: Transaction amount.
+            status: Current status of the transaction.
+            timestampSec: Transaction timestamp in seconds.
+            transactionType: Type of transaction (deposit, withdrawal, transfer).
+            transactionHash: Blockchain transaction hash.
+            token: Token symbol.
+            etaTsSec: Estimated time of arrival in seconds.
+            blockNumber: Blockchain block number.
+            chain: Blockchain network name.
+            instantWithdrawalChain: Chain used for instant withdrawal.
+            instantWithdrawalToken: Token used for instant withdrawal.
+            isInstantWithdrawal: Whether this is an instant withdrawal.
+            withdrawalAddress: Destination address for withdrawal.
+            receivingAddress: Receiving address for transfer.
+            receivingAccountId: Receiving account ID for internal transfer.
+            srcAccountId: Source account ID for internal transfer.
+            srcAddress: Source address for transfer.
+
+        """
         self.id = id
         self.assetId = assetId
         self.quantity = quantity
@@ -1014,6 +1175,18 @@ class WithdrawRequest:
         maxFees: HibachiNumericInput,
         signature: str,
     ):
+        """Initialize a WithdrawRequest instance.
+
+        Args:
+            accountId: Account ID initiating the withdrawal.
+            coin: Coin/token symbol to withdraw.
+            withdrawAddress: Destination withdrawal address.
+            network: Blockchain network for the withdrawal.
+            quantity: Amount to withdraw (converted to Decimal).
+            maxFees: Maximum withdrawal fees (converted to Decimal).
+            signature: Cryptographic signature for the withdrawal.
+
+        """
         self.accountId = accountId
         self.coin = coin
         self.withdrawAddress = withdrawAddress
@@ -1052,6 +1225,18 @@ class TransferRequest:
         dstPublicKey: str,
         signature: str,
     ):
+        """Initialize a TransferRequest instance.
+
+        Args:
+            accountId: Source account ID initiating the transfer.
+            coin: Coin/token symbol to transfer.
+            fees: Transfer fees (converted to Decimal).
+            nonce: Unique nonce for the transfer (defaults to current epoch timestamp in μs).
+            quantity: Amount to transfer (converted to Decimal).
+            dstPublicKey: Destination account public key.
+            signature: Cryptographic signature for the transfer.
+
+        """
         self.accountId = accountId
         self.coin = coin
         self.fees = numeric_to_decimal(fees)
@@ -1256,6 +1441,22 @@ class OrderPlaceParams:
         creation_deadline: int | None = None,
         trigger_direction: TriggerDirection | None = None,
     ):
+        """Initialize OrderPlaceParams for placing an order via REST.
+
+        Args:
+            symbol: Trading symbol for the order.
+            quantity: Order quantity (converted to Decimal).
+            side: Order side (BID/ASK/BUY/SELL).
+            orderType: Type of order (LIMIT/MARKET).
+            maxFeesPercent: Maximum fees as percentage (converted to Decimal).
+            price: Limit price for the order (converted to Decimal).
+            trigger_price: Trigger price for conditional orders (converted to Decimal).
+            twap_config: TWAP configuration for time-weighted execution.
+            orderFlags: Additional order flags (POST_ONLY, IOC, REDUCE_ONLY).
+            creation_deadline: Deadline timestamp for order creation.
+            trigger_direction: Trigger direction (HIGH/LOW) for conditional orders.
+
+        """
         self.symbol = symbol
         self.quantity = numeric_to_decimal(quantity)
         self.side = side
@@ -1302,6 +1503,19 @@ class OrderModifyParams:
         maxFeesPercent: HibachiNumericInput,
         nonce: int | None = None,
     ):
+        """Initialize OrderModifyParams for modifying an order.
+
+        Args:
+            orderId: ID of the order to modify.
+            accountId: Account ID that owns the order.
+            symbol: Trading symbol of the order.
+            quantity: Updated order quantity (converted to Decimal).
+            price: Updated order price (converted to Decimal).
+            side: Order side (BID/ASK/BUY/SELL).
+            maxFeesPercent: Maximum fees as percentage (converted to Decimal).
+            nonce: Optional nonce for the modification (defaults to current epoch timestamp in μs).
+
+        """
         self.orderId = orderId
         self.accountId = accountId
         self.symbol = symbol

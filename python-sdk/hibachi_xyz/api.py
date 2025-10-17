@@ -1,3 +1,10 @@
+"""HTTP API client for Hibachi XYZ exchange.
+
+This module provides the main HibachiApiClient class for interacting with the
+Hibachi exchange REST API, including market data queries, account management,
+and order operations.
+"""
+
 import hmac
 import logging
 from dataclasses import asdict
@@ -100,7 +107,27 @@ log = logging.getLogger(__name__)
 
 
 def raise_response_errors(response: HttpResponse) -> None:
-    """check if the response status is not 2XX and if so raise the appropriate pre-defined error from errors.py"""
+    """Check HTTP response status and raise appropriate errors.
+
+    Validates the response status code and raises pre-defined exceptions for non-2XX
+    status codes with detailed error messages extracted from the response body.
+
+    Args:
+        response: The HTTP response to validate
+
+    Raises:
+        BadRequest: For 400 status codes
+        Unauthorized: For 401 status codes
+        Forbidden: For 403 status codes
+        NotFound: For 404 status codes
+        RateLimited: For 429 status codes with rate limit details
+        BadHttpStatus: For other 4XX status codes
+        InternalServerError: For 500 status codes
+        BadGateway: For 502 status codes
+        ServiceUnavailable: For 503 status codes
+        GatewayTimeout: For 504 status codes
+
+    """
     status = response.status
 
     # Success status codes (2xx)
@@ -181,6 +208,19 @@ def raise_response_errors(response: HttpResponse) -> None:
 
 
 def price_to_bytes(price: HibachiNumericInput, contract: FutureContract) -> bytes:
+    """Convert price to bytes representation for signing.
+
+    Converts a price value to an 8-byte representation adjusted for contract
+    decimals and scaled by 2^32 for fixed-point representation.
+
+    Args:
+        price: The price value to convert
+        contract: The future contract containing decimal precision info
+
+    Returns:
+        bytes: 8-byte big-endian representation of the scaled price
+
+    """
     return int(
         numeric_to_decimal(price)
         * pow(Decimal("2"), 32)
@@ -189,34 +229,29 @@ def price_to_bytes(price: HibachiNumericInput, contract: FutureContract) -> byte
 
 
 class HibachiApiClient:
-    """
-    Example usage:
-    ```python
-    from hibachi_xyz import HibachiApiClient
-    from dotenv import load_dotenv
-    load_dotenv()
+    """Hibachi API client for trading operations.
 
-    hibachi = HibachiApiClient(
-        api_key = os.environ.get('HIBACHI_API_KEY', "your-api-key"),
-        account_id = os.environ.get('HIBACHI_ACCOUNT_ID', "your-account-id"),
-        private_key = os.environ.get('HIBACHI_PRIVATE_KEY', "your-private"),
-    )
+    Examples:
+        .. code-block:: python
 
-    account_info = hibachi.get_account_info()
-    print(f"Account Balance: {account_info.balance}")
-    print(f"total Position Notional: {account_info.totalPositionNotional}")
+            from hibachi_xyz import HibachiApiClient
+            from dotenv import load_dotenv
+            import os
 
-    exchange_info = api.get_exchange_info()
-    print(exchange_info)
-    ```
+            load_dotenv()
 
-    Args:
-        api_url: The base URL of the API
-        data_api_url: The base URL of the data API
-        account_id: The account ID
-        api_key: The API key
-        private_key: The private key for the account
+            hibachi = HibachiApiClient(
+                api_key=os.environ.get('HIBACHI_API_KEY', "your-api-key"),
+                account_id=os.environ.get('HIBACHI_ACCOUNT_ID', "your-account-id"),
+                private_key=os.environ.get('HIBACHI_PRIVATE_KEY', "your-private"),
+            )
 
+            account_info = hibachi.get_account_info()
+            print(f"Account Balance: {account_info.balance}")
+            print(f"Total Position Notional: {account_info.totalPositionNotional}")
+
+            exchange_info = hibachi.get_exchange_info()
+            print(exchange_info)
     """
 
     _account_id: int | None = None
@@ -239,6 +274,18 @@ class HibachiApiClient:
         private_key: str | None = None,
         executor: HttpExecutor | None = None,
     ):
+        """Initialize the Hibachi API client.
+
+        Args:
+            api_url: Base URL for the Hibachi API (default: production URL)
+            data_api_url: Base URL for the data API (default: production data URL)
+            account_id: Your Hibachi account ID (optional, can be set later)
+            api_key: Your API key for authentication (optional, can be set later)
+            private_key: Private key for signing requests (hex string with or without 0x prefix,
+                or HMAC key for web accounts)
+            executor: Custom HTTP executor (optional, uses default if not provided)
+
+        """
         if private_key is not None:
             self.set_private_key(private_key)
 
@@ -256,23 +303,59 @@ class HibachiApiClient:
 
     @property
     def future_contracts(self) -> dict[str, FutureContract]:
+        """Get the cached future contracts metadata.
+
+        Returns:
+            dict[str, FutureContract]: Dictionary mapping contract symbols to their metadata
+
+        Raises:
+            ValidationError: If contracts have not been loaded yet (call get_exchange_info() first)
+
+        """
         if self._future_contracts is None:
             raise ValidationError("future_contracts not yet loaded")
         return self._future_contracts
 
     @property
     def account_id(self) -> int:
+        """Get the current account ID.
+
+        Returns:
+            int: The account ID
+
+        Raises:
+            ValidationError: If account_id has not been set
+
+        """
         if self._account_id is None:
             raise ValidationError("account_id has not been set")
         return self._account_id
 
     @property
     def api_key(self) -> str:
+        """Get the current API key.
+
+        Returns:
+            str: The API key
+
+        Raises:
+            ValidationError: If api_key has not been set
+
+        """
         if self._http_executor.api_key is None:
             raise ValidationError("api_key has not been set")
         return self._http_executor.api_key
 
     def set_account_id(self, account_id: int | None) -> None:
+        """Set the account ID for API requests.
+
+        Args:
+            account_id: The account ID (int, numeric string, or None)
+
+        Raises:
+            ValidationError: If the account_id is an invalid type or format
+
+        """
         _account_id = cast(Any, account_id)
         if isinstance(_account_id, str):
             if not _account_id.isdigit():
@@ -286,6 +369,15 @@ class HibachiApiClient:
             )
 
     def set_api_key(self, api_key: str | None) -> None:
+        """Set the API key for authenticated requests.
+
+        Args:
+            api_key: The API key string (or None to clear)
+
+        Raises:
+            ValidationError: If the api_key is an invalid type
+
+        """
         _api_key = cast(Any, api_key)
         if not isinstance(_api_key, (str, NoneType)):
             raise ValidationError from TypeError(
@@ -295,6 +387,16 @@ class HibachiApiClient:
         self._http_executor.api_key = api_key
 
     def set_private_key(self, private_key: str) -> None:
+        """Set the private key for signing requests.
+
+        Supports two formats:
+            - Ethereum private key (hex string with or without 0x prefix) for wallet accounts
+            - HMAC key (non-hex string) for web accounts
+
+        Args:
+            private_key: The private key as a hex string (with/without 0x) or HMAC key
+
+        """
         if private_key.startswith("0x"):
             private_key = private_key[2:]
             private_key_bytes = bytes.fromhex(private_key)
@@ -306,30 +408,27 @@ class HibachiApiClient:
     """ Market API endpoints, can be called without having an account """
 
     def get_exchange_info(self) -> ExchangeInfo:
-        """
-        Return exchange metadata, currently it will return all futureContracts.
+        """Get exchange metadata and maintenance information.
 
-        Also returns a list of exchange maintenance windows in the "maintenanceWindow" field. For each window, the fields "begin" and "end" denote the beginning and end of the window, in seconds since the UNIX epoch. The field "note" contains a note.
+        Retrieves all available future contracts, fee configuration, withdrawal limits,
+        and maintenance windows. The maintenance status can be "NORMAL", "UNSCHEDULED_MAINTENANCE",
+        or "SCHEDULED_MAINTENANCE".
 
-        The field "maintenanceStatus" can have the values "NORMAL", "UNSCHEDULED_MAINTENANCE", "SCHEDULED_MAINTENANCE". If the exchange is currently under scheduled maintenance, the field "currentMaintenanceWindow" displays information on the current maintenance window.
+        Returns:
+            ExchangeInfo: Exchange metadata including fee config, future contracts,
+                withdrawal limits, maintenance windows, and current status
 
-        Endpoint: `GET /market/exchange-info`
+        Raises:
+            DeserializationError: If the API response cannot be parsed
 
-        ```python
-        exchange_info = client.get_exchange_info()
-        print(exchange_info)
-        ```
-        Return type:
-        ```python
-        ExchangeInfo {
-            feeConfig: FeeConfig
-            futureContracts: List[FutureContract]
-            instantWithdrawalLimit: WithdrawalLimit
-            maintenanceWindow: List[MaintenanceWindow]
-            # can be NORMAL, MAINTENANCE
-            status: str
-        }
-        ```
+        Example:
+            .. code-block:: python
+
+                exchange_info = client.get_exchange_info()
+                print(exchange_info)
+
+        Endpoint:
+            GET /market/exchange-info
 
         """
         exchange_info = self.__send_simple_request("/market/exchange-info")
@@ -378,65 +477,21 @@ class HibachiApiClient:
         )
 
     def get_inventory(self) -> InventoryResponse:
-        """
-        Similar to /market/exchange-info, in addition to the contract metadata we will return their latest price info.
+        """Get market inventory with contract metadata and latest price information.
 
-        Return type:
-        ```python
-        InventoryResponse {
-            crossChainAssets: {
-                chain: str
-                exchangeRateFromUSDT: str
-                exchangeRateToUSDT: str
-                instantWithdrawalLowerLimitInUSDT: str
-                instantWithdrawalUpperLimitInUSDT: str
-                token: str
-            }[]
-            feeConfig: {
-                depositFees: str
-                instantWithdrawDstPublicKey: str
-                instantWithdrawalFees: List[List[Union[int, float]]]
-                tradeMakerFeeRate: str
-                tradeTakerFeeRate: str
-                transferFeeRate: str
-                withdrawalFees: str
-            }
-            markets: {
-                contract: {
-                    displayName: str
-                    id: int
-                    marketCloseTimestamp: str | None
-                    marketOpenTimestamp: str | None
-                    minNotional: str
-                    minOrderSize: str
-                    orderbookGranularities: List[str]
-                    initialMarginRate: str
-                    maintenanceMarginRate: str
-                    settlementDecimals: int
-                    settlementSymbol: str
-                    status: str
-                    stepSize: str
-                    symbol: str
-                    tickSize: str
-                    underlyingDecimals: int
-                    underlyingSymbol: str
-                }
-                info: {
-                    category: str
-                    markPrice: str
-                    price24hAgo: str
-                    priceLatest: str
-                    tags: List[str]
-                }
-            }[]
-            tradingTiers: {
-                level: int
-                lowerThreshold: str
-                title: str
-                upperThreshold: str
-            }[]
-        }
-        ```
+        Similar to get_exchange_info, but includes current price data for all contracts,
+        cross-chain assets, fee configuration, and trading tiers.
+
+        Returns:
+            InventoryResponse: Market inventory including cross-chain assets, fee config,
+                markets with contract and price info, and trading tiers
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Endpoint:
+            GET /market/inventory
+
         """
         market_inventory = self.__send_simple_request("/market/inventory")
 
@@ -474,6 +529,24 @@ class HibachiApiClient:
         return output
 
     def get_prices(self, symbol: str) -> PriceResponse:
+        """Get current price information for a trading symbol.
+
+        Retrieves mark price, index price, and funding rate estimation for the specified symbol.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+
+        Returns:
+            PriceResponse: Price information including mark price, index price, and funding rates
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+            HttpConnectionError: If the API request fails
+
+        Endpoint:
+            GET /market/data/prices
+
+        """
         response = self.__send_simple_request(f"/market/data/prices?symbol={symbol}")
         try:
             response["fundingRateEstimation"] = create_with(  # type: ignore
@@ -486,6 +559,24 @@ class HibachiApiClient:
         return result
 
     def get_stats(self, symbol: str) -> StatsResponse:
+        """Get 24-hour statistics for a trading symbol.
+
+        Retrieves 24-hour trading statistics including volume, high/low prices, and price changes.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+
+        Returns:
+            StatsResponse: 24-hour trading statistics
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+            HttpConnectionError: If the API request fails
+
+        Endpoint:
+            GET /market/data/stats
+
+        """
         response = self.__send_simple_request(f"/market/data/stats?symbol={symbol}")
         try:
             result = create_with(StatsResponse, response)
@@ -494,6 +585,24 @@ class HibachiApiClient:
         return result
 
     def get_trades(self, symbol: str) -> TradesResponse:
+        """Get recent trades for a trading symbol.
+
+        Retrieves the most recent executed trades for the specified symbol.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+
+        Returns:
+            TradesResponse: List of recent trades with price, quantity, taker side, and timestamp
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+            HttpConnectionError: If the API request fails
+
+        Endpoint:
+            GET /market/data/trades
+
+        """
         response = self.__send_simple_request(f"/market/data/trades?symbol={symbol}")
         try:
             result = TradesResponse(
@@ -512,6 +621,25 @@ class HibachiApiClient:
         return result
 
     def get_klines(self, symbol: str, interval: Interval) -> KlinesResponse:
+        """Get candlestick (K-line) data for a trading symbol.
+
+        Retrieves historical candlestick data at the specified time interval.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+            interval: The time interval for candlesticks (e.g., Interval.ONE_MINUTE)
+
+        Returns:
+            KlinesResponse: List of candlestick data with OHLCV information
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+            HttpConnectionError: If the API request fails
+
+        Endpoint:
+            GET /market/data/klines
+
+        """
         response = self.__send_simple_request(
             f"/market/data/klines?symbol={symbol}&interval={interval.value}"
         )
@@ -524,17 +652,23 @@ class HibachiApiClient:
         return result
 
     def get_open_interest(self, symbol: str) -> OpenInterestResponse:
-        """Get open interest for a symbol
+        """Get open interest for a trading symbol.
 
-        Endpoint: `GET /market/data/open-interest`
+        Retrieves the current open interest (total outstanding contracts) for the specified symbol.
 
         Args:
-            symbol: The trading symbol (e.g. "BTC/USDT-P")
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
 
         Returns:
             OpenInterestResponse: The open interest data
 
-        -----------------------------------------------------------------------
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+            HttpConnectionError: If the API request fails
+
+        Endpoint:
+            GET /market/data/open-interest
+
         """
         response = self.__send_simple_request(
             f"/market/data/open-interest?symbol={symbol}"
@@ -546,32 +680,27 @@ class HibachiApiClient:
         return result
 
     def get_orderbook(self, symbol: str, depth: int, granularity: float) -> OrderBook:
-        """
-        Get the orderbook price levels.
-        It will return up to depth price levels on both side. The price level will be aggreated based on granularity.
+        """Get orderbook price levels for a trading symbol.
 
-        Endpoint: `GET /market/data/orderbook`
+        Retrieves aggregated bid and ask price levels from the orderbook. Price levels
+        are aggregated based on the specified granularity.
 
         Args:
-            symbol: The trading symbol (e.g. "BTC/USDT-P")
-            depth: The number of price levels to return on each side
-            granularity: The price level granularity (e.g. 0.01)
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+            depth: Number of price levels to return on each side (1-100)
+            granularity: Price level granularity for aggregation (e.g., 0.01)
 
-        Return type:
-        ```python
-         OrderBook {
-            ask: {
-                price: str
-                quantity: str
-            }[]
-            bid: {
-                price: str
-                quantity: str
-            }[]
-        }
-        ```
+        Returns:
+            OrderBook: Orderbook with bid and ask price levels containing price and quantity
 
-        -----------------------------------------------------------------------
+        Raises:
+            ValueError: If depth is not between 1 and 100, or granularity is not valid
+            DeserializationError: If the API response cannot be parsed
+            HttpConnectionError: If the API request fails
+
+        Endpoint:
+            GET /market/data/orderbook
+
         """
         depth = int(depth)
         if depth < 1 or depth > 100:
@@ -611,25 +740,27 @@ class HibachiApiClient:
     ### ------------------------------------------------ Account API - Capital ------------------------------------------------
 
     def get_capital_balance(self) -> CapitalBalance:
+        """Get account balance including unrealized PnL.
+
+        Retrieves the net equity balance for your account, which includes
+        unrealized profit and loss from open positions.
+
+        Returns:
+            CapitalBalance: Account balance as a string
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                capital_balance = client.get_capital_balance()
+                print(capital_balance.balance)
+
+        Endpoint:
+            GET /capital/balance
+
         """
-        Get the balance of your account.
-        The returned balance is your net equity which includes unrealized PnL.
-
-        Endpoint: `GET /capital/balance`
-
-        ```python
-        capital_balance = client.get_capital_balance()
-        print(capital_balance.balance)
-        ```
-
-        ```
-        CapitalBalance {
-            balance: str
-        }
-        ```
-        -----------------------------------------------------------------------
-        """
-
         response = self.__send_authorized_request(
             "GET", f"/capital/balance?accountId={self.account_id}"
         )
@@ -640,38 +771,26 @@ class HibachiApiClient:
         return result
 
     def get_capital_history(self) -> CapitalHistory:
+        """Get deposit and withdrawal history for your account.
+
+        Retrieves the most recent deposit and withdrawal transactions, up to
+        100 of each transaction type.
+
+        Returns:
+            CapitalHistory: List of transactions including deposits and withdrawals
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                capital_history = client.get_capital_history()
+
+        Endpoint:
+            GET /capital/history
+
         """
-        Get the deposit and withdraw history of your account.
-        It will return most recent up to 100 deposit and 100 withdraw.
-
-        Endpoint: `GET /capital/history`
-
-        ```python
-        capital_history = client.get_capital_history()
-        ```
-
-        ```python
-        Transaction {
-            assetId: int
-            blockNumber: int
-            chain: str | None
-            etaTsSec: int
-            id: int
-            quantity: str
-            status: str
-            timestampSec: int
-            token: str | None
-            transactionHash: Union[str,str]
-            transactionType: str
-        }
-
-        CapitalHistory {
-            transactions: List[Transaction]
-        }
-        ```
-        -----------------------------------------------------------------------
-        """
-
         response = self.__send_authorized_request(
             "GET", f"/capital/history?accountId={self.account_id}"
         )
@@ -696,23 +815,28 @@ class HibachiApiClient:
         max_fees: str,
         network: str = "arbitrum",
     ) -> WithdrawResponse:
-        """Submit a withdraw request.
+        """Submit a withdrawal request.
 
-        Endpoint: `POST /capital/withdraw`
+        Submits a request to withdraw funds to an external address. The quantity
+        must not exceed the maximalWithdraw value returned by get_account_info().
 
         Args:
-            coin: The coin to withdraw (e.g. "USDT")
-            withdraw_address: The address to withdraw to
-            quantity: The amount to withdraw should be no more than maximalWithdraw returned by /trade/account/info endpoint, otherwise it will be rejected.
+            coin: The coin to withdraw (e.g., "USDT")
+            withdraw_address: The destination withdrawal address
+            quantity: Amount to withdraw (must not exceed maximalWithdraw)
             max_fees: Maximum fees allowed for the withdrawal
-            network: The network to withdraw on (default "arbitrum")
+            network: The blockchain network to withdraw on (default: "arbitrum")
 
         Returns:
-            WithdrawResponse: The response containing the order ID
+            WithdrawResponse: Response containing the withdrawal order ID
 
-        -----------------------------------------------------------------------
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Endpoint:
+            POST /capital/withdraw
+
         """
-
         # Create withdraw request payload
         request = WithdrawRequest(
             accountId=self.account_id,
@@ -742,17 +866,26 @@ class HibachiApiClient:
         dstPublicKey: str,
         max_fees: HibachiNumericInput,
     ) -> TransferResponse:
-        """
-        Request fund transfer to another account.
+        """Request fund transfer to another account.
 
-        Endpoint: `POST /capital/transfer`
+        Transfers funds from your account to another account identified by its public key.
 
         Args:
-            coin: The coin to transfer
-            fees: The fees to transfer
-            quantity: The quantity to transfer
-        """
+            coin: The coin to transfer (e.g., "USDT")
+            quantity: The amount to transfer
+            dstPublicKey: Destination account's public key
+            max_fees: Maximum fees as a percentage
 
+        Returns:
+            TransferResponse: Response containing the transfer details
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Endpoint:
+            POST /capital/transfer
+
+        """
         nonce = time_ns() // 1_000
 
         request = TransferRequest(
@@ -778,20 +911,22 @@ class HibachiApiClient:
         return result
 
     def get_deposit_info(self, public_key: str) -> DepositInfo:
-        """Get deposit address information.
+        """Get deposit address information for a public key.
 
-        Endpoint: `GET /capital/deposit-info`
+        Retrieves the EVM deposit address associated with the specified public key.
 
         Args:
             public_key: The public key to get deposit info for
 
         Returns:
-            DepositInfo: The deposit address information
+            DepositInfo: Deposit address information containing the EVM deposit address
 
-        ```python
-        DepositInfo { depositAddressEvm: str }
-        ```
-        -----------------------------------------------------------------------
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Endpoint:
+            GET /capital/deposit-info
+
         """
         response = self.__send_authorized_request(
             "GET",
@@ -808,14 +943,18 @@ class HibachiApiClient:
     ) -> str:
         """Sign a withdrawal request payload.
 
+        Creates a binary payload from withdrawal parameters and signs it using
+        the configured private key.
+
         Args:
-            coin: The coin to withdraw
-            withdraw_address: The withdrawal address
+            coin: The coin to withdraw (e.g., "USDT")
+            withdraw_address: The destination withdrawal address
             quantity: The withdrawal amount
             max_fees: Maximum fees allowed
 
         Returns:
-            str: The signature for the withdrawal request
+            str: The hex-encoded signature for the withdrawal request
+
         """
         asset_id = self.__get_asset_id(coin)
         # Create payload bytes
@@ -842,6 +981,19 @@ class HibachiApiClient:
         dst_account_public_key: str,
         max_fees_percent: HibachiNumericInput,
     ) -> str:
+        """Create and sign the payload for a transfer request.
+
+        Args:
+            nonce: Unique nonce for this transfer (defaults to current epoch timestamp in μs)
+            coin: The coin to transfer (e.g., "USDT")
+            quantity: The amount to transfer
+            dst_account_public_key: Destination account's public key
+            max_fees_percent: Maximum fees as a percentage
+
+        Returns:
+            str: The hex-encoded signature
+
+        """
         quantity = numeric_to_decimal(quantity)
         max_fees_percent = numeric_to_decimal(max_fees_percent)
         asset_id = self.__get_asset_id(coin)
@@ -870,50 +1022,28 @@ class HibachiApiClient:
     ## Trade API endpoints, account_id and api_key must be set
 
     def get_account_info(self) -> AccountInfo:
+        """Get detailed account information.
+
+        Retrieves comprehensive account information including balance, positions,
+        assets, fee rates, and withdrawal limits.
+
+        Returns:
+            AccountInfo: Account details including balance, positions, assets,
+                order notional, unrealized PnL, and fee rates
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                account_info = client.get_account_info()
+                print(account_info.balance)
+
+        Endpoint:
+            GET /trade/account/info
+
         """
-        Get account information/details
-
-        Endpoint: `GET /trade/account/info`
-
-        ```python
-        account_info = client.get_account_info()
-        print(account_info.balance)
-        ```
-
-        Return type:
-
-        ```python
-        AccountInfo {
-            assets: {
-                quantity: str
-                symbol: str
-            }[]
-            balance: str
-            maximalWithdraw: str
-            numFreeTransfersRemaining: int
-            positions: {
-                direction: str
-                entryNotional: str
-                markPrice: str
-                notionalValue: str
-                openPrice: str
-                quantity: str
-                symbol: str
-                unrealizedFundingPnl: str
-                unrealizedTradingPnl: str
-            }[]
-            totalOrderNotional: str
-            totalPositionNotional: str
-            totalUnrealizedFundingPnl: str
-            totalUnrealizedPnl: str
-            totalUnrealizedTradingPnl: str
-            tradeMakerFeeRate: str
-            tradeTakerFeeRate: str
-        }
-        ```
-        -----------------------------------------------------------------------
-        """
-
         response = self.__send_authorized_request(
             "GET", f"/trade/account/info?accountId={self.account_id}"
         )
@@ -945,40 +1075,26 @@ class HibachiApiClient:
         return result
 
     def get_account_trades(self) -> AccountTradesResponse:
+        """Get account trade history.
+
+        Retrieves the most recent trade history for your account, up to 100 records.
+
+        Returns:
+            AccountTradesResponse: List of recent trades with details including price,
+                quantity, side, fees, realized PnL, and timestamps
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                account_trades = client.get_account_trades()
+
+        Endpoint:
+            GET /trade/account/trades
+
         """
-        Get the trades history of your account.
-        It will return most recent up to 100 records.
-
-        Endpoint: `GET /trade/account/trades`
-
-        ```python
-        account_trades = client.get_account_trades()
-        ```
-
-        Return type:
-
-        ```python
-        AccountTradesResponse {
-            trades: {
-                askAccountId: int
-                askOrderId: int
-                bidAccountId: int
-                bidOrderId: int
-                fee: str
-                id: int
-                orderType: str
-                price: str
-                quantity: str
-                realizedPnl: str
-                side: str
-                symbol: str
-                timestamp: int
-            }[]
-        }
-        ```
-        -----------------------------------------------------------------------
-        """
-
         response = self.__send_authorized_request(
             "GET", f"/trade/account/trades?accountId={self.account_id}"
         )
@@ -990,32 +1106,27 @@ class HibachiApiClient:
         return result
 
     def get_settlements_history(self) -> SettlementsResponse:
+        """Get settlement history for your account.
+
+        Retrieves the history of settled trades, including position settlements
+        and funding rate settlements.
+
+        Returns:
+            SettlementsResponse: List of settlements with direction, price, quantity,
+                settled amount, symbol, and timestamp
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                settlements = client.get_settlements_history()
+
+        Endpoint:
+            GET /trade/account/settlements_history
+
         """
-        You can obtain the history of settled trades.
-
-        Endpoint: `GET /trade/account/settlements_history`
-
-        ```python
-        settlements = client.get_settlements_history()
-        ```
-
-        Return type:
-
-        ```python
-        SettlementsResponse {
-            settlements: {
-                direction: str
-                indexPrice: str
-                quantity: str
-                settledAmount: str
-                symbol: str
-                timestamp: int
-            }[]
-        }
-        ```
-        -----------------------------------------------------------------------
-        """
-
         response = self.__send_authorized_request(
             "GET", f"/trade/account/settlements_history?accountId={self.account_id}"
         )
@@ -1030,41 +1141,27 @@ class HibachiApiClient:
         return result
 
     def get_pending_orders(self) -> PendingOrdersResponse:
+        """Get all pending orders for your account.
+
+        Retrieves all currently active orders including open, partially filled,
+        and triggered orders.
+
+        Returns:
+            PendingOrdersResponse: List of pending orders with details including order ID,
+                type, side, price, quantity, status, and timestamps
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                pending_orders = client.get_pending_orders()
+
+        Endpoint:
+            GET /trade/orders
+
         """
-        Get pending orders
-
-        Endpoint: `GET /trade/orders`
-
-        ```python
-        pending_orders = client.get_pending_orders()
-        ```
-
-        Return type:
-        ```python
-        PendingOrdersResponse {
-            orders: {
-                accountId: int
-                availableQuantity: str
-                contractId: int | None
-                creationTime: int | None
-                finishTime: int | None
-                numOrdersRemaining: int | None
-                numOrdersTotal: int | None
-                orderId: str
-                orderType: OrderType
-                price: str | None
-                quantityMode: str | None
-                side: Side
-                status: OrderStatus
-                symbol: str
-                totalQuantity: str | None
-                triggerPrice: str | None
-            }[]
-        }
-        ```
-        -----------------------------------------------------------------------
-        """
-
         response = self.__send_authorized_request(
             "GET", f"/trade/orders?accountId={self.account_id}"
         )
@@ -1078,41 +1175,33 @@ class HibachiApiClient:
     def get_order_details(
         self, order_id: int | None = None, nonce: int | None = None
     ) -> Order:
-        """
-        Get order details
+        """Get detailed information for a specific order.
 
-        Endpoint: `GET /trade/order`
+        Retrieves order details using either the order ID or the nonce used when
+        creating the order. At least one identifier must be provided.
 
-        Either the order_id or the nonce can be used to query the order details
+        Args:
+            order_id: The order ID to query (optional)
+            nonce: The nonce used when creating the order (optional)
 
-        ```python
-        order_details = client.get_order_details(order_id=123)
-        # or
-        order_details = client.get_order_details(nonce=1234567)
-        ```
+        Returns:
+            Order: Order details including ID, type, side, price, quantity, status,
+                and timestamps
 
-        Return type:
-        ```python
-        Order {
-            accountId: int
-            availableQuantity: str
-            contractId: int | None
-            creationTime: int | None
-            finishTime: int | None
-            numOrdersRemaining: int | None
-            numOrdersTotal: int | None
-            orderId: str
-            orderType: OrderType
-            price: str | None
-            quantityMode: str | None
-            side: Side
-            status: OrderStatus
-            symbol: str
-            totalQuantity: str | None
-            triggerPrice: str | None
-        }
-        ```
-        -----------------------------------------------------------------------
+        Raises:
+            ValidationError: If neither order_id nor nonce is provided
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                order_details = client.get_order_details(order_id=123)
+                # or
+                order_details = client.get_order_details(nonce=1234567)
+
+        Endpoint:
+            GET /trade/order
+
         """
         self.__check_order_selector(order_id, nonce)
 
@@ -1144,19 +1233,41 @@ class HibachiApiClient:
         order_flags: OrderFlags | None = None,
         tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
-        """
-        Place a market order
+        """Place a market order.
 
-        Endpoint: `POST /trade/order`
+        Submits a market order that executes immediately at the current market price.
+        Supports trigger prices, TWAP execution, and take-profit/stop-loss configurations.
 
-        ```python
-        (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.BUY, max_fees_percent)
-        (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.SELL, max_fees_percent)
-        (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.BID, max_fees_percent, creation_deadline=2)
-        (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.ASK, max_fees_percent, trigger_price=1_000_000)
-        (nonce, order_id) = client.place_market_order("SOL/USDT-P", 1, Side.BID, max_fees_percent, twap_config=twap_config)
-        (nonce, trigger_market_order_id) = client.place_market_order("BTC/USDT-P", 0.001, Side.ASK, max_fees_percent, trigger_price=90_100)
-        ```
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+            quantity: The order quantity
+            side: Order side (BUY, SELL, BID, or ASK)
+            max_fees_percent: Maximum fees as a percentage
+            trigger_price: Price to trigger order execution (optional)
+            twap_config: Time-weighted average price configuration (optional)
+            creation_deadline: Deadline in seconds for order creation (optional)
+            order_flags: Additional order flags (optional)
+            tpsl: Take-profit/stop-loss configuration (optional)
+
+        Returns:
+            tuple[Nonce, OrderId]: Tuple containing the nonce (defaults to current epoch timestamp in μs) and order ID
+
+        Raises:
+            ValueError: If both twap_config and trigger_price are set, or if twap_config and tpsl are set
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.BUY, max_fees_percent)
+                (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.SELL, max_fees_percent)
+                (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.BID, max_fees_percent, creation_deadline=2)
+                (nonce, order_id) = client.place_market_order("BTC/USDT-P", 0.0001, Side.ASK, max_fees_percent, trigger_price=1_000_000)
+                (nonce, order_id) = client.place_market_order("SOL/USDT-P", 1, Side.BID, max_fees_percent, twap_config=twap_config)
+
+        Endpoint:
+            POST /trade/order
+
         """
         self.__ensure_contract_listed(symbol)
 
@@ -1225,21 +1336,41 @@ class HibachiApiClient:
         order_flags: OrderFlags | None = None,
         tpsl: TPSLConfig | None = None,
     ) -> tuple[Nonce, OrderId]:
+        """Place a limit order.
+
+        Submits a limit order that executes only at the specified price or better.
+        Supports trigger prices and take-profit/stop-loss configurations.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+            quantity: The order quantity
+            price: The limit price
+            side: Order side (BUY, SELL, BID, or ASK)
+            max_fees_percent: Maximum fees as a percentage
+            trigger_price: Price to trigger order execution (optional)
+            creation_deadline: Deadline in seconds for order creation (optional)
+            order_flags: Additional order flags (optional)
+            tpsl: Take-profit/stop-loss configuration (optional)
+
+        Returns:
+            tuple[Nonce, OrderId]: Tuple containing the nonce (defaults to current epoch timestamp in μs) and order ID
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 80_000, Side.BUY, max_fees_percent)
+                (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 80_000, Side.SELL, max_fees_percent)
+                (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 80_000, Side.BID, max_fees_percent, creation_deadline=2)
+                (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 1_001_000, Side.ASK, max_fees_percent, trigger_price=1_000_000)
+                (nonce, limit_order_id) = client.place_limit_order("BTC/USDT-P", 0.001, 6_000, Side.BID, max_fees_percent)
+
+        Endpoint:
+            POST /trade/order
+
         """
-        Place a limit order
-
-        Endpoint: `POST /trade/order`
-
-        ```python
-        (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 80_000, Side.BUY, max_fees_percent)
-        (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 80_000, Side.SELL, max_fees_percent)
-        (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 80_000, Side.BID, max_fees_percent, creation_deadline=2)
-        (nonce, order_id) = client.place_limit_order("BTC/USDT-P", 0.0001, 1_001_000, Side.ASK, max_fees_percent, trigger_price=1_000_000)
-        (nonce, limit_order_id) = client.place_limit_order("BTC/USDT-P", 0.001, 6_000, Side.BID, max_fees_percent)
-        (nonce, trigger_limit_order_id) = client.place_limit_order("BTC/USDT-P", 0.001, 90_000, Side.ASK, max_fees_percent, trigger_price=90_100)
-        ```
-        """
-
         self.__ensure_contract_listed(symbol)
 
         if side == Side.BUY:
@@ -1301,6 +1432,28 @@ class HibachiApiClient:
         creation_deadline: Decimal | None = None,
         order_flags: OrderFlags | None = None,
     ) -> tuple[Nonce, OrderId]:
+        """Place a parent order with take-profit/stop-loss child orders.
+
+        Creates a parent order along with its configured TP/SL child orders in a single batch.
+
+        Args:
+            symbol: Trading symbol
+            quantity: Order quantity
+            price: Limit price (None for market orders)
+            side: Order side (BID/ASK)
+            max_fees_percent: Maximum fees as percentage
+            tpsl: Take-profit/stop-loss configuration
+            trigger_price: Trigger price for parent order (optional)
+            creation_deadline: Deadline for order creation (optional)
+            order_flags: Additional order flags (optional)
+
+        Returns:
+            tuple[Nonce, OrderId]: The nonce (defaults to current epoch timestamp in μs) and order ID of the parent order
+
+        Raises:
+            DeserializationError: If the API response cannot be parsed
+
+        """
         # TODO double conversion
         parent_order_request = CreateOrder(
             symbol=symbol,
@@ -1366,20 +1519,39 @@ class HibachiApiClient:
         trigger_price: HibachiNumericInput | None = None,
         creation_deadline: HibachiNumericInput | None = None,
     ) -> Json:
+        """Update an existing order.
+
+        Modifies the parameters of an existing order including quantity, price,
+        and trigger price. The order is retrieved first to maintain unmodified fields.
+
+        Args:
+            order_id: The ID of the order to update
+            max_fees_percent: Maximum fees as a percentage
+            quantity: Updated order quantity (optional)
+            price: Updated limit price (optional)
+            trigger_price: Updated trigger price (optional)
+            creation_deadline: Deadline in seconds for update (optional)
+
+        Returns:
+            Json: The API response
+
+        Raises:
+            ValidationError: If update parameters are invalid for the order type
+            DeserializationError: If the API response cannot be parsed
+
+        Example:
+            .. code-block:: python
+
+                max_fees_percent = 0.0005
+                client.update_order(order_id, max_fees_percent, quantity=0.002)
+                client.update_order(order_id, max_fees_percent, price=1_050_000)
+                client.update_order(order_id, max_fees_percent, trigger_price=1_100_000)
+                client.update_order(order_id, max_fees_percent, quantity=0.001, price=1_210_000, trigger_price=1_250_000)
+
+        Endpoint:
+            PUT /trade/order
+
         """
-        Update an order
-
-        Endpoint: `PUT /trade/order`
-
-        ```python
-        max_fees_percent = 0.0005
-        client.update_order(order_id, max_fees_percent, quantity=0.002)
-        client.update_order(order_id, max_fees_percent, price=1_050_000)
-        client.update_order(order_id, max_fees_percent, trigger_price=1_100_000)
-        client.update_order(order_id, max_fees_percent, quantity=0.001, price=1_210_000, trigger_price=1_250_000)
-        ```
-        """
-
         order = self.get_order_details(order_id=order_id)
 
         price = numeric_to_decimal(price)
@@ -1412,7 +1584,28 @@ class HibachiApiClient:
         creation_deadline: HibachiNumericInput | None = None,
         nonce: Nonce | None = None,
     ) -> Dict[str, Any]:
-        """used to generate the signature for the update order request"""
+        """Generate signature and request data for updating an order.
+
+        Creates the signed request data needed to update an existing order. Infers
+        missing fields from the existing order object.
+
+        Args:
+            order: The existing order to update
+            side: Order side (BID or ASK)
+            max_fees_percent: Maximum fees as a percentage
+            quantity: Updated order quantity (optional)
+            price: Updated limit price (optional)
+            trigger_price: Updated trigger price (optional)
+            creation_deadline: Deadline in seconds for update (optional)
+            nonce: Custom nonce for the update (optional, defaults to current epoch timestamp in μs)
+
+        Returns:
+            Dict[str, Any]: The signed request data ready to send to the API
+
+        Raises:
+            ValidationError: If update parameters are invalid for the order type
+
+        """
         symbol = order.symbol
         self.__ensure_contract_listed(symbol)
 
@@ -1472,15 +1665,30 @@ class HibachiApiClient:
     def cancel_order(
         self, order_id: int | None = None, nonce: int | None = None
     ) -> Json:
-        """
-        Cancel an order
+        """Cancel an existing order.
 
-        Endpoint: `DELETE /trade/order`
+        Cancels an order using either the order ID or the nonce used when creating
+        the order. At least one identifier must be provided.
 
-        ```python
-        client.cancel_order(order_id=123)
-        client.cancel_order(nonce=1234567)
-        ```
+        Args:
+            order_id: The order ID to cancel (optional)
+            nonce: The nonce used when creating the order (optional)
+
+        Returns:
+            Json: The API response
+
+        Raises:
+            ValidationError: If neither order_id nor nonce is provided
+
+        Example:
+            .. code-block:: python
+
+                client.cancel_order(order_id=123)
+                client.cancel_order(nonce=1234567)
+
+        Endpoint:
+            DELETE /trade/order
+
         """
         self.__check_order_selector(order_id, nonce)
 
@@ -1494,17 +1702,25 @@ class HibachiApiClient:
         )
 
     def cancel_all_orders(self, contractId: int | None = None) -> Json:
-        """
-        Cancel all orders
+        """Cancel all pending orders.
 
-        Endpoint: `DELETE /trade/orders`
+        Cancels all currently pending orders for the account. Currently uses a
+        workaround that individually cancels each order.
 
-        ```python
-        client.cancel_all_orders()
-        ```
+        Args:
+            contractId: Contract ID to filter orders (optional, currently unused)
 
-        Note: currently there is a bug in the API where cancelling all orders is not working.
-        This is a workaround to cancel all orders.
+        Returns:
+            Json: The API response (empty dict when using workaround)
+
+        Example:
+            .. code-block:: python
+
+                client.cancel_all_orders()
+
+        Endpoint:
+            DELETE /trade/orders
+
         """
         # TODO remove this
         workaround = True
@@ -1525,48 +1741,43 @@ class HibachiApiClient:
     def batch_orders(
         self, orders: list[CreateOrder | UpdateOrder | CancelOrder]
     ) -> BatchResponse:
-        """
-        Creating, updating and cancelling orders can be done in a batch
-        This requires knowing all details of the existing orders, there is no shortcut for update order details
+        """Submit multiple order operations in a single batch request.
 
-        Endpoint: `POST /trade/orders`
+        Creates, updates, and cancels orders atomically in a single API call.
+        All order details must be provided explicitly (no shortcuts for updates).
 
-        ```python
-        response = client.batch_orders([
-            # Simple market order
-            CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent),
-            # Simple limit order
-            CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, price=90_000),
-            # Trigger market order
-            CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, trigger_price=85_000),
-            # Trigger limit order
-            CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, price=84_750, trigger_price=85_000),
-            # TWAP order
-            CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, twap_config=TWAPConfig(5, TWAPQuantityMode.FIXED)),
-            # Market order, only valid if placed within two seconds
-            CreateOrder("BTC/USDT-P", Side.BUY, 0.001, max_fees_percent, creation_deadline=2),
-            # Limit order, only valid if placed within one seconds
-            CreateOrder("BTC/USDT-P", Side.BUY, 0.001, max_fees_percent, price=90_000, creation_deadline=1),
-            # Trigger market order, only valid if placed within three seconds
-            CreateOrder("BTC/USDT-P", Side.BUY, 0.001, max_fees_percent, trigger_price=85_000, creation_deadline=3),
-            # Trigger limit order, only valid if placed within five seconds
-            CreateOrder("BTC/USDT-P", Side.BUY, 0.001, max_fees_percent, price=75_250, trigger_price=75_000, creation_deadline=5),
-            # TWAP order only valid if placed within two seconds
-            CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, twap_config=TWAPConfig(5, TWAPQuantityMode.FIXED), creation_deadline=2),
-            # Update limit order
-            # Need to fill all relevant optional parameters
-            UpdateOrder(limit_order_id, "BTC/USDT-P", Side.BUY, 0.001, max_fees_percent, price=60_000),
-            # update trigger limit order
-            # Need to fill all relevant optional parameters
-            UpdateOrder(trigger_limit_order_id, "BTC/USDT-P", Side.ASK, 0.002, max_fees_percent, price=94_000, trigger_price=94_500),
-            # update trigger market order
-            # Need to fill all relevant optional parameters
-            UpdateOrder(trigger_market_order_id, "BTC/USDT-P", Side.ASK, 0.001, max_fees_percent, trigger_price=93_000),
-            # Cancel order
-            CancelOrder(order_id=limit_order_id),
-            CancelOrder(nonce=nonce),
-        ])
-        ```
+        Args:
+            orders: List of order operations (CreateOrder, UpdateOrder, or CancelOrder)
+
+        Returns:
+            BatchResponse: Response containing results for each order operation
+
+        Raises:
+            ValidationError: If an order operation is invalid
+            DeserializationError: If the API response cannot be parsed
+
+        Example::
+
+            response = client.batch_orders([
+                # Simple market order
+                CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent),
+                # Simple limit order
+                CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, price=90_000),
+                # Trigger market order
+                CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, trigger_price=85_000),
+                # Trigger limit order
+                CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, price=84_750, trigger_price=85_000),
+                # TWAP order
+                CreateOrder("BTC/USDT-P", Side.SELL, 0.001, max_fees_percent, twap_config=TWAPConfig(5, TWAPQuantityMode.FIXED)),
+                # Update limit order (need all relevant optional parameters)
+                UpdateOrder(limit_order_id, "BTC/USDT-P", Side.BUY, 0.001, max_fees_percent, price=60_000),
+                # Cancel order
+                CancelOrder(order_id=limit_order_id),
+            ])
+
+        Endpoint:
+            POST /trade/orders
+
         """
         nonce = time_ns() // 1_000
         orders_data: JsonArray = [
@@ -1595,6 +1806,15 @@ class HibachiApiClient:
     """ Deferred helpers """
 
     def __send_simple_request(self, path: str) -> Json:
+        """Send an unauthenticated request to the API.
+
+        Args:
+            path: The API endpoint path
+
+        Returns:
+            Json: The parsed JSON response body
+
+        """
         return self._http_executor.send_simple_request(path).body
 
     def __send_authorized_request(
@@ -1603,11 +1823,34 @@ class HibachiApiClient:
         path: str,
         json: Json | None = None,
     ) -> Json:
+        """Send an authenticated request to the API.
+
+        Args:
+            method: HTTP method (GET, POST, PUT, DELETE)
+            path: The API endpoint path
+            json: Optional JSON payload for the request body
+
+        Returns:
+            Json: The parsed JSON response body
+
+        """
         return self._http_executor.send_authorized_request(method, path, json).body
 
     """ Private helpers """
 
     def __get_asset_id(self, coin: str) -> int:
+        """Get the asset ID for a coin symbol.
+
+        Args:
+            coin: The coin symbol (e.g., "USDT")
+
+        Returns:
+            int: The asset ID
+
+        Raises:
+            ValidationError: If the coin is not recognized by the exchange
+
+        """
         if self._future_contracts is None:
             self.get_exchange_info()
 
@@ -1634,6 +1877,18 @@ class HibachiApiClient:
         return asset_id
 
     def __get_contract(self, symbol: str) -> FutureContract:
+        """Get the future contract metadata for a trading symbol.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+
+        Returns:
+            FutureContract: The contract metadata
+
+        Raises:
+            ValidationError: If the symbol is not recognized by the exchange
+
+        """
         if self._future_contracts is None:
             self.get_exchange_info()
 
@@ -1649,15 +1904,48 @@ class HibachiApiClient:
         return contract
 
     def __ensure_contract_listed(self, symbol: str) -> None:
+        """Validate that a trading symbol is listed on the exchange.
+
+        Args:
+            symbol: The trading symbol to validate
+
+        Raises:
+            ValidationError: If the symbol is not recognized by the exchange
+
+        """
         self.__get_contract(symbol)
 
     def __check_order_selector(self, order_id: int | None, nonce: int | None) -> None:
+        """Validate that at least one order identifier is provided.
+
+        Args:
+            order_id: The order ID (optional)
+            nonce: The order nonce (optional)
+
+        Raises:
+            ValidationError: If neither order_id nor nonce is provided
+
+        """
         if order_id is None and nonce is None:
             raise ValidationError from ValueError(
                 "Either order_id or nonce must be provided"
             )
 
     def __sign_payload(self, payload: bytes) -> str:
+        """Sign a payload using the configured private key.
+
+        Supports both ECDSA (for wallet accounts) and HMAC (for web accounts) signing.
+
+        Args:
+            payload: The bytes to sign
+
+        Returns:
+            str: The hex-encoded signature
+
+        Raises:
+            RuntimeError: If no private key is configured
+
+        """
         if self._private_key:
             # Hash the payload
             message_hash = sha256(payload).digest()
@@ -1691,6 +1979,20 @@ class HibachiApiClient:
         max_fees_percent: Decimal,
         price: Decimal | None,
     ) -> bytes:
+        """Create the binary payload for creating or updating an order.
+
+        Args:
+            contract: The future contract metadata
+            nonce: The nonce for this order (defaults to current epoch timestamp in μs)
+            quantity: The order quantity
+            side: The order side (BID or ASK)
+            max_fees_percent: Maximum fees as a percentage
+            price: The limit price (None for market orders)
+
+        Returns:
+            bytes: The binary payload to be signed
+
+        """
         contract_id = contract.id
 
         nonce_bytes = nonce.to_bytes(8, "big")
@@ -1728,6 +2030,26 @@ class HibachiApiClient:
         order_flags: OrderFlags | None = None,
         trigger_direction: TriggerDirection | None = None,
     ) -> Dict[str, Any]:
+        """Create the request data for placing an order.
+
+        Args:
+            nonce: Unique nonce for this order (defaults to current epoch timestamp in μs)
+            symbol: Trading symbol
+            quantity: Order quantity
+            side: Order side (BID/ASK)
+            max_fees_percent: Maximum fees as percentage
+            trigger_price: Trigger price for conditional orders (optional)
+            price: Limit price (None for market orders)
+            creation_deadline: Deadline for order creation in seconds (optional)
+            twap_config: TWAP configuration for time-weighted orders (optional)
+            parent_order: Parent order reference for child orders (optional)
+            order_flags: Additional order flags (optional)
+            trigger_direction: Direction for trigger activation (optional)
+
+        Returns:
+            Dict[str, Any]: The signed request data ready to send to the API
+
+        """
         contract = self.__get_contract(symbol)
         payload = self.__create_or_update_order_payload(
             contract, nonce, quantity, side, max_fees_percent, price
@@ -1779,6 +2101,24 @@ class HibachiApiClient:
         creation_deadline: Decimal | None,
         order_flags: OrderFlags | None = None,
     ) -> Dict[str, Any]:
+        """Create the request data for updating an existing order.
+
+        Args:
+            order_id: The ID of the order to update
+            nonce: Unique nonce for this update (defaults to current epoch timestamp in μs)
+            symbol: Trading symbol
+            quantity: Updated order quantity
+            side: Order side (BID/ASK)
+            max_fees_percent: Maximum fees as percentage
+            price: Updated limit price (optional)
+            trigger_price: Updated trigger price (optional)
+            creation_deadline: Deadline for update in seconds (optional)
+            order_flags: Additional order flags (optional)
+
+        Returns:
+            Dict[str, Any]: The signed request data ready to send to the API
+
+        """
         contract = self.__get_contract(symbol)
         payload = self.__create_or_update_order_payload(
             contract, nonce, quantity, side, max_fees_percent, price
@@ -1808,6 +2148,19 @@ class HibachiApiClient:
         return request
 
     def __cancel_order_payload(self, order_id: int | None, nonce: int | None) -> bytes:
+        """Create the binary payload for canceling an order.
+
+        Args:
+            order_id: The order ID to cancel (optional)
+            nonce: The order nonce to cancel (optional)
+
+        Returns:
+            bytes: The binary payload to be signed
+
+        Raises:
+            ValidationError: If neither order_id nor nonce is provided
+
+        """
         if order_id is not None:
             return order_id.to_bytes(8, "big")
         if nonce is None:
@@ -1823,6 +2176,17 @@ class HibachiApiClient:
         nonce: int | None,
         nonce_as_str: bool = True,
     ) -> Dict[str, Any]:
+        """Create the request data for canceling an order.
+
+        Args:
+            order_id: The order ID to cancel (optional)
+            nonce: The order nonce to cancel (optional)
+            nonce_as_str: Whether to format nonce as string (default True)
+
+        Returns:
+            Dict[str, Any]: The signed request data ready to send to the API
+
+        """
         payload = self.__cancel_order_payload(order_id, nonce)
         signature = self.__sign_payload(payload)
         request = {"signature": signature}
@@ -1835,6 +2199,19 @@ class HibachiApiClient:
     def __batch_order_request_data(
         self, nonce: int, o: CreateOrder | UpdateOrder | CancelOrder
     ) -> JsonObject:
+        """Create request data for a batch order operation.
+
+        Args:
+            nonce: Base nonce for this operation
+            o: The order operation (CreateOrder, UpdateOrder, or CancelOrder)
+
+        Returns:
+            JsonObject: The request data with action type included
+
+        Raises:
+            ValidationError: If the order type is not recognized
+
+        """
         if type(o) is CreateOrder:
             payload = self._create_order_request_data(
                 nonce,

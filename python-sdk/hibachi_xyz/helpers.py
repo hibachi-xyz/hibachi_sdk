@@ -1,5 +1,4 @@
-"""
-Helper utilities for the Hibachi Python SDK.
+"""Helper utilities for the Hibachi Python SDK.
 
 This module contains utility functions for serialization, deserialization,
 API response handling, WebSocket management, and display formatting.
@@ -68,8 +67,7 @@ def get_hibachi_client() -> str:
 
 @lru_cache(maxsize=1)
 def _required_fields(signature: inspect.Signature) -> list[str]:
-    """
-    Extract list of required parameter names from a function signature.
+    """Extract list of required parameter names from a function signature.
 
     Returns parameter names that have no default value and are positional
     or keyword parameters.
@@ -89,8 +87,7 @@ def _required_fields(signature: inspect.Signature) -> list[str]:
 
 @lru_cache(maxsize=1)
 def _required_nullable_fields(signature: inspect.Signature) -> list[str]:
-    """
-    Return names of parameters that are required and whose annotation allows None.
+    """Return names of parameters that are required and whose annotation allows None.
 
     This is useful for determining which fields should be explicitly set to None
     when constructing objects from partial data.
@@ -128,8 +125,7 @@ T = TypeVar("T")
 def create_with(
     func: Callable[..., T], data: Dict[str, Any], *, implicit_null: bool = False
 ) -> T:
-    """
-    Create an object from a dictionary, filtering to only valid parameters.
+    """Create an object from a dictionary, filtering to only valid parameters.
 
     This allows constructing objects from API responses that may contain
     additional fields beyond what the constructor expects, making the SDK
@@ -142,6 +138,7 @@ def create_with(
 
     Returns:
         Instance created by calling func with filtered data
+
     """
     sig = inspect.signature(func)
     valid_keys = sig.parameters.keys()
@@ -163,8 +160,7 @@ def create_with(
 
 
 def decimal_as_str(obj: object) -> str:
-    """
-    Custom JSON serializer for Decimal objects.
+    """Serialize Decimal objects to JSON strings.
 
     Converts Decimal to string to preserve precision in JSON serialization.
     """
@@ -175,8 +171,7 @@ def decimal_as_str(obj: object) -> str:
 
 
 def serialize_request(request: Json | None) -> bytes | None:
-    """
-    Serialize a request object to JSON bytes.
+    """Serialize a request object to JSON bytes.
 
     Uses orjson for fast serialization with custom Decimal handling.
 
@@ -188,6 +183,7 @@ def serialize_request(request: Json | None) -> bytes | None:
 
     Raises:
         SerializationError: If serialization fails
+
     """
     if request is None:
         return None
@@ -198,8 +194,7 @@ def serialize_request(request: Json | None) -> bytes | None:
 
 
 def deserialize_response(response_body: bytes, url: str) -> Json:
-    """
-    Deserialize a JSON response body.
+    """Deserialize a JSON response body.
 
     Args:
         response_body: Response bytes to deserialize
@@ -210,6 +205,7 @@ def deserialize_response(response_body: bytes, url: str) -> Json:
 
     Raises:
         DeserializationError: If deserialization fails
+
     """
     try:
         return orjson.loads(response_body)  # type: ignore
@@ -222,14 +218,13 @@ def deserialize_response(response_body: bytes, url: str) -> Json:
 def deserialize_batch_response_order(
     data: JsonObject,
 ) -> BatchResponseOrder:
-    """
-    Deserialize a batch response order based on which fields are present.
+    """Deserialize a batch response order based on which fields are present.
 
     Logic:
-    - If 'errorCode' is present -> ErrorBatchResponse
-    - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
-    - If only 'orderId' is present -> UpdateOrderBatchResponse
-    - If only 'nonce' is present -> CancelOrderBatchResponse
+        - If 'errorCode' is present -> ErrorBatchResponse
+        - If both 'nonce' and 'orderId' are present -> CreateOrderBatchResponse
+        - If only 'orderId' is present -> UpdateOrderBatchResponse
+        - If only 'nonce' is present -> CancelOrderBatchResponse
 
     Args:
         data: JSON object to deserialize
@@ -239,6 +234,7 @@ def deserialize_batch_response_order(
 
     Raises:
         DeserializationError: If the data cannot be deserialized into any known type
+
     """
     try:
         for k in list(data.keys()):
@@ -268,14 +264,13 @@ def deserialize_batch_response_order(
 
 
 def check_maintenance_window(response: JsonObject) -> None:
-    """
-    Check API response for maintenance status and raise exception if found.
+    """Check API response for maintenance status and raise exception if found.
 
     This function inspects an API response for a status field indicating exchange health.
     The exchange can be in one of three states:
-    - NORMAL: Exchange is operating normally (no exception raised)
-    - SCHEDULED_MAINTENANCE: Exchange is undergoing scheduled maintenance with known timing
-    - UNSCHEDULED_MAINTENANCE: Exchange is undergoing unscheduled maintenance
+        - NORMAL: Exchange is operating normally (no exception raised)
+        - SCHEDULED_MAINTENANCE: Exchange is undergoing scheduled maintenance with known timing
+        - UNSCHEDULED_MAINTENANCE: Exchange is undergoing unscheduled maintenance
 
     When any MAINTENANCE status is detected, a MaintanenceOutage exception is raised with
     details about the maintenance window timing (if available for scheduled maintenance).
@@ -284,8 +279,8 @@ def check_maintenance_window(response: JsonObject) -> None:
         response: JSON response from the API containing potential maintenance information
 
     Raises:
-        MaintanenceOutage: If status is anything other than "NORMAL",
-            with a message containing human-readable UTC timestamps for scheduled windows
+        MaintanenceOutage: If status is anything other than "NORMAL", with a message containing human-readable UTC timestamps for scheduled windows
+
     """
     # Only return early if status is NORMAL
     status = response.get("status")
@@ -352,14 +347,14 @@ def check_maintenance_window(response: JsonObject) -> None:
 def get_next_maintenance_window(
     exchange_info: ExchangeInfo,
 ) -> MaintenanceWindow | None:
-    """
-    Get the next scheduled maintenance window if any exists.
+    """Get the next scheduled maintenance window if any exists.
 
     Args:
         exchange_info: The exchange information containing maintenance windows
 
     Returns:
         Details about the next maintenance window or None if none exists
+
     """
     windows = exchange_info.maintenanceWindow
     if not windows:
@@ -377,14 +372,14 @@ def get_next_maintenance_window(
 
 
 def format_maintenance_window(window_info: MaintenanceWindow | None) -> str:
-    """
-    Format maintenance window information into a user-friendly string.
+    """Format maintenance window information into a user-friendly string.
 
     Args:
         window_info: Maintenance window information from get_next_maintenance_window
 
     Returns:
         Formatted string with maintenance window details
+
     """
     if window_info is None:
         return "No upcoming maintenance windows scheduled."
@@ -428,8 +423,7 @@ def format_maintenance_window(window_info: MaintenanceWindow | None) -> str:
 def get_withdrawal_fee_for_amount(
     exchange_info: ExchangeInfo, amount: HibachiNumericInput
 ) -> int | float:
-    """
-    Calculate the instant withdrawal fee for a given amount.
+    """Calculate the instant withdrawal fee for a given amount.
 
     Fees are tiered based on withdrawal amount. This function finds the
     appropriate fee tier for the given amount.
@@ -440,6 +434,7 @@ def get_withdrawal_fee_for_amount(
 
     Returns:
         Fee percentage/amount for the withdrawal
+
     """
     amount = numeric_to_decimal(amount)
     fees = exchange_info.feeConfig.instantWithdrawalFees
@@ -460,8 +455,7 @@ def get_withdrawal_fee_for_amount(
 
 
 def absolute_creation_deadline(relative_creation_deadline: Decimal) -> int:
-    """
-    Convert a relative creation deadline (in seconds) to an absolute timestamp.
+    """Convert a relative creation deadline (in seconds) to an absolute timestamp.
 
     Note: This is based on wall time and can drift. Server-side uses NTP with
     chrony AWS Time Sync Service. If client time is significantly off from
@@ -474,6 +468,7 @@ def absolute_creation_deadline(relative_creation_deadline: Decimal) -> int:
 
     Returns:
         Unix timestamp as integer
+
     """
     return int(relative_creation_deadline + Decimal(time()))
 
@@ -484,14 +479,14 @@ def absolute_creation_deadline(relative_creation_deadline: Decimal) -> int:
 
 
 def print_data(response: Any) -> None:
-    """
-    Pretty-print response data, handling dataclasses specially.
+    """Pretty-print response data, handling dataclasses specially.
 
     Dataclass instances are converted to dictionaries before printing
     for better formatting.
 
     Args:
         response: Data to print
+
     """
     if is_dataclass(response) and not isinstance(response, type):
         cpprint(asdict(response))

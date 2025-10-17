@@ -1,3 +1,9 @@
+"""WebSocket client for trade operations.
+
+This module provides the HibachiWSTradeClient for placing, modifying, and
+canceling orders via WebSocket connections with lower latency than HTTP.
+"""
+
 import logging
 import random
 import time
@@ -32,52 +38,51 @@ log = logging.getLogger(__name__)
 
 
 class HibachiWSTradeClient:
-    """
-    Trade Websocket Client is used to place, modify and cancel orders.
+    """Trade Websocket Client is used to place, modify and cancel orders.
 
-    ```python
-    import asyncio
-    import os
-    from hibachi_xyz import HibachiWSTradeClient, print_data
+    Examples:
+        .. code-block:: python
 
-    from dotenv import load_dotenv
-    load_dotenv()
+            import asyncio
+            import os
+            from hibachi_xyz import HibachiWSTradeClient, print_data
+            from dotenv import load_dotenv
 
-    account_id = int(os.environ.get('HIBACHI_ACCOUNT_ID', "your-account-id"))
-    private_key = os.environ.get('HIBACHI_PRIVATE_KEY', "your-private")
-    api_key = os.environ.get('HIBACHI_API_KEY', "your-api-key")
-    public_key = os.environ.get('HIBACHI_PUBLIC_KEY', "your-public")
+            load_dotenv()
 
-    async def main():
-        client = HibachiWSTradeClient(
-            api_key=api_key,
-            account_id=account_id,
-            account_public_key=public_key,
-            private_key=private_key
-        )
+            account_id = int(os.environ.get('HIBACHI_ACCOUNT_ID', "your-account-id"))
+            private_key = os.environ.get('HIBACHI_PRIVATE_KEY', "your-private")
+            api_key = os.environ.get('HIBACHI_API_KEY', "your-api-key")
+            public_key = os.environ.get('HIBACHI_PUBLIC_KEY', "your-public")
 
-        await client.connect()
-        orders = await client.get_orders_status()
-        first_order = orders.result[0]
+            async def main():
+                client = HibachiWSTradeClient(
+                    api_key=api_key,
+                    account_id=account_id,
+                    account_public_key=public_key,
+                    private_key=private_key
+                )
 
-        # single order
-        order = await client.get_order_status(first_order.orderId)
-        print_data(order)
+                await client.connect()
+                orders = await client.get_orders_status()
+                first_order = orders.result[0]
 
-        # client.api.set_private_key(private_key)
-        modify_result = await client.modify_order(
-            order=order.result,
-            quantity=float("0.002"),
-            price=str(float("93500.0")),
-            side=order.result.side,
-            maxFeesPercent=float("0.00045"),
-        )
+                # single order
+                order = await client.get_order_status(first_order.orderId)
+                print_data(order)
 
-        print_data(modify_result)
+                # client.api.set_private_key(private_key)
+                modify_result = await client.modify_order(
+                    order=order.result,
+                    quantity=float("0.002"),
+                    price=str(float("93500.0")),
+                    side=order.result.side,
+                    maxFeesPercent=float("0.00045"),
+                )
 
-    asyncio.run(main())
-    ```
+                print_data(modify_result)
 
+            asyncio.run(main())
     """
 
     def __init__(
@@ -90,6 +95,19 @@ class HibachiWSTradeClient:
         private_key: str | None = None,
         executor: WsExecutor | None = None,
     ):
+        """Initialize the Hibachi WebSocket trade client.
+
+        Args:
+            api_key: Your API key for authentication
+            account_id: Your Hibachi account ID (int or numeric string)
+            account_public_key: Your account's public key
+            api_url: Base URL for the Hibachi API (default: production URL)
+            data_api_url: Base URL for the data API (default: production data URL)
+            private_key: Private key for signing requests (hex string with or without 0x prefix,
+                or HMAC key for web accounts)
+            executor: Custom WebSocket executor (optional, uses default if not provided)
+
+        """
         self.api_endpoint = api_url
         self.api_endpoint = (
             self.api_endpoint.replace("https://", "wss://") + "/ws/trade"
@@ -117,6 +135,15 @@ class HibachiWSTradeClient:
 
     @property
     def websocket(self) -> WsConnection:
+        """Get the WebSocket connection.
+
+        Returns:
+            Active WebSocket connection.
+
+        Raises:
+            ValidationError: If no connection exists. Call connect() first.
+
+        """
         if self._websocket is None:
             raise ValidationError from ValueError(
                 "No existing ws connection. Call `connect` first"
@@ -124,7 +151,7 @@ class HibachiWSTradeClient:
         return self._websocket
 
     async def connect(self) -> Self:
-        """Establish WebSocket connection with retry logic"""
+        """Establish WebSocket connection with retry logic."""
         self._websocket = await connect_with_retry(
             web_url=self.api_endpoint
             + f"?accountId={self.account_id}&hibachiClient={get_hibachi_client()}",
@@ -135,7 +162,7 @@ class HibachiWSTradeClient:
         return self
 
     async def place_order(self, params: OrderPlaceParams) -> tuple[Nonce, int]:
-        """Place a new order"""
+        """Place a new order."""
         self.message_id += 1
 
         nonce = time.time_ns() // 1_000
@@ -178,7 +205,7 @@ class HibachiWSTradeClient:
         return (nonce, int(response_data.get("result").get("orderId")))
 
     async def cancel_order(self, orderId: int, nonce: int) -> WebSocketResponse:
-        """Cancel an existing order"""
+        """Cancel an existing order."""
         self.message_id += 1
 
         prepare_packet = self.api._cancel_order_request_data(
@@ -215,7 +242,7 @@ class HibachiWSTradeClient:
         maxFeesPercent: float,
         nonce: Nonce | None = None,
     ) -> WebSocketResponse:
-        """Modify an existing order"""
+        """Modify an existing order."""
         self.message_id += 1
 
         prepare_packet = self.api._update_order_generate_sig(
@@ -252,7 +279,7 @@ class HibachiWSTradeClient:
         return create_with(WebSocketResponse, response_data)
 
     async def get_order_status(self, orderId: int) -> OrderStatusResponse:
-        """Get status of a specific order"""
+        """Get status of a specific order."""
         self.message_id += 1
         message = {
             "id": self.message_id,
@@ -270,7 +297,7 @@ class HibachiWSTradeClient:
         return OrderStatusResponse(**response_data)
 
     async def get_orders_status(self) -> OrdersStatusResponse:
-        """Get status of all orders"""
+        """Get status of all orders."""
         self.message_id += 1
 
         message = {
@@ -286,7 +313,7 @@ class HibachiWSTradeClient:
         return OrdersStatusResponse(**response_data)
 
     async def cancel_all_orders(self) -> bool:
-        """Cancel all orders"""
+        """Cancel all orders."""
         self.message_id += 1
 
         nonce = time.time_ns() // 1_000
@@ -315,7 +342,7 @@ class HibachiWSTradeClient:
             return False
 
     async def batch_orders(self, params: OrdersBatchParams) -> WebSocketResponse:
-        """Execute multiple order operations in a single request"""
+        """Execute multiple order operations in a single request."""
         self.message_id += 1
         message = {
             "id": self.message_id,
@@ -330,7 +357,7 @@ class HibachiWSTradeClient:
     async def enable_cancel_on_disconnect(
         self, params: EnableCancelOnDisconnectParams
     ) -> WebSocketResponse:
-        """Enable automatic order cancellation on WebSocket disconnect"""
+        """Enable automatic order cancellation on WebSocket disconnect."""
         self.message_id += 1
         message = {
             "id": self.message_id,
@@ -343,7 +370,7 @@ class HibachiWSTradeClient:
         return WebSocketResponse(**response_data)
 
     async def disconnect(self) -> None:
-        """Close the WebSocket connection"""
+        """Close the WebSocket connection."""
         if self._websocket:
             await self._websocket.close()
             self._websocket = None
