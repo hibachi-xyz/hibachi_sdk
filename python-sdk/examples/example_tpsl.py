@@ -80,7 +80,7 @@ def example_tpsl_rest():
 
     # place tpsl on existing position
     # a tpsl order is a trigger order with the reduce only flag set
-    # assuming our current posiiton is 0.02 long sol entered at prices.markPrice,
+    # assuming our current position is 0.02 long sol entered at prices.markPrice,
     # this is a take profit order for 75% qty at 10% profit
     (nonce, order_id) = hibachi.place_market_order(
         symbol="SOL/USDT-P",
@@ -92,7 +92,7 @@ def example_tpsl_rest():
         # This code only runs when the file is executed directly
     )
 
-    # assuming our current posiiton is 0.02 long sol entered at prices.markPrice,
+    # assuming our current position is 0.02 long sol entered at prices.markPrice,
     # this is a stop loss order for 50% qty at 10% loss
     (nonce, order_id) = hibachi.place_market_order(
         symbol="SOL/USDT-P",
@@ -176,7 +176,7 @@ async def example_tpsl_ws_client():
 
     # place tpsl on existing position
     # a tpsl order is a trigger order with the reduce only flag set
-    # assuming our current posiiton is 0.02 long sol entered at prices.markPrice,
+    # assuming our current position is 0.02 long sol entered at prices.markPrice,
     # this is a take profit order for 75% qty at 10% profit
     (nonce, order_id) = client.api.place_market_order(
         symbol="SOL/USDT-P",
@@ -188,7 +188,7 @@ async def example_tpsl_ws_client():
         # This code only runs when the file is executed directly
     )
 
-    # assuming our current posiiton is 0.02 long sol entered at prices.markPrice,
+    # assuming our current position is 0.02 long sol entered at prices.markPrice,
     # this is a stop loss order for 50% qty at 10% loss
     (nonce, order_id) = client.api.place_market_order(
         symbol="SOL/USDT-P",

@@ -36,9 +36,9 @@ def example_public_api():
     # in 0d6h0m on 26 June 2025 at 16:00 for a duration of 2 hours.
     # Reason: Updating system.
     #
-    next_maintainance_window = get_next_maintenance_window(exch_info)
+    next_maintenance_window = get_next_maintenance_window(exch_info)
     print(
-        f"\nNext Maintenance Window: {format_maintenance_window(next_maintainance_window)}"
+        f"\nNext Maintenance Window: {format_maintenance_window(next_maintenance_window)}"
     )
 
     # Get Prices

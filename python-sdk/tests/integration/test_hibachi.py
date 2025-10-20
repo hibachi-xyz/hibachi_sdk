@@ -112,10 +112,10 @@ def test_exchange_info():
     fee = get_withdrawal_fee_for_amount(exch_info, 1000)
     assert fee == 0.002
 
-    next_maintainance_window = get_next_maintenance_window(exch_info)
+    next_maintenance_window = get_next_maintenance_window(exch_info)
 
-    if next_maintainance_window is not None:
-        assert isinstance(next_maintainance_window, MaintenanceWindow)
+    if next_maintenance_window is not None:
+        assert isinstance(next_maintenance_window, MaintenanceWindow)
 
 
 def test_get_prices():
@@ -456,7 +456,7 @@ def test_place_market_order():
     # Pending or partially filled orders can be updated using the order_id
     # Quantity, price and trigger price can be updated separately or any number of them at once
     # The single order update request is convenient, but does two requests behind the curtains
-    # First it will downlowd the order details of the order to be updated to get all data to create a correct signature
+    # First it will download the order details of the order to be updated to get all data to create a correct signature
     client.get_order_details(order_id=order_id)
 
     client.update_order(order_id, max_fees_percent, quantity=0.002)

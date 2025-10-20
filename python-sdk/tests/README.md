@@ -7,15 +7,70 @@ This directory contains unit and integration tests for the Python SDK.
 ```
 tests/
 ├── unit/              # Unit tests (deterministic and isolated to Python SDK)
+│   ├── conftest.py    # Pytest configuration and shared fixtures
 │   ├── data/          # Test data files (JSON responses)
-│   └── http/          # HTTP endpoint tests
-│       ├── get/       # GET endpoint tests
-│       ├── post/      # POST endpoint tests
-│       ├── put/       # PUT endpoint tests
-│       └── delete/    # DELETE endpoint tests
-├── integration/       # Integration tests (requiring live Hibachi APIs)
-└── README.md         # This file
+│   ├── http/          # HTTP endpoint tests
+│   │   ├── get/       # GET endpoint tests
+│   │   ├── post/      # POST endpoint tests
+│   │   ├── put/       # PUT endpoint tests
+│   │   └── delete/    # DELETE endpoint tests
+│   └── ws/            # WebSocket client tests
+│       ├── test_account_ws.py  # Account stream tests
+│       ├── test_market_ws.py   # Market data stream tests
+│       └── test_trade_ws.py    # Trade execution stream tests
+├── integration/       # Integration tests (requiring live Hibachi APIs and credentials set in .env)
+├── mock_executors.py  # Mock HTTP and WebSocket executors for unit testing
+└── README.md          # This file
 ```
+
+## Test Philosophy
+
+Unit tests follow a deterministic approach:
+- **Predictable**: Same inputs always produce the same outputs
+- **Isolated**: Tests don't depend on external services or network calls
+- **Mocked Executors**: HTTP and WebSocket executors are mocked to simulate network behavior
+- **Structured**: Always in the `tests/unit/` root
+
+Integration tests have external dependencies:
+- **Comprehensive**: Tests the entire roundtrip of SDK call -> API server -> call result
+- **Maximally Stateless**: Best effort attempt to reset state on setup / teardown e.g. flatten positions, transfer balances
+- **Structured**: Always in the `tests/integration/` root
+
+### Mock Executor Architecture
+
+The `tests/mock_executors.py` module provides mock executor implementations for unit testing
+
+#### HTTP Mocking
+
+1. **MockHttpExecutor** - Simulates HTTP request execution
+   - `stage_output()` - Stage outputs (responses or exceptions) for subsequent HTTP requests
+   - `call_log` - Records all HTTP operations (method, path, json) for verification
+
+The MockHttpExecutor uses a queue-based approach where outputs are staged before execution and consumed in FIFO order.
+
+#### WebSocket Mocking
+
+1. **MockWsHarness** - Manages mock WebSocket connections and executors
+   - Contains a `MockWsExecutor` instance
+   - Contains a `MockHttpExecutor` instance for HTTP operations
+   - Tracks all `MockWsConnection` instances created
+
+2. **MockWsConnection** - Simulates a WebSocket connection with:
+   - `stage_output()` - Stage outputs for connection operations (connect, send, close, etc.)
+   - `stage_recv()` - Stage messages to be received from the server
+   - `call_log` - Records all operations for verification
+
+3. **MockWsExecutor** - WebSocket executor that creates and manages mock connections
+   - `connect()` - Creates and returns a new `MockWsConnection`
+   - `call_log` - Records all connection attempts for verification
+
+#### Mock Output Types
+
+Both HTTP and WebSocket mocks support two output types:
+- **MockSuccessfulOutput** - Returns some response value
+- **MockExceptionOutput** - Raises an exception
+
+These are accepted by the `stage_output` calls for each mock. Once staged, they are stored in a FIFO queue where each call to a executor interface method consumes from the queue and returns / raises the stored object.
 
 ## Unit Test Data Directory (`unit/data/`)
 
@@ -80,14 +135,3 @@ All test data files include extra fields beyond the minimum required fields. The
 
 Extra fields are prefixed with `extra_field_` to make it explicitly clear they are test additions. For future compatibility tests this is **NOT** expected. E.g. the APIs will begin returning field "XYZ" -> add "XYZ" to existing or new test files, no need for `extra_field_` prefix.
 
-## Test Philosophy
-
-Unit tests follow a deterministic approach:
-- **Predictable**: Same inputs always produce the same outputs
-- **Isolated**: Tests don't depend on external services or network calls
-- **Structured**: Always in the `tests/unit/` root
-
-Integration tests have external dependencies:
-- **Comprehensive**: Tests the entire roundtrip of SDK call -> API server -> call result
-- **Maximally Stateless**: Best effort attempt to reset state on setup / teardown e.g. flatten positions, transfer balances
-- **Structured**: Always in the `tests/integration/` root
