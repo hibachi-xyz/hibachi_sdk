@@ -1,7 +1,8 @@
 import pytest
 
+from hibachi_xyz.errors import DeserializationError
 from hibachi_xyz.executors.interface import HttpResponse
-from hibachi_xyz.types import Side
+from hibachi_xyz.types import FutureContract, Side
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
 
@@ -47,3 +48,56 @@ def test_place_limit_order(mock_http_client, test_data):
 
     # Assertions
     assert order_id == order_response["orderId"]
+
+
+def test_place_limit_order_deserialization_error(mock_http_client):
+    """Test that malformed response raises DeserializationError."""
+    client, mock_http = mock_http_client
+
+    symbol = "BTC/USDT-P"
+    client._future_contracts = {
+        symbol: FutureContract(
+            displayName="BTC/USDT Perps",
+            id=1,
+            initialMarginRate="0.066667",
+            maintenanceMarginRate="0.046667",
+            marketCloseTimestamp=None,
+            marketCreationTimestamp="1727701319.73488",
+            marketOpenTimestamp=None,
+            minNotional="1",
+            minOrderSize="0.000000001",
+            orderbookGranularities=["0.01", "0.1", "1"],
+            settlementDecimals=6,
+            settlementSymbol="USDT",
+            status="LIVE",
+            stepSize="0.000000001",
+            symbol=symbol,
+            tickSize="0.000001",
+            underlyingDecimals=8,
+            underlyingSymbol="BTC",
+        )
+    }
+
+    # Malformed response with orderId as a non-numeric string
+    malformed_payload = {
+        "orderId": "not_a_number",
+    }
+
+    mock_http.stage_output(
+        MockSuccessfulOutput(
+            output=HttpResponse(status=200, body=malformed_payload),
+            call_validation=lambda call: call.function_name == "send_authorized_request"
+            and call.arg_pack[0:2] == ("POST", "/trade/order"),
+        )
+    )
+
+    with pytest.raises(DeserializationError) as exc_info:
+        client.place_limit_order(
+            symbol=symbol,
+            quantity=0.001,
+            price=50000,
+            side=Side.BUY,
+            max_fees_percent=0.001,
+        )
+
+    assert "Received invalid" in str(exc_info.value)

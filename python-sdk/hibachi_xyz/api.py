@@ -24,6 +24,7 @@ from hibachi_xyz.errors import (
     Forbidden,
     GatewayTimeout,
     InternalServerError,
+    MissingCredentialsError,
     NotFound,
     RateLimited,
     ServiceUnavailable,
@@ -399,10 +400,12 @@ class HibachiApiClient:
         """
         if private_key.startswith("0x"):
             private_key = private_key[2:]
-            private_key_bytes = bytes.fromhex(private_key)
+            try:
+                private_key_bytes = bytes.fromhex(private_key)
+            except ValueError as e:
+                raise ValidationError(f"Invalid hex private key: {e}") from e
             self._private_key = eth_keys.datatypes.PrivateKey(private_key_bytes)
-
-        if private_key.startswith("0x") is False:
+        else:
             self._private_key_hmac = private_key
 
     """ Market API endpoints, can be called without having an account """
@@ -702,16 +705,15 @@ class HibachiApiClient:
             GET /market/data/orderbook
 
         """
-        depth = int(depth)
-        if depth < 1 or depth > 100:
-            raise ValueError(
-                "Depth must be a positive integer between 1 and 100, inclusive"
+        if not isinstance(depth, int) or depth < 1 or depth > 100:
+            raise ValidationError(
+                f"{depth=} must be a positive integer between 1 and 100, inclusive"
             )
 
         contract = self.__get_contract(symbol)
         granularities = contract.orderbookGranularities
         if str(granularity) not in granularities:
-            raise ValueError(
+            raise ValidationError(
                 f"Granularity for symbol {symbol} must be one of {granularities}"
             )
 
@@ -721,11 +723,11 @@ class HibachiApiClient:
 
         try:
             ask_levels = [
-                OrderBookLevel(price=level["price"], quantity=level["quantity"])  # type: ignore
+                create_with(OrderBookLevel, level)  # type: ignore
                 for level in response["ask"]["levels"]  # type: ignore
             ]
             bid_levels = [
-                OrderBookLevel(price=level["price"], quantity=level["quantity"])  # type: ignore
+                create_with(OrderBookLevel, level)  # type: ignore
                 for level in response["bid"]["levels"]  # type: ignore
             ]
 
@@ -959,13 +961,18 @@ class HibachiApiClient:
         asset_id = self.__get_asset_id(coin)
         # Create payload bytes
         asset_id_bytes = asset_id.to_bytes(4, "big")
-        quantity_bytes = int(float(quantity) * 1e6).to_bytes(
-            8, "big"
-        )  # Assuming 6 decimals for USDT
-        max_fees_bytes = int(float(max_fees) * 1e6).to_bytes(
-            8, "big"
-        )  # Assuming 6 decimals for USDT
-        address_bytes = bytes.fromhex(withdraw_address.replace("0x", ""))
+        try:
+            quantity_bytes = int(float(quantity) * 1e6).to_bytes(
+                8, "big"
+            )  # Assuming 6 decimals for USDT
+            max_fees_bytes = int(float(max_fees) * 1e6).to_bytes(
+                8, "big"
+            )  # Assuming 6 decimals for USDT
+            address_bytes = bytes.fromhex(withdraw_address.replace("0x", ""))
+        except ValueError as e:
+            raise ValidationError(f"Invalid withdrawal parameter format: {e}") from e
+        except OverflowError as e:
+            raise ValidationError(f"Withdrawal value out of range: {e}") from e
 
         # Combine payload
         payload = asset_id_bytes + quantity_bytes + max_fees_bytes + address_bytes
@@ -1000,11 +1007,16 @@ class HibachiApiClient:
         # Create payload bytes
         nonce_bytes = nonce.to_bytes(8, "big")
         asset_id_bytes = asset_id.to_bytes(4, "big")
-        quantity_bytes = int(float(quantity) * 1e6).to_bytes(
-            8, "big"
-        )  # Assuming 6 decimals for USDT
-        max_fees_bytes = int(float(max_fees_percent)).to_bytes(8, "big")
-        address_bytes = bytes.fromhex(dst_account_public_key.replace("0x", ""))
+        try:
+            quantity_bytes = int(float(quantity) * 1e6).to_bytes(
+                8, "big"
+            )  # Assuming 6 decimals for USDT
+            max_fees_bytes = int(float(max_fees_percent)).to_bytes(8, "big")
+            address_bytes = bytes.fromhex(dst_account_public_key.replace("0x", ""))
+        except ValueError as e:
+            raise ValidationError(f"Invalid transfer parameter format: {e}") from e
+        except OverflowError as e:
+            raise ValidationError(f"Transfer value out of range: {e}") from e
 
         # Combine payload
         payload = (
@@ -1277,10 +1289,10 @@ class HibachiApiClient:
             side = Side.ASK
 
         if twap_config is not None and trigger_price is not None:
-            raise ValueError("Can not set trigger price for TWAP order")
+            raise ValidationError("Can not set trigger price for TWAP order")
 
         if twap_config is not None and tpsl is not None:
-            raise ValueError("Can not set tpsl for TWAP order")
+            raise ValidationError("Can not set tpsl for TWAP order")
 
         quantity = numeric_to_decimal(quantity)
         max_fees_percent = numeric_to_decimal(max_fees_percent)
@@ -1815,7 +1827,9 @@ class HibachiApiClient:
             Json: The parsed JSON response body
 
         """
-        return self._http_executor.send_simple_request(path).body
+        response = self._http_executor.send_simple_request(path)
+        raise_response_errors(response)
+        return response.body
 
     def __send_authorized_request(
         self,
@@ -1834,7 +1848,9 @@ class HibachiApiClient:
             Json: The parsed JSON response body
 
         """
-        return self._http_executor.send_authorized_request(method, path, json).body
+        response = self._http_executor.send_authorized_request(method, path, json)
+        raise_response_errors(response)
+        return response.body
 
     """ Private helpers """
 
@@ -1968,7 +1984,7 @@ class HibachiApiClient:
                 self._private_key_hmac.encode(), payload, sha256
             ).hexdigest()
 
-        raise RuntimeError("Private key is not set")
+        raise MissingCredentialsError("Private key is not set")
 
     def __create_or_update_order_payload(
         self,
@@ -1997,12 +2013,19 @@ class HibachiApiClient:
 
         nonce_bytes = nonce.to_bytes(8, "big")
         contract_id_bytes = contract_id.to_bytes(4, "big")
-        quantity_bytes = int(quantity * pow(10, contract.underlyingDecimals)).to_bytes(
-            8, "big"
-        )
+        try:
+            quantity_bytes = int(
+                quantity * pow(10, contract.underlyingDecimals)
+            ).to_bytes(8, "big")
+            max_fees_percent_bytes = int(max_fees_percent * pow(10, 8)).to_bytes(
+                8, "big"
+            )
+        except ValueError as e:
+            raise ValidationError(f"Invalid order parameter format: {e}") from e
+        except OverflowError as e:
+            raise ValidationError(f"Order value out of range: {e}") from e
         price_bytes = b"" if price is None else price_to_bytes(price, contract)
         side_bytes = (0 if side.value == "ASK" else 1).to_bytes(4, "big")
-        max_fees_percent_bytes = int(max_fees_percent * pow(10, 8)).to_bytes(8, "big")
 
         payload = (
             nonce_bytes

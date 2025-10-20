@@ -6,7 +6,12 @@ import orjson
 import pytest
 
 from hibachi_xyz.api_ws_market import HibachiWSMarketClient
-from hibachi_xyz.errors import ValidationError, WebSocketConnectionError
+from hibachi_xyz.errors import (
+    SerializationError,
+    ValidationError,
+    WebSocketConnectionError,
+    WebSocketMessageError,
+)
 from hibachi_xyz.types import (
     Json,
     WebSocketSubscription,
@@ -166,4 +171,120 @@ async def test_general_exception_handling(caplog):
         timeout=1.0,
     )
 
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_subscribe_serialization_error():
+    """Test that SerializationError is raised when message serialization fails."""
+    import unittest.mock
+
+    harness = MockWsHarness()
+    client = HibachiWSMarketClient(api_endpoint="foo", executor=harness.executor)
+
+    await client.connect()
+
+    # Patch orjson.dumps to raise an error
+    with unittest.mock.patch("hibachi_xyz.api_ws_market.orjson.dumps") as mock_dumps:
+        mock_dumps.side_effect = TypeError("Mock serialization error")
+
+        subscriptions = [
+            WebSocketSubscription("BTC/USDT-P", WebSocketSubscriptionTopic.MARK_PRICE),
+        ]
+
+        with pytest.raises(
+            SerializationError, match="Failed to serialize unsubscribe message"
+        ):
+            await client.subscribe(subscriptions)
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_subscribe_websocket_message_error():
+    """Test that WebSocketMessageError is raised when send fails."""
+
+    harness = MockWsHarness()
+    client = HibachiWSMarketClient(api_endpoint="foo", executor=harness.executor)
+
+    await client.connect()
+    mock_websocket = harness.connections[0]
+
+    subscriptions = [
+        WebSocketSubscription("BTC/USDT-P", WebSocketSubscriptionTopic.MARK_PRICE),
+    ]
+
+    # Mock the send method to raise an exception
+    original_send = mock_websocket.send
+
+    async def failing_send(*args, **kwargs):
+        raise RuntimeError("Mock send failure")
+
+    mock_websocket.send = failing_send
+
+    with pytest.raises(
+        WebSocketMessageError, match="Failed to send unsubscribe message"
+    ):
+        await client.subscribe(subscriptions)
+
+    # Restore original send
+    mock_websocket.send = original_send
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_unsubscribe_serialization_error():
+    """Test that SerializationError is raised when unsubscribe message serialization fails."""
+    import unittest.mock
+
+    harness = MockWsHarness()
+    client = HibachiWSMarketClient(api_endpoint="foo", executor=harness.executor)
+
+    await client.connect()
+
+    # Patch orjson.dumps to raise an error
+    with unittest.mock.patch("hibachi_xyz.api_ws_market.orjson.dumps") as mock_dumps:
+        mock_dumps.side_effect = ValueError("Mock serialization error")
+
+        subscriptions = [
+            WebSocketSubscription("BTC/USDT-P", WebSocketSubscriptionTopic.MARK_PRICE),
+        ]
+
+        with pytest.raises(
+            SerializationError, match="Failed to serialize unsubscribe message"
+        ):
+            await client.unsubscribe(subscriptions)
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_unsubscribe_websocket_message_error():
+    """Test that WebSocketMessageError is raised when unsubscribe send fails."""
+
+    harness = MockWsHarness()
+    client = HibachiWSMarketClient(api_endpoint="foo", executor=harness.executor)
+
+    await client.connect()
+    mock_websocket = harness.connections[0]
+
+    subscriptions = [
+        WebSocketSubscription("BTC/USDT-P", WebSocketSubscriptionTopic.MARK_PRICE),
+    ]
+
+    # Mock the send method to raise an exception
+    original_send = mock_websocket.send
+
+    async def failing_send(*args, **kwargs):
+        raise ConnectionError("Mock send failure")
+
+    mock_websocket.send = failing_send
+
+    with pytest.raises(
+        WebSocketMessageError, match="Failed to send unsubscribe message"
+    ):
+        await client.unsubscribe(subscriptions)
+
+    # Restore original send
+    mock_websocket.send = original_send
     await client.disconnect()

@@ -59,7 +59,11 @@ class MaintanenceOutage(ExchangeError):
         super().__init__(message)
 
 
-class BadHttpStatus(ExchangeError):
+class HibachiApiError(Exception):
+    """Deprecated - use hibachi_xyz.errors.BadHttpStatus and subclasses."""
+
+
+class BadHttpStatus(ExchangeError, HibachiApiError):
     """Raised when response status from exchange is not 2XX."""
 
     status_code: int
@@ -133,6 +137,19 @@ class Unauthorized(BadHttpStatus):
 
 class Forbidden(BadHttpStatus):
     """Raised when the server returns a 403 Forbidden error."""
+
+    pass
+
+
+## Websockets errors
+
+
+class BadWebsocketResponse(ExchangeError):
+    """Raised when the server sends a websocket message indicating an error.
+
+    This is specifically an error in the action requested of the exchange.
+    It is not an error with the websocket connection or protocol
+    """
 
     pass
 
@@ -326,21 +343,3 @@ class MissingCredentialsError(ValidationError):
 # ============================================================================
 # DEPRECATED TYPES
 # ============================================================================
-
-
-class HibachiApiError(BadHttpStatus):
-    """Deprecated - use hibachi_xyz.errors.ExchangeError and subclasses."""
-
-    status_code: int
-    message: str
-
-    def __init__(self, status_code: int, message: str):
-        """Initialize a HibachiApiError (deprecated).
-
-        Args:
-            status_code: The HTTP status code returned by the server.
-            message: Description of the API error.
-
-        """
-        self.status_code = status_code
-        self.message = message

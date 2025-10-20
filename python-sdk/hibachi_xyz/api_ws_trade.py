@@ -14,7 +14,13 @@ import orjson
 
 from hibachi_xyz.api import HibachiApiClient
 from hibachi_xyz.connection import connect_with_retry
-from hibachi_xyz.errors import ValidationError
+from hibachi_xyz.errors import (
+    BadWebsocketResponse,
+    DeserializationError,
+    SerializationError,
+    ValidationError,
+    WebSocketMessageError,
+)
 from hibachi_xyz.executors import DEFAULT_WS_EXECUTOR, WsConnection, WsExecutor
 from hibachi_xyz.helpers import (
     DEFAULT_API_URL,
@@ -71,7 +77,6 @@ class HibachiWSTradeClient:
                 order = await client.get_order_status(first_order.orderId)
                 print_data(order)
 
-                # client.api.set_private_key(private_key)
                 modify_result = await client.modify_order(
                     order=order.result,
                     quantity=float("0.002"),
@@ -117,9 +122,12 @@ class HibachiWSTradeClient:
         # random id start
         self.message_id = random.randint(1, 1000000)
         self.api_key = api_key
-        self.account_id: int = (
-            int(account_id) if isinstance(account_id, str) else account_id
-        )
+        try:
+            self.account_id: int = (
+                int(account_id) if isinstance(account_id, str) else account_id
+            )
+        except (ValueError, TypeError) as e:
+            raise ValidationError(f"Invalid account_id format: {e}") from e
         self.account_public_key = account_public_key
         self._executor: WsExecutor = (
             executor if executor is not None else DEFAULT_WS_EXECUTOR()
@@ -193,16 +201,37 @@ class HibachiWSTradeClient:
             "signature": prepare_packet.get("signature"),
         }
 
-        await self.websocket.send(orjson.dumps(message).decode())
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize order.place message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError("Failed to send order.place message") from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
 
         log.debug("ws place_order -------------------------------------------")
         log.debug("Response data: %s", response_data)
 
-        # response_data["result"] = OrderPlaceResponseResult(**response_data["result"])
-        # nonce: Nonce = prepare_packet.get("nonce")
-        return (nonce, int(response_data.get("result").get("orderId")))
+        try:
+            order_id = int(response_data.get("result").get("orderId"))
+        except (ValueError, TypeError, AttributeError, KeyError) as e:
+            raise DeserializationError(
+                f"Failed to extract orderId from response: {e}"
+            ) from e
+
+        return (nonce, order_id)
 
     async def cancel_order(self, orderId: int, nonce: int) -> WebSocketResponse:
         """Cancel an existing order."""
@@ -221,13 +250,31 @@ class HibachiWSTradeClient:
             "params": {
                 "orderId": str(orderId),
                 "accountId": str(self.account_id),
-                # "nonce": str(nonce)
             },
             "signature": prepare_packet.get("signature"),
         }
-        await self.websocket.send(orjson.dumps(message).decode())
+
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize order.cancel message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError(
+                f"Failed to send order.cancel message {orderId=}"
+            ) from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
 
         log.debug("Response data: %s", response_data)
 
@@ -245,15 +292,23 @@ class HibachiWSTradeClient:
         """Modify an existing order."""
         self.message_id += 1
 
+        try:
+            price_float = float(price)
+            trigger_price_float = (
+                float(order.triggerPrice)
+                if isinstance(order.triggerPrice, str)
+                else order.triggerPrice
+            )
+        except (ValueError, TypeError) as e:
+            raise ValidationError(f"Invalid price or trigger_price format: {e}") from e
+
         prepare_packet = self.api._update_order_generate_sig(
             order,
             side=side,
             max_fees_percent=maxFeesPercent,
             quantity=quantity,
-            price=float(price),
-            trigger_price=float(order.triggerPrice)
-            if isinstance(order.triggerPrice, str)
-            else order.triggerPrice,
+            price=price_float,
+            trigger_price=trigger_price_float,
             nonce=nonce,
         )
 
@@ -267,12 +322,28 @@ class HibachiWSTradeClient:
             "signature": signature,
         }
 
-        await self.websocket.send(orjson.dumps(message).decode())
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize order.modify message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError("Failed to send order.modify message") from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
 
         if "error" in response_data and response_data["error"]:
-            raise Exception(
+            raise BadWebsocketResponse(
                 f"Error modifying order: {response_data['error']['message']}"
             )
 
@@ -287,14 +358,32 @@ class HibachiWSTradeClient:
             "params": {"orderId": str(orderId), "accountId": int(self.account_id)},
         }
 
-        await self.websocket.send(orjson.dumps(message).decode())
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize order.status message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError(
+                f"Failed to send order.status message {orderId=}"
+            ) from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
 
         log.debug("Response data: %s", response_data)
 
-        response_data["result"] = Order(**response_data["result"])
-        return OrderStatusResponse(**response_data)
+        response_data["result"] = create_with(Order, response_data["result"])
+        return create_with(OrderStatusResponse, response_data)
 
     async def get_orders_status(self) -> OrdersStatusResponse:
         """Get status of all orders."""
@@ -306,11 +395,30 @@ class HibachiWSTradeClient:
             "params": {"accountId": int(self.account_id)},
         }
 
-        await self.websocket.send(orjson.dumps(message).decode())
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize orders.status message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError("Failed to send orders.status message") from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
-        response_data["result"] = [Order(**order) for order in response_data["result"]]
-        return OrdersStatusResponse(**response_data)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
+
+        response_data["result"] = [
+            create_with(Order, order) for order in response_data["result"]
+        ]
+        return create_with(OrdersStatusResponse, response_data)
 
     async def cancel_all_orders(self) -> bool:
         """Cancel all orders."""
@@ -326,13 +434,30 @@ class HibachiWSTradeClient:
             "params": {
                 "accountId": self.account_id,
                 "nonce": nonce,
-                # "contractId": 2 # TODO: get contract id
+                # TODO: get contract id
             },
             "signature": signed_packet.get("signature"),
         }
-        await self.websocket.send(orjson.dumps(message).decode())
+
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize orders.cancel message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError("Failed to send orders.cancel message") from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
 
         log.debug("Response data: %s", response_data)
 
@@ -349,10 +474,28 @@ class HibachiWSTradeClient:
             "method": "orders.batch",
             "params": asdict(params),
         }
-        await self.websocket.send(orjson.dumps(message).decode())
+
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize orders.batch message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError("Failed to send orders.batch message") from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
-        return WebSocketResponse(**response_data)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
+
+        return create_with(WebSocketResponse, response_data)
 
     async def enable_cancel_on_disconnect(
         self, params: EnableCancelOnDisconnectParams
@@ -364,10 +507,30 @@ class HibachiWSTradeClient:
             "method": "orders.enableCancelOnDisconnect",
             "params": asdict(params),
         }
-        await self.websocket.send(orjson.dumps(message).decode())
+
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize orders.enableCancelOnDisconnect message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError(
+                "Failed to send orders.enableCancelOnDisconnect message"
+            ) from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
-        return WebSocketResponse(**response_data)
+
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
+
+        return create_with(WebSocketResponse, response_data)
 
     async def disconnect(self) -> None:
         """Close the WebSocket connection."""

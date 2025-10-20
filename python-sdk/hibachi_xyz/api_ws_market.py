@@ -12,7 +12,13 @@ from typing import Self
 import orjson
 
 from hibachi_xyz.connection import connect_with_retry
-from hibachi_xyz.errors import ValidationError, WebSocketConnectionError
+from hibachi_xyz.errors import (
+    DeserializationError,
+    SerializationError,
+    ValidationError,
+    WebSocketConnectionError,
+    WebSocketMessageError,
+)
 from hibachi_xyz.executors.defaults import DEFAULT_WS_EXECUTOR
 from hibachi_xyz.executors.interface import WsConnection, WsExecutor
 from hibachi_xyz.helpers import DEFAULT_DATA_API_URL, get_hibachi_client
@@ -108,7 +114,19 @@ class HibachiWSMarketClient:
                 ]
             },
         }
-        await self.websocket.send(orjson.dumps(message).decode())
+
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize unsubscribe message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError(
+                f"Failed to send unsubscribe message {subscriptions=}"
+            ) from e
 
     async def unsubscribe(self, subscriptions: list[WebSocketSubscription]) -> None:
         """Unsubscribe from one or more market data topics.
@@ -132,7 +150,18 @@ class HibachiWSMarketClient:
                 ]
             },
         }
-        await self.websocket.send(orjson.dumps(message).decode())
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize unsubscribe message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError(
+                f"Failed to send unsubscribe message {subscriptions=}"
+            ) from e
 
     def on(self, topic: str, handler: WsEventHandler) -> None:
         """Register a callback for raw topic name (e.g., 'mark_price')."""
@@ -155,7 +184,14 @@ class HibachiWSMarketClient:
         try:
             while True:
                 raw = await self.websocket.recv()
-                msg = orjson.loads(raw)
+
+                try:
+                    msg = orjson.loads(raw)
+                except (ValueError, TypeError) as e:
+                    raise DeserializationError(
+                        f"Failed to parse WebSocket message: {e}"
+                    ) from e
+
                 topic = msg.get("topic")
                 if topic and topic in self._event_handlers:
                     for handler in self._event_handlers[topic]:

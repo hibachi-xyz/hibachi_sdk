@@ -11,7 +11,13 @@ import time
 import orjson
 
 from hibachi_xyz.connection import connect_with_retry
-from hibachi_xyz.errors import ValidationError, WebSocketConnectionError
+from hibachi_xyz.errors import (
+    DeserializationError,
+    SerializationError,
+    ValidationError,
+    WebSocketConnectionError,
+    WebSocketMessageError,
+)
 from hibachi_xyz.executors import DEFAULT_WS_EXECUTOR, WsConnection, WsExecutor
 from hibachi_xyz.helpers import DEFAULT_API_URL, create_with, get_hibachi_client
 from hibachi_xyz.types import (
@@ -53,7 +59,10 @@ class HibachiWSAccountClient:
         self._websocket: WsConnection | None = None
         self.message_id = 0
         self.api_key = api_key
-        self.account_id = int(account_id)
+        try:
+            self.account_id = int(account_id)
+        except (ValueError, TypeError) as e:
+            raise ValidationError(f"Invalid account_id format: {e}") from e
         self.listenKey: str | None = None
         self._event_handlers: dict[str, list[WsEventHandler]] = {}
         self._executor: WsExecutor = (
@@ -154,23 +163,46 @@ class HibachiWSAccountClient:
             "timestamp": self._timestamp(),
         }
 
-        await self.websocket.send(orjson.dumps(message).decode())
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(
+                f"Failed to serialize stream.start message: {e}"
+            ) from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError(
+                f"Failed to send stream.start message {self.account_id=}"
+            ) from e
+
         response = await self.websocket.recv()
-        response_data = orjson.loads(response)
 
-        snapshot_data = response_data["result"]["accountSnapshot"]
-        snapshot = AccountSnapshot(
-            account_id=snapshot_data["account_id"],
-            balance=snapshot_data["balance"],
-            positions=[
-                create_with(Position, pos) for pos in snapshot_data["positions"]
-            ],
-        )
+        try:
+            response_data = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(
+                f"Failed to parse WebSocket response: {e}"
+            ) from e
 
-        result = AccountStreamStartResult(
-            accountSnapshot=snapshot,
-            listenKey=response_data["result"]["listenKey"],
-        )
+        try:
+            snapshot_data = response_data["result"]["accountSnapshot"]
+            snapshot = AccountSnapshot(
+                account_id=snapshot_data["account_id"],
+                balance=snapshot_data["balance"],
+                positions=[
+                    create_with(Position, pos) for pos in snapshot_data["positions"]
+                ],
+            )
+
+            result = AccountStreamStartResult(
+                accountSnapshot=snapshot,
+                listenKey=response_data["result"]["listenKey"],
+            )
+        except KeyError as e:
+            raise DeserializationError(
+                f"Missing required field in response: {e}"
+            ) from e
 
         self.listenKey = result.listenKey
         return result
@@ -187,7 +219,7 @@ class HibachiWSAccountClient:
 
         """
         if not self.listenKey:
-            raise ValueError("Cannot send ping: listenKey not initialized.")
+            raise ValidationError("Cannot send ping: listenKey not initialized.")
 
         message = {
             "id": self._next_message_id(),
@@ -196,9 +228,24 @@ class HibachiWSAccountClient:
             "timestamp": self._timestamp(),
         }
 
-        await self.websocket.send(orjson.dumps(message).decode())
+        try:
+            payload = orjson.dumps(message).decode()
+        except (ValueError, TypeError) as e:
+            raise SerializationError(f"Failed to serialize ping message: {e}") from e
+        try:
+            await self.websocket.send(payload)
+        except Exception as e:
+            raise WebSocketMessageError(
+                f"Failed to send ping message {self.account_id=}"
+            ) from e
+
         response = await self.websocket.recv()
-        parsed = orjson.loads(response)
+
+        try:
+            parsed = orjson.loads(response)
+        except (ValueError, TypeError) as e:
+            raise DeserializationError(f"Failed to parse ping response: {e}") from e
+
         if parsed.get("status") == 200:
             log.debug("pong!")
 
@@ -221,7 +268,13 @@ class HibachiWSAccountClient:
         """
         try:
             response = await asyncio.wait_for(self.websocket.recv(), timeout=15)
-            message = orjson.loads(response)
+
+            try:
+                message = orjson.loads(response)
+            except (ValueError, TypeError) as e:
+                raise DeserializationError(
+                    f"Failed to parse WebSocket message: {e}"
+                ) from e
 
             topic = message.get("topic")
             if topic in self._event_handlers:

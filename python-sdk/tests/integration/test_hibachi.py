@@ -1,5 +1,7 @@
 from typing import List
 
+import pytest
+
 from hibachi_xyz import (
     CancelOrder,
     CreateOrder,
@@ -11,7 +13,7 @@ from hibachi_xyz import (
     get_version,
 )
 from hibachi_xyz.env_setup import setup_environment
-from hibachi_xyz.errors import ExchangeError
+from hibachi_xyz.errors import BadRequest
 from hibachi_xyz.helpers import (
     get_next_maintenance_window,
     get_withdrawal_fee_for_amount,
@@ -56,7 +58,6 @@ from hibachi_xyz.types import (
     Transaction,
     UpdateOrderBatchResponse,
     WithdrawalLimit,
-    WithdrawResponse,
 )
 
 
@@ -354,10 +355,8 @@ def test_get_pending_orders():
         api_endpoint, data_api_endpoint, account_id=account_id, api_key=api_key
     )
     assert client is not None
-    # assert account_id != "your-account-id"
-    # assert api_key != "your-api-key"
-    # client.set_account_id(account_id)
-    # client.set_api_key(api_key)
+    assert account_id != "your-account-id"
+    assert api_key != "your-api-key"
 
     pending_orders_response = client.get_pending_orders()
 
@@ -388,12 +387,9 @@ def test_place_market_order():
         private_key=private_key,
     )
     assert client is not None
-    # assert account_id != "your-account-id"
-    # assert api_key != "your-api-key"
-    # assert private_key != "your-private"
-    # client.set_account_id(account_id)
-    # client.set_api_key(api_key)
-    # client.set_private_key(private_key)
+    assert account_id != "your-account-id"
+    assert api_key != "your-api-key"
+    assert private_key != "your-private"
 
     # max_fees_percent is required for most actions related to orders, it must be at least as much as returned in the exchange_info
     max_fees_percent = 0.0005
@@ -713,18 +709,14 @@ def test_withdraw():
     exchange_info = client.get_exchange_info()
     withdrawal_fees = exchange_info.feeConfig.withdrawalFees
 
-    # Test withdraw request
-    try:
-        response = client.withdraw(
+    # Test withdraw request. This raises bad request so long as withdraw address is junk
+    with pytest.raises(BadRequest):
+        client.withdraw(
             coin="USDT",
             withdraw_address="0x0000000000000000000000000000000000000000",
             quantity="1.0",
             max_fees=withdrawal_fees,
         )
-        assert isinstance(response, WithdrawResponse)
-        assert isinstance(response.orderId, str)
-    except ExchangeError:
-        pass
 
 
 def test_get_deposit_info():

@@ -1,7 +1,14 @@
 import pytest
 
+from hibachi_xyz.errors import ValidationError
 from hibachi_xyz.executors.interface import HttpResponse
-from hibachi_xyz.types import Side
+from hibachi_xyz.types import (
+    FutureContract,
+    Side,
+    TPSLConfig,
+    TWAPConfig,
+    TWAPQuantityMode,
+)
 from tests.mock_executors import MockSuccessfulOutput
 from tests.unit.conftest import load_json_all_cases
 
@@ -46,3 +53,90 @@ def test_place_market_order(mock_http_client, test_data):
 
     # Assertions
     assert order_id == order_response["orderId"]
+
+
+def test_place_market_order_twap_with_trigger_price(mock_http_client):
+    """Test that placing market order with both twap_config and trigger_price raises ValidationError."""
+    client, mock_http = mock_http_client
+
+    symbol = "BTC/USDT-P"
+    client._future_contracts = {
+        symbol: FutureContract(
+            displayName="BTC/USDT Perps",
+            id=1,
+            initialMarginRate="0.066667",
+            maintenanceMarginRate="0.046667",
+            marketCloseTimestamp=None,
+            marketCreationTimestamp="1727701319.73488",
+            marketOpenTimestamp=None,
+            minNotional="1",
+            minOrderSize="0.000000001",
+            orderbookGranularities=["0.01", "0.1", "1"],
+            settlementDecimals=6,
+            settlementSymbol="USDT",
+            status="LIVE",
+            stepSize="0.000000001",
+            symbol=symbol,
+            tickSize="0.000001",
+            underlyingDecimals=8,
+            underlyingSymbol="BTC",
+        )
+    }
+
+    twap_config = TWAPConfig(duration_minutes=5, quantity_mode=TWAPQuantityMode.FIXED)
+
+    with pytest.raises(ValidationError) as exc_info:
+        client.place_market_order(
+            symbol=symbol,
+            quantity=0.001,
+            side=Side.BUY,
+            max_fees_percent=0.001,
+            trigger_price=50000,
+            twap_config=twap_config,
+        )
+
+    assert "Can not set trigger price for TWAP order" in str(exc_info.value)
+
+
+def test_place_market_order_twap_with_tpsl(mock_http_client):
+    """Test that placing market order with both twap_config and tpsl raises ValidationError."""
+    client, mock_http = mock_http_client
+
+    symbol = "BTC/USDT-P"
+    client._future_contracts = {
+        symbol: FutureContract(
+            displayName="BTC/USDT Perps",
+            id=1,
+            initialMarginRate="0.066667",
+            maintenanceMarginRate="0.046667",
+            marketCloseTimestamp=None,
+            marketCreationTimestamp="1727701319.73488",
+            marketOpenTimestamp=None,
+            minNotional="1",
+            minOrderSize="0.000000001",
+            orderbookGranularities=["0.01", "0.1", "1"],
+            settlementDecimals=6,
+            settlementSymbol="USDT",
+            status="LIVE",
+            stepSize="0.000000001",
+            symbol=symbol,
+            tickSize="0.000001",
+            underlyingDecimals=8,
+            underlyingSymbol="BTC",
+        )
+    }
+
+    twap_config = TWAPConfig(duration_minutes=5, quantity_mode=TWAPQuantityMode.FIXED)
+    tpsl_config = TPSLConfig()
+
+    with pytest.raises(ValidationError) as exc_info:
+        client.place_market_order(
+            symbol=symbol,
+            quantity=0.001,
+            side=Side.BUY,
+            max_fees_percent=0.001,
+            twap_config=twap_config,
+            tpsl=tpsl_config,
+        )
+
+    assert "Can not set tpsl for TWAP order" in str(exc_info.value)

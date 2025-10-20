@@ -4,7 +4,11 @@ import orjson
 import pytest
 
 from hibachi_xyz.api_ws_trade import HibachiWSTradeClient
-from hibachi_xyz.errors import ValidationError
+from hibachi_xyz.errors import (
+    SerializationError,
+    ValidationError,
+    WebSocketMessageError,
+)
 from hibachi_xyz.types import (
     EnableCancelOnDisconnectParams,
     OrdersBatchParams,
@@ -337,4 +341,192 @@ async def test_message_id_increments():
     assert second_id == first_id + 1
     assert third_id == second_id + 1
 
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_get_order_status_serialization_error():
+    """Test that SerializationError is raised when order.status message serialization fails."""
+    import unittest.mock
+
+    harness = MockWsHarness()
+    client = HibachiWSTradeClient(
+        api_key="test_key",
+        account_id=12345,
+        account_public_key="test_public_key",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+
+    # Patch orjson.dumps to raise an error
+    with unittest.mock.patch("hibachi_xyz.api_ws_trade.orjson.dumps") as mock_dumps:
+        mock_dumps.side_effect = TypeError("Mock serialization error")
+
+        with pytest.raises(
+            SerializationError, match="Failed to serialize order.status message"
+        ):
+            await client.get_order_status(orderId=12345)
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_get_order_status_websocket_message_error():
+    """Test that WebSocketMessageError is raised when order.status send fails."""
+    harness = MockWsHarness()
+    client = HibachiWSTradeClient(
+        api_key="test_key",
+        account_id=12345,
+        account_public_key="test_public_key",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+    mock_websocket = harness.connections[0]
+
+    # Mock the send method to raise an exception
+    original_send = mock_websocket.send
+
+    async def failing_send(*args, **kwargs):
+        raise RuntimeError("Mock send failure")
+
+    mock_websocket.send = failing_send
+
+    with pytest.raises(
+        WebSocketMessageError, match="Failed to send order.status message"
+    ):
+        await client.get_order_status(orderId=12345)
+
+    # Restore original send
+    mock_websocket.send = original_send
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_cancel_all_orders_serialization_error():
+    """Test that SerializationError is raised when orders.cancel message serialization fails."""
+    harness = MockWsHarness()
+    client = HibachiWSTradeClient(
+        api_key="test_key",
+        account_id=12345,
+        account_public_key="test_public_key",
+        private_key="test_private_key",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+
+    # Inject a non-serializable account_id to cause serialization to fail
+    original_account_id = client.account_id
+    client.account_id = lambda: "not_serializable"
+
+    with pytest.raises(
+        SerializationError, match="Failed to serialize orders.cancel message"
+    ):
+        await client.cancel_all_orders()
+
+    client.account_id = original_account_id
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_cancel_all_orders_websocket_message_error():
+    """Test that WebSocketMessageError is raised when orders.cancel send fails."""
+    harness = MockWsHarness()
+    client = HibachiWSTradeClient(
+        api_key="test_key",
+        account_id=12345,
+        account_public_key="test_public_key",
+        private_key="test_private_key",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+    mock_websocket = harness.connections[0]
+
+    # Mock the send method to raise an exception
+    original_send = mock_websocket.send
+
+    async def failing_send(*args, **kwargs):
+        raise ConnectionError("Mock send failure")
+
+    mock_websocket.send = failing_send
+
+    with pytest.raises(
+        WebSocketMessageError, match="Failed to send orders.cancel message"
+    ):
+        await client.cancel_all_orders()
+
+    # Restore original send
+    mock_websocket.send = original_send
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_batch_orders_serialization_error():
+    """Test that SerializationError is raised when orders.batch message serialization fails."""
+    import unittest.mock
+
+    harness = MockWsHarness()
+    client = HibachiWSTradeClient(
+        api_key="test_key",
+        account_id=12345,
+        account_public_key="test_public_key",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+
+    # Patch orjson.dumps to raise an error
+    with unittest.mock.patch("hibachi_xyz.api_ws_trade.orjson.dumps") as mock_dumps:
+        mock_dumps.side_effect = TypeError("Mock serialization error")
+
+        batch_params = OrdersBatchParams(
+            accountId="12345",
+            orders=[],
+        )
+
+        with pytest.raises(
+            SerializationError, match="Failed to serialize orders.batch message"
+        ):
+            await client.batch_orders(batch_params)
+
+    await client.disconnect()
+
+
+@pytest.mark.asyncio
+async def test_batch_orders_websocket_message_error():
+    """Test that WebSocketMessageError is raised when orders.batch send fails."""
+    harness = MockWsHarness()
+    client = HibachiWSTradeClient(
+        api_key="test_key",
+        account_id=12345,
+        account_public_key="test_public_key",
+        executor=harness.executor,
+    )
+
+    await client.connect()
+    mock_websocket = harness.connections[0]
+
+    # Mock the send method to raise an exception
+    original_send = mock_websocket.send
+
+    async def failing_send(*args, **kwargs):
+        raise RuntimeError("Mock send failure")
+
+    mock_websocket.send = failing_send
+
+    batch_params = OrdersBatchParams(
+        accountId="12345",
+        orders=[],
+    )
+
+    with pytest.raises(
+        WebSocketMessageError, match="Failed to send orders.batch message"
+    ):
+        await client.batch_orders(batch_params)
+
+    # Restore original send
+    mock_websocket.send = original_send
     await client.disconnect()

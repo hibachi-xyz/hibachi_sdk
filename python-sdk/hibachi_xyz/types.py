@@ -123,7 +123,6 @@ class OrderType(Enum):
 
     LIMIT = "LIMIT"
     MARKET = "MARKET"
-    # SCHEDULED_TWAP = "SCHEDULED_TWAP"
 
 
 class OrderStatus(Enum):
@@ -200,7 +199,7 @@ class OrderIdVariant:
 
         """
         if nonce is None:
-            raise ValueError("nonce cannot be None")
+            raise ValidationError("nonce cannot be None")
         return cls(nonce=nonce, order_id=None)
 
     @classmethod
@@ -218,7 +217,7 @@ class OrderIdVariant:
 
         """
         if order_id is None:
-            raise ValueError("order_id cannot be None")
+            raise ValidationError("order_id cannot be None")
         return cls(nonce=None, order_id=order_id)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -235,7 +234,7 @@ class OrderIdVariant:
             return {"nonce": str(self.nonce)}
         elif self.order_id is not None:
             return {"orderId": str(self.order_id)}
-        raise ValueError("Empty OrderIdVariant: no nonce or order_id set")
+        raise ValidationError("Empty OrderIdVariant: no nonce or order_id set")
 
 
 class TWAPQuantityMode(Enum):
@@ -891,6 +890,29 @@ class Trade:
     quantity: str
     takerSide: TakerSide
     timestamp: int
+
+    def __init__(
+        self,
+        price: str,
+        quantity: str,
+        takerSide: str | TakerSide,
+        timestamp: int,
+    ):
+        """Initialize a Trade instance.
+
+        Args:
+            price: Trade price as string.
+            quantity: Trade quantity as string.
+            takerSide: Taker side (Buy or Sell), as string or TakerSide enum.
+            timestamp: Trade timestamp.
+
+        """
+        self.price = price
+        self.quantity = quantity
+        self.takerSide = (
+            TakerSide(takerSide) if isinstance(takerSide, str) else takerSide
+        )
+        self.timestamp = timestamp
 
 
 @dataclass
