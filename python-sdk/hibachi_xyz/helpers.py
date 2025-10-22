@@ -19,7 +19,7 @@ from prettyprinter import cpprint
 
 from hibachi_xyz.errors import (
     DeserializationError,
-    MaintanenceOutage,
+    MaintenanceOutage,
     SerializationError,
 )
 from hibachi_xyz.types import (
@@ -272,14 +272,14 @@ def check_maintenance_window(response: JsonObject) -> None:
         - SCHEDULED_MAINTENANCE: Exchange is undergoing scheduled maintenance with known timing
         - UNSCHEDULED_MAINTENANCE: Exchange is undergoing unscheduled maintenance
 
-    When any MAINTENANCE status is detected, a MaintanenceOutage exception is raised with
+    When any MAINTENANCE status is detected, a MaintenanceOutage exception is raised with
     details about the maintenance window timing (if available for scheduled maintenance).
 
     Args:
         response: JSON response from the API containing potential maintenance information
 
     Raises:
-        MaintanenceOutage: If status is anything other than "NORMAL", with a message containing human-readable UTC timestamps for scheduled windows
+        MaintenanceOutage: If status is anything other than "NORMAL", with a message containing human-readable UTC timestamps for scheduled windows
 
     """
     # Only return early if status is NORMAL
@@ -289,7 +289,7 @@ def check_maintenance_window(response: JsonObject) -> None:
 
     # Build message based on maintenance type
     if status == "UNSCHEDULED_MAINTENANCE":
-        raise MaintanenceOutage(
+        raise MaintenanceOutage(
             "Exchange is currently undergoing unscheduled maintenance"
         )
 
@@ -298,7 +298,7 @@ def check_maintenance_window(response: JsonObject) -> None:
         message_parts = ["Exchange is currently undergoing scheduled maintenance"]
     else:
         # Unknown status - still raise but with generic message
-        raise MaintanenceOutage(f"Exchange is currently unavailable (status: {status})")
+        raise MaintenanceOutage(f"Exchange is currently unavailable (status: {status})")
 
     # Try to extract additional details from currentMaintenanceWindow if present
     current_window = response.get("currentMaintenanceWindow")
@@ -341,7 +341,7 @@ def check_maintenance_window(response: JsonObject) -> None:
         if isinstance(note, str) and note:
             message_parts.append(f"Reason: {note}")
 
-    raise MaintanenceOutage(". ".join(message_parts))
+    raise MaintenanceOutage(". ".join(message_parts))
 
 
 def get_next_maintenance_window(

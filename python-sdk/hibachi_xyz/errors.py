@@ -46,11 +46,11 @@ class ExchangeError(BaseError):
     pass
 
 
-class MaintanenceOutage(ExchangeError):
-    """Raised when exchange cannot handle response due to maintanence."""
+class MaintenanceOutage(ExchangeError):
+    """Raised when exchange cannot handle response due to maintenance."""
 
     def __init__(self, message: str):
-        """Initialize a MaintanenceOutage error.
+        """Initialize a MaintenanceOutage error.
 
         Args:
             message: Description of the maintenance outage error.

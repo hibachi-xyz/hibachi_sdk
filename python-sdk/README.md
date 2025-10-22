@@ -338,7 +338,7 @@ def get_orderbook(symbol: str, depth: int, granularity: float) -> OrderBook
 ```
 
 Get the orderbook price levels.
-It will return up to depth price levels on both side. The price level will be aggreated based on granularity.
+It will return up to depth price levels on both side. The price level will be aggregated based on granularity.
 
 Endpoint: `GET /market/data/orderbook`
 
