@@ -90,6 +90,40 @@ hibachi_sdk/
 │   └── docs/           # Sphinx documentation
 └── CODEOWNERS          # Repository ownership
 ```
+## Authentication
+
+Create a `.env` file and enter your values from hibachi. Please see [Authentication](https://api-doc.hibachi.xyz/#f1e55d83-5587-4c31-bff2-e972590a16ad) for more information. Before start running this SDK, you want to make 10 USDT deposit into the account you will be using below to ensure successful runs. 
+
+```
+ENVIRONMENT=production
+HIBACHI_API_ENDPOINT_PRODUCTION="https://api.hibachi.xyz"
+HIBACHI_DATA_API_ENDPOINT_PRODUCTION="https://data-api.hibachi.xyz"
+HIBACHI_API_KEY_PRODUCTION="your_api_key_here"
+HIBACHI_PRIVATE_KEY_PRODUCTION="your_private_key_here"
+HIBACHI_PUBLIC_KEY_PRODUCTION="your_public_key_here"
+HIBACHI_ACCOUNT_ID_PRODUCTION="your_account_id_here"
+HIBACHI_TRANSFER_DST_ACCOUNT_PUBLIC_KEY_PRODUCTION="transfer_destination_account_public_key_here"
+```
+
+```python
+# ensure .env has the values set.
+from hibachi_xyz.env_setup import setup_environment
+api_endpoint, data_api_endpoint, api_key, account_id, private_key, public_key, _ = setup_environment()
+
+hibachi = HibachiApiClient(
+        api_url= api_endpoint,
+        data_api_url= data_api_endpoint,
+        api_key = api_key,
+        account_id = account_id,
+        private_key = private_key,
+    )
+
+account_info = hibachi.get_account_info()
+print(f"Account Balance: {account_info.balance}")
+print(f"total Position Notional: {account_info.totalPositionNotional}")
+```
+
+Once you can see your account balance you can proceed with the below examples or specific documentation. Let us know if you need any help!
 
 ## Support & Contributing
 
