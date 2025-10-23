@@ -60,12 +60,12 @@ jobs:
       - run:
           name: Install project dependencies
           command: |
-            cd python-sdk
+            cd python
             poetry install --with dev
       - run:
           name: Run all pre-build checks
           command: |
-            cd python-sdk
+            cd python
             poetry run poe check
       - *slack_fail_notification
 
@@ -83,8 +83,8 @@ jobs:
             python3 -m venv myapp
             source myapp/bin/activate
             pip install --upgrade pip
-            pip install -e 'python-sdk/[dev]'
-            ENVIRONMENT=$ENVIRONMENT pytest python-sdk/tests/unit
+            pip install -e 'python/[dev]'
+            ENVIRONMENT=$ENVIRONMENT pytest python/tests/unit
       - *slack_fail_notification
 
   integration-tests:
@@ -103,7 +103,7 @@ jobs:
               source myapp/bin/activate
               pip install --upgrade pip
               pip install 'hibachi-xyz[dev]'
-              ENVIRONMENT=$ENVIRONMENT pytest python-sdk/tests/integration -k "not example"
+              ENVIRONMENT=$ENVIRONMENT pytest python/tests/integration -k "not example"
             else
               echo "Integration tests disabled. Set run_integration_tests parameter to true to enable."
             fi
@@ -117,18 +117,18 @@ jobs:
           name: Patch version dynamically
           command: |
             VERSION_SUFFIX=$(date +%Y%m%d%H%M%S)
-            sed -i "s/^version = .*/version = \"0.0.1.dev$VERSION_SUFFIX\"/" python-sdk/pyproject.toml
-            grep version python-sdk/pyproject.toml
+            sed -i "s/^version = .*/version = \"0.0.1.dev$VERSION_SUFFIX\"/" python/pyproject.toml
+            grep version python/pyproject.toml
       - run: pip install build twine
       - run:
           name: Build SDK
           command: |
             echo 'dry run publish'
-            # python -m build -s -w python-sdk
+            # python -m build -s -w python
       - run:
           name: Publish to PyPI
           command: |
-            # twine upload python-sdk/dist/* -u __token__ -p "$PYPI_TOKEN"
+            # twine upload python/dist/* -u __token__ -p "$PYPI_TOKEN"
             echo 'dry run publish'
 
 workflows:
