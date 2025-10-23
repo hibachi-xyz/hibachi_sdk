@@ -67,16 +67,6 @@ nonce, order_id = hibachi.place_limit_order(
 - **Trade WebSocket**: WebSocket-based order management
 - **Account WebSocket**: Real-time account balance and position updates
 
-## Authentication
-
-All SDKs require API credentials from Hibachi:
-
-1. Create an account at [hibachi.xyz](https://hibachi.xyz)
-2. Generate API keys from your account settings
-3. Use the API key, account ID, and private key in your SDK configuration
-
-For detailed authentication setup, see the [Authentication Documentation](https://api-doc.hibachi.xyz/#f1e55d83-5587-4c31-bff2-e972590a16ad).
-
 ## Repository Structure
 
 ```
