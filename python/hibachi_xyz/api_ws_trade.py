@@ -30,6 +30,7 @@ from hibachi_xyz.helpers import (
 )
 from hibachi_xyz.types import (
     EnableCancelOnDisconnectParams,
+    JsonObject,
     Nonce,
     Order,
     OrderPlaceParams,
@@ -233,8 +234,13 @@ class HibachiWSTradeClient:
 
         return (nonce, order_id)
 
-    async def cancel_order(self, orderId: int, nonce: int) -> WebSocketResponse:
+    async def cancel_order(
+        self, orderId: int | None, nonce: int | None
+    ) -> WebSocketResponse:
         """Cancel an existing order."""
+        if orderId is None and nonce is None:
+            raise ValidationError("Either 'orderId' or 'nonce' must be not None")
+
         self.message_id += 1
 
         prepare_packet = self.api._cancel_order_request_data(
@@ -244,15 +250,18 @@ class HibachiWSTradeClient:
         log.debug("prepare_packet -------------------------------------------")
         log.debug("Prepare packet: %s", prepare_packet)
 
-        message = {
+        message: JsonObject = {
             "id": self.message_id,
             "method": "order.cancel",
             "params": {
-                "orderId": str(orderId),
-                "accountId": str(self.account_id),
+                "accountId": int(self.account_id),
             },
             "signature": prepare_packet.get("signature"),
         }
+        if orderId is not None:
+            message["params"]["orderId"] = str(orderId)  # type: ignore
+        else:
+            message["params"]["nonce"] = str(nonce)  # type: ignore
 
         try:
             payload = orjson.dumps(message).decode()
@@ -278,7 +287,7 @@ class HibachiWSTradeClient:
 
         log.debug("Response data: %s", response_data)
 
-        return create_with(WebSocketResponse, response_data)
+        return create_with(WebSocketResponse, response_data, implicit_null=True)
 
     async def modify_order(
         self,
@@ -347,7 +356,7 @@ class HibachiWSTradeClient:
                 f"Error modifying order: {response_data['error']['message']}"
             )
 
-        return create_with(WebSocketResponse, response_data)
+        return create_with(WebSocketResponse, response_data, implicit_null=True)
 
     async def get_order_status(self, orderId: int) -> OrderStatusResponse:
         """Get status of a specific order."""
@@ -383,7 +392,7 @@ class HibachiWSTradeClient:
         log.debug("Response data: %s", response_data)
 
         response_data["result"] = create_with(Order, response_data["result"])
-        return create_with(OrderStatusResponse, response_data)
+        return create_with(OrderStatusResponse, response_data, implicit_null=True)
 
     async def get_orders_status(self) -> OrdersStatusResponse:
         """Get status of all orders."""
@@ -495,7 +504,7 @@ class HibachiWSTradeClient:
                 f"Failed to parse WebSocket response: {e}"
             ) from e
 
-        return create_with(WebSocketResponse, response_data)
+        return create_with(WebSocketResponse, response_data, implicit_null=True)
 
     async def enable_cancel_on_disconnect(
         self, params: EnableCancelOnDisconnectParams
@@ -530,7 +539,7 @@ class HibachiWSTradeClient:
                 f"Failed to parse WebSocket response: {e}"
             ) from e
 
-        return create_with(WebSocketResponse, response_data)
+        return create_with(WebSocketResponse, response_data, implicit_null=True)
 
     async def disconnect(self) -> None:
         """Close the WebSocket connection."""
