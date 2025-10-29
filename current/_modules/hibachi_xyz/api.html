@@ -95,6 +95,7 @@
     <span class="n">Forbidden</span><span class="p">,</span>
     <span class="n">GatewayTimeout</span><span class="p">,</span>
     <span class="n">InternalServerError</span><span class="p">,</span>
+    <span class="n">MissingCredentialsError</span><span class="p">,</span>
     <span class="n">NotFound</span><span class="p">,</span>
     <span class="n">RateLimited</span><span class="p">,</span>
     <span class="n">ServiceUnavailable</span><span class="p">,</span>
@@ -486,10 +487,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">private_key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">):</span>
             <span class="n">private_key</span> <span class="o">=</span> <span class="n">private_key</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
-            <span class="n">private_key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">private_key</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">private_key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">private_key</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid hex private key: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_private_key</span> <span class="o">=</span> <span class="n">eth_keys</span><span class="o">.</span><span class="n">datatypes</span><span class="o">.</span><span class="n">PrivateKey</span><span class="p">(</span><span class="n">private_key_bytes</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">private_key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_private_key_hmac</span> <span class="o">=</span> <span class="n">private_key</span></div>
 
 
@@ -813,16 +816,15 @@
 <span class="sd">            GET /market/data/orderbook</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">depth</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">depth</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">depth</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Depth must be a positive integer between 1 and 100, inclusive&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">depth</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">depth</span><span class="si">=}</span><span class="s2"> must be a positive integer between 1 and 100, inclusive&quot;</span>
             <span class="p">)</span>
 
         <span class="n">contract</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_contract</span><span class="p">(</span><span class="n">symbol</span><span class="p">)</span>
         <span class="n">granularities</span> <span class="o">=</span> <span class="n">contract</span><span class="o">.</span><span class="n">orderbookGranularities</span>
         <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">granularity</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">granularities</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;Granularity for symbol </span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2"> must be one of </span><span class="si">{</span><span class="n">granularities</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
 
@@ -832,11 +834,11 @@
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">ask_levels</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">OrderBookLevel</span><span class="p">(</span><span class="n">price</span><span class="o">=</span><span class="n">level</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">],</span> <span class="n">quantity</span><span class="o">=</span><span class="n">level</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>  <span class="c1"># type: ignore</span>
+                <span class="n">create_with</span><span class="p">(</span><span class="n">OrderBookLevel</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;ask&quot;</span><span class="p">][</span><span class="s2">&quot;levels&quot;</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
             <span class="p">]</span>
             <span class="n">bid_levels</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">OrderBookLevel</span><span class="p">(</span><span class="n">price</span><span class="o">=</span><span class="n">level</span><span class="p">[</span><span class="s2">&quot;price&quot;</span><span class="p">],</span> <span class="n">quantity</span><span class="o">=</span><span class="n">level</span><span class="p">[</span><span class="s2">&quot;quantity&quot;</span><span class="p">])</span>  <span class="c1"># type: ignore</span>
+                <span class="n">create_with</span><span class="p">(</span><span class="n">OrderBookLevel</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;bid&quot;</span><span class="p">][</span><span class="s2">&quot;levels&quot;</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
             <span class="p">]</span>
 
@@ -1086,13 +1088,18 @@
         <span class="n">asset_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__get_asset_id</span><span class="p">(</span><span class="n">coin</span><span class="p">)</span>
         <span class="c1"># Create payload bytes</span>
         <span class="n">asset_id_bytes</span> <span class="o">=</span> <span class="n">asset_id</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
-        <span class="n">quantity_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
-            <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
-        <span class="p">)</span>  <span class="c1"># Assuming 6 decimals for USDT</span>
-        <span class="n">max_fees_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">max_fees</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
-            <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
-        <span class="p">)</span>  <span class="c1"># Assuming 6 decimals for USDT</span>
-        <span class="n">address_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">withdraw_address</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">quantity_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>  <span class="c1"># Assuming 6 decimals for USDT</span>
+            <span class="n">max_fees_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">max_fees</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>  <span class="c1"># Assuming 6 decimals for USDT</span>
+            <span class="n">address_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">withdraw_address</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid withdrawal parameter format: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">OverflowError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Withdrawal value out of range: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="c1"># Combine payload</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="n">asset_id_bytes</span> <span class="o">+</span> <span class="n">quantity_bytes</span> <span class="o">+</span> <span class="n">max_fees_bytes</span> <span class="o">+</span> <span class="n">address_bytes</span>
@@ -1127,11 +1134,16 @@
         <span class="c1"># Create payload bytes</span>
         <span class="n">nonce_bytes</span> <span class="o">=</span> <span class="n">nonce</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
         <span class="n">asset_id_bytes</span> <span class="o">=</span> <span class="n">asset_id</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
-        <span class="n">quantity_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
-            <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
-        <span class="p">)</span>  <span class="c1"># Assuming 6 decimals for USDT</span>
-        <span class="n">max_fees_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">max_fees_percent</span><span class="p">))</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
-        <span class="n">address_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">dst_account_public_key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">quantity_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1e6</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>  <span class="c1"># Assuming 6 decimals for USDT</span>
+            <span class="n">max_fees_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">max_fees_percent</span><span class="p">))</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
+            <span class="n">address_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">dst_account_public_key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;0x&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid transfer parameter format: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">OverflowError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Transfer value out of range: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
         <span class="c1"># Combine payload</span>
         <span class="n">payload</span> <span class="o">=</span> <span class="p">(</span>
@@ -1421,10 +1433,10 @@
             <span class="n">side</span> <span class="o">=</span> <span class="n">Side</span><span class="o">.</span><span class="n">ASK</span>
 
         <span class="k">if</span> <span class="n">twap_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">trigger_price</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can not set trigger price for TWAP order&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Can not set trigger price for TWAP order&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">twap_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">tpsl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can not set tpsl for TWAP order&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Can not set tpsl for TWAP order&quot;</span><span class="p">)</span>
 
         <span class="n">quantity</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">quantity</span><span class="p">)</span>
         <span class="n">max_fees_percent</span> <span class="o">=</span> <span class="n">numeric_to_decimal</span><span class="p">(</span><span class="n">max_fees_percent</span><span class="p">)</span>
@@ -1975,7 +1987,9 @@
 <span class="sd">            Json: The parsed JSON response body</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http_executor</span><span class="o">.</span><span class="n">send_simple_request</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">body</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http_executor</span><span class="o">.</span><span class="n">send_simple_request</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">raise_response_errors</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">body</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__send_authorized_request</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1994,7 +2008,9 @@
 <span class="sd">            Json: The parsed JSON response body</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http_executor</span><span class="o">.</span><span class="n">send_authorized_request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">json</span><span class="p">)</span><span class="o">.</span><span class="n">body</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_http_executor</span><span class="o">.</span><span class="n">send_authorized_request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">json</span><span class="p">)</span>
+        <span class="n">raise_response_errors</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">body</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Private helpers &quot;&quot;&quot;</span>
 
@@ -2128,7 +2144,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_private_key_hmac</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">payload</span><span class="p">,</span> <span class="n">sha256</span>
             <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
 
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Private key is not set&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">MissingCredentialsError</span><span class="p">(</span><span class="s2">&quot;Private key is not set&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">__create_or_update_order_payload</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -2157,12 +2173,19 @@
 
         <span class="n">nonce_bytes</span> <span class="o">=</span> <span class="n">nonce</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
         <span class="n">contract_id_bytes</span> <span class="o">=</span> <span class="n">contract_id</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
-        <span class="n">quantity_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">quantity</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">contract</span><span class="o">.</span><span class="n">underlyingDecimals</span><span class="p">))</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
-            <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
-        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">quantity_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="n">quantity</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">contract</span><span class="o">.</span><span class="n">underlyingDecimals</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
+            <span class="n">max_fees_percent_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_fees_percent</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid order parameter format: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+        <span class="k">except</span> <span class="ne">OverflowError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Order value out of range: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="n">price_bytes</span> <span class="o">=</span> <span class="sa">b</span><span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">price</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">price_to_bytes</span><span class="p">(</span><span class="n">price</span><span class="p">,</span> <span class="n">contract</span><span class="p">)</span>
         <span class="n">side_bytes</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="n">side</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;ASK&quot;</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
-        <span class="n">max_fees_percent_bytes</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">max_fees_percent</span> <span class="o">*</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">))</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="s2">&quot;big&quot;</span><span class="p">)</span>
 
         <span class="n">payload</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">nonce_bytes</span>

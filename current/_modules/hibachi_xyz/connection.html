@@ -74,6 +74,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">TransportError</span><span class="p">,</span> <span class="n">WebSocketConnectionError</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.executors.interface</span><span class="w"> </span><span class="kn">import</span> <span class="n">WsConnection</span><span class="p">,</span> <span class="n">WsExecutor</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
@@ -86,7 +87,8 @@
     <span class="n">headers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">executor</span><span class="p">:</span> <span class="n">WsExecutor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_retries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="n">retry_delay</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">retry_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">backoff_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WsConnection</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Establish WebSocket connection with exponential backoff retry logic.</span>
 
@@ -99,6 +101,7 @@
 <span class="sd">        executor: Optional WebSocket executor to use for connection</span>
 <span class="sd">        max_retries: Maximum number of connection attempts (default: 10)</span>
 <span class="sd">        retry_delay: Initial retry delay in seconds (default: 1)</span>
+<span class="sd">        backoff_factor: Factor to increase retry_delay with each retry</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Established WebSocket connection</span>
@@ -122,7 +125,7 @@
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">retry_count</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">retry_count</span> <span class="o">&gt;=</span> <span class="n">max_retries</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="k">raise</span> <span class="n">WebSocketConnectionError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Failed to connect after </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2"> attempts: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
                 <span class="p">)</span>
 
@@ -133,9 +136,9 @@
                 <span class="n">retry_delay</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
-            <span class="n">retry_delay</span> <span class="o">*=</span> <span class="mi">2</span>  <span class="c1"># Exponential backoff</span>
+            <span class="n">retry_delay</span> <span class="o">*=</span> <span class="n">backoff_factor</span>  <span class="c1"># Exponential backoff</span>
 
-    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unreachable&quot;</span><span class="p">)</span>  <span class="c1"># satisfies mypy</span></div>
+    <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span><span class="s2">&quot;Unreachable. Contact Hibachi support&quot;</span><span class="p">)</span></div>
 
 </pre></div>
 

@@ -123,13 +123,13 @@
 
 
 
-<div class="viewcode-block" id="MaintanenceOutage">
-<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.MaintanenceOutage">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">MaintanenceOutage</span><span class="p">(</span><span class="n">ExchangeError</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when exchange cannot handle response due to maintanence.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="MaintenanceOutage">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.MaintenanceOutage">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaintenanceOutage</span><span class="p">(</span><span class="n">ExchangeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when exchange cannot handle response due to maintenance.&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a MaintanenceOutage error.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a MaintenanceOutage error.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            message: Description of the maintenance outage error.</span>
@@ -139,9 +139,16 @@
 
 
 
+<div class="viewcode-block" id="HibachiApiError">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.HibachiApiError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HibachiApiError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated - use hibachi_xyz.errors.BadHttpStatus and subclasses.&quot;&quot;&quot;</span></div>
+
+
+
 <div class="viewcode-block" id="BadHttpStatus">
 <a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.BadHttpStatus">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">BadHttpStatus</span><span class="p">(</span><span class="n">ExchangeError</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BadHttpStatus</span><span class="p">(</span><span class="n">ExchangeError</span><span class="p">,</span> <span class="n">HibachiApiError</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when response status from exchange is not 2XX.&quot;&quot;&quot;</span>
 
     <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span>
@@ -242,6 +249,22 @@
 <a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.Forbidden">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">Forbidden</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server returns a 403 Forbidden error.&quot;&quot;&quot;</span>
+
+    <span class="k">pass</span></div>
+
+
+
+<span class="c1">## Websockets errors</span>
+
+
+<div class="viewcode-block" id="BadWebsocketResponse">
+<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.BadWebsocketResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BadWebsocketResponse</span><span class="p">(</span><span class="n">ExchangeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when the server sends a websocket message indicating an error.</span>
+
+<span class="sd">    This is specifically an error in the action requested of the exchange.</span>
+<span class="sd">    It is not an error with the websocket connection or protocol</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">pass</span></div>
 
@@ -463,27 +486,6 @@
 <span class="c1"># ============================================================================</span>
 <span class="c1"># DEPRECATED TYPES</span>
 <span class="c1"># ============================================================================</span>
-
-
-<div class="viewcode-block" id="HibachiApiError">
-<a class="viewcode-back" href="../../hibachi_xyz.html#hibachi_xyz.errors.HibachiApiError">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">HibachiApiError</span><span class="p">(</span><span class="n">BadHttpStatus</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Deprecated - use hibachi_xyz.errors.ExchangeError and subclasses.&quot;&quot;&quot;</span>
-
-    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a HibachiApiError (deprecated).</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            status_code: The HTTP status code returned by the server.</span>
-<span class="sd">            message: Description of the API error.</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">status_code</span> <span class="o">=</span> <span class="n">status_code</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span></div>
-
 </pre></div>
 
            </div>
