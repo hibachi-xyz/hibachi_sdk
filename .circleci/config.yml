@@ -119,12 +119,13 @@ jobs:
             VERSION_SUFFIX=$(date +%Y%m%d%H%M%S)
             sed -i "s/^version = .*/version = \"0.0.1.dev$VERSION_SUFFIX\"/" python/pyproject.toml
             grep version python/pyproject.toml
-      - run: pip install build twine
+      - run: pip install poetry twine
       - run:
           name: Build SDK
           command: |
             echo 'dry run publish'
-            # python -m build -s -w python
+            # cd python
+            # poetry build
       - run:
           name: Publish to PyPI
           command: |

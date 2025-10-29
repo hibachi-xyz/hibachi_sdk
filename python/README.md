@@ -65,11 +65,11 @@ Once you can see your account balance you can proceed with the below examples or
 
 See how to use the Python SDK from working code:
 
-[REST Example - Trade and Account](https://github.com/hibachi-xyz/yule-os/blob/main/python-sdk/examples/example_rest_api.py)   
-[REST Example - Market](https://github.com/hibachi-xyz/yule-os/blob/main/python-sdk/examples/example_public_api.py)   
-[Websocket Examples - Trade](https://github.com/hibachi-xyz/yule-os/blob/main/python-sdk/examples/example_ws_trade.py)   
-[Websocket Examples - Account](https://github.com/hibachi-xyz/yule-os/blob/main/python-sdk/examples/example_ws_account.py)
-[Websocket Examples - Market](https://github.com/hibachi-xyz/yule-os/blob/main/python-sdk/examples/example_ws_Market.py)
+[REST Example - Trade and Account](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_rest_api.py)
+[REST Example - Market](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_public_api.py)
+[Websocket Examples - Trade](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_ws_trade.py)
+[Websocket Examples - Account](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_ws_account.py)
+[Websocket Examples - Market](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_ws_Market.py)
 
 ## Environment Variables
 
@@ -1288,8 +1288,8 @@ Unsubscribe from specific market subscriptions
 # Development
 
 ```sh
-cd yule
-python3 -m venv python-sdk
+cd hibachi_sdk
+python3 -m venv python
 
 # Run tests
 ./bin/pytest -v -s

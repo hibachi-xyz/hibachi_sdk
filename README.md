@@ -117,7 +117,7 @@ Once you can see your account balance you can proceed with the below examples or
 
 ## Support & Contributing
 
-- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/hibachi-xyz/yule-os/issues)
+- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/hibachi-xyz/hibachi_sdk/issues)
 - **Documentation**: [Official API Docs](https://api-doc.hibachi.xyz/)
 - **Community**: Join our community channels (links available on [hibachi.xyz](https://hibachi.xyz))
 

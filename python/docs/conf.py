@@ -53,8 +53,6 @@ def linkcode_resolve(domain: str, info: dict[str, str]) -> str | None:
     if domain != "py" or not info["module"]:
         return None
     filename = (
-        info["module"]
-        .replace(".", "/")
-        .replace("hibachi_xyz/", "python-sdk/hibachi_xyz/")
+        info["module"].replace(".", "/").replace("hibachi_xyz/", "python/hibachi_xyz/")
     )
-    return f"https://github.com/hibachi-xyz/yule-os/tree/v{release}/{filename}.py"
+    return f"https://github.com/hibachi-xyz/hibachi_sdk/tree/v{release}/{filename}.py"

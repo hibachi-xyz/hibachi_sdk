@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "hibachi_xyz"
@@ -36,8 +36,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/hibachi-xyz/yule-os"
-Issues = "https://github.com/hibachi-xyz/yule-os/issues"
+"Package Documentation" = "https://hibachi-xyz.github.io/hibachi_sdk/current/"
+"Hibachi API Documentation" = "https://api-doc.hibachi.xyz/"
+Source = "https://github.com/hibachi-xyz/hibachi_sdk/"
+Issues = "https://github.com/hibachi-xyz/hibachi_sdk/issues/"
 
 [tool.mypy]
 python_version = "3.13"
