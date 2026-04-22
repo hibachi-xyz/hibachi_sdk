@@ -117,6 +117,9 @@ from hibachi_xyz.types import (  # type: ignore[attr-defined]
     WithdrawalLimit,
     WithdrawRequest,
     WithdrawResponse,
+    check_tick_size,
+    round_price_to_tick,
+    round_quantity_to_step,
 )
 
 log = logging.getLogger(__name__)
@@ -247,4 +250,7 @@ __all__ = [
     "__version__",
     "print_data",
     "HibachiApiError",
+    "check_tick_size",
+    "round_price_to_tick",
+    "round_quantity_to_step",
 ]

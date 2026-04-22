@@ -33,6 +33,7 @@ from hibachi_xyz.types import (
     JsonObject,
     Nonce,
     Order,
+    OrderFlags,
     OrderPlaceParams,
     OrdersBatchParams,
     OrdersStatusResponse,
@@ -191,6 +192,8 @@ class HibachiWSTradeClient:
             price=params.price,
             creation_deadline=params.creation_deadline,
             twap_config=params.twap_config,
+            order_flags=OrderFlags(params.orderFlags) if params.orderFlags else None,
+            trigger_direction=params.trigger_direction,
         )
 
         prepare_packet["accountId"] = self.account_id
