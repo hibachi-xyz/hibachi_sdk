@@ -69,7 +69,7 @@ See how to use the Python SDK from working code:
 [REST Example - Market](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_public_api.py)
 [Websocket Examples - Trade](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_ws_trade.py)
 [Websocket Examples - Account](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_ws_account.py)
-[Websocket Examples - Market](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_ws_Market.py)
+[Websocket Examples - Market](https://github.com/hibachi-xyz/hibachi_sdk/blob/main/python/examples/example_ws_market.py)
 
 ## Environment Variables
 
