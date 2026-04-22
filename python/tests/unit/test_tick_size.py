@@ -64,7 +64,7 @@ class TestRoundPriceToTick:
             round_price_to_tick("100.12345", "-0.01")
 
     def test_simulates_mark_price_offset(self):
-        """Simulate Ymir-style price generation: mark * (1 + delta)."""
+        """Simulate price generation from mark price with small offset."""
         mark = Decimal("2234")
         tick = "0.01"
         for i in range(1, 20):
