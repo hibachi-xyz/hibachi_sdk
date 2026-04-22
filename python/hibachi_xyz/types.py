@@ -56,6 +56,83 @@ WsEventHandler: TypeAlias = Callable[[Json], Coroutine[None, None, None]]
 DECIMAL_PATTERN = re.compile(r"^\d+(\.\d+)?$")
 
 
+def round_price_to_tick(
+    price: HibachiNumericInput, tick_size: HibachiNumericInput
+) -> Decimal:
+    """Round a price to the nearest multiple of the tick size.
+
+    Args:
+        price: The price to round (Decimal, str, float, or int)
+        tick_size: The tick size (Decimal, str, float, or int)
+
+    Returns:
+        Decimal: The price rounded to the nearest tick size multiple
+
+    Raises:
+        ValidationError: If the price or tick_size is invalid, or tick_size is not positive
+
+    Example:
+        >>> round_price_to_tick(100.123, "0.01")
+        Decimal('100.12')
+        >>> round_price_to_tick("50.0055", Decimal("0.001"))
+        Decimal('50.006')
+    """
+    p = numeric_to_decimal(price)
+    tick = numeric_to_decimal(tick_size)
+    if tick <= 0:
+        raise ValidationError(f"Tick size must be positive, got: {tick_size}")
+    return (p / tick).quantize(Decimal("1")) * tick
+
+
+def round_quantity_to_step(
+    quantity: HibachiNumericInput, step_size: HibachiNumericInput
+) -> Decimal:
+    """Round a quantity down to the nearest multiple of the step size.
+
+    Uses ROUND_DOWN to avoid exceeding the intended quantity.
+
+    Args:
+        quantity: The quantity to round (Decimal, str, float, or int)
+        step_size: The step size (Decimal, str, float, or int)
+
+    Returns:
+        Decimal: The quantity rounded down to the nearest step size multiple
+
+    Raises:
+        ValidationError: If the quantity or step_size is invalid, or step_size is not positive
+
+    Example:
+        >>> round_quantity_to_step(1.23456789, "0.00000001")
+        Decimal('1.23456789')
+    """
+    from decimal import ROUND_DOWN
+
+    q = numeric_to_decimal(quantity)
+    step = numeric_to_decimal(step_size)
+    if step <= 0:
+        raise ValidationError(f"Step size must be positive, got: {step_size}")
+    return (q / step).quantize(Decimal("1"), rounding=ROUND_DOWN) * step
+
+
+def check_tick_size(price: HibachiNumericInput, tick_size: HibachiNumericInput) -> None:
+    """Validate that a price is a multiple of the tick size.
+
+    Args:
+        price: The price to validate
+        tick_size: The tick size (Decimal, str, float, or int)
+
+    Raises:
+        ValidationError: If the price is not a multiple of the tick size, or tick_size is not positive
+    """
+    p = numeric_to_decimal(price)
+    tick = numeric_to_decimal(tick_size)
+    if tick <= 0:
+        raise ValidationError(f"Tick size must be positive, got: {tick_size}")
+    remainder = p % tick
+    if remainder != Decimal("0"):
+        raise ValidationError(f"Price {p} is not a multiple of tick size {tick_size}")
+
+
 def full_precision_string(n: HibachiNumericInput) -> str:
     """Convert a numeric input to a full precision string representation."""
     if isinstance(n, str):

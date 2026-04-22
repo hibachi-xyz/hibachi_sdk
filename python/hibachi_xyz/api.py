@@ -99,6 +99,7 @@ from hibachi_xyz.types import (
     WithdrawalLimit,
     WithdrawRequest,
     WithdrawResponse,
+    check_tick_size,
     deserialize_batch_response_order,
     full_precision_string,
     numeric_to_decimal,
@@ -1919,6 +1920,28 @@ class HibachiApiClient:
 
         return contract
 
+    def get_tick_size(self, symbol: str) -> Decimal:
+        """Get the tick size (minimum price increment) for a symbol.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+
+        Returns:
+            Decimal: The tick size for the contract
+        """
+        return Decimal(self.__get_contract(symbol).tickSize)
+
+    def get_step_size(self, symbol: str) -> Decimal:
+        """Get the step size (minimum quantity increment) for a symbol.
+
+        Args:
+            symbol: The trading symbol (e.g., "BTC/USDT-P")
+
+        Returns:
+            Decimal: The step size for the contract
+        """
+        return Decimal(self.__get_contract(symbol).stepSize)
+
     def __ensure_contract_listed(self, symbol: str) -> None:
         """Validate that a trading symbol is listed on the exchange.
 
@@ -2074,6 +2097,10 @@ class HibachiApiClient:
 
         """
         contract = self.__get_contract(symbol)
+        if price is not None:
+            check_tick_size(price, contract.tickSize)
+        if trigger_price is not None:
+            check_tick_size(trigger_price, contract.tickSize)
         payload = self.__create_or_update_order_payload(
             contract, nonce, quantity, side, max_fees_percent, price
         )
@@ -2143,6 +2170,10 @@ class HibachiApiClient:
 
         """
         contract = self.__get_contract(symbol)
+        if price is not None:
+            check_tick_size(price, contract.tickSize)
+        if trigger_price is not None:
+            check_tick_size(trigger_price, contract.tickSize)
         payload = self.__create_or_update_order_payload(
             contract, nonce, quantity, side, max_fees_percent, price
         )

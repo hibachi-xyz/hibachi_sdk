@@ -5,6 +5,7 @@ from hibachi_xyz import (
     TWAPConfig,
     TWAPQuantityMode,
     UpdateOrder,
+    round_price_to_tick,
 )
 from hibachi_xyz.env_setup import setup_environment
 from hibachi_xyz.types import (
@@ -234,16 +235,21 @@ def example_auth_rest_api():
     # Market Order Placed: Nonce: 1750928720123123, Order ID: 588745218831456123
     print(f"Market Order Placed: Nonce: {nonce}, Order ID: {order_id}")
 
-    # Advanced Order
+    # Advanced Order — prices must be aligned to the contract's tick size.
+    # Use round_price_to_tick() to snap prices to the nearest valid increment.
+    tick_size = hibachi.get_tick_size("BTC/USDT-P")
+    limit_price = round_price_to_tick(float(prices.markPrice), tick_size)
+    trigger_price = round_price_to_tick(float(prices.markPrice) * 0.95, tick_size)
+
     (nonce, order_id) = hibachi.place_limit_order(
         symbol="BTC/USDT-P",
         quantity=0.0001,
-        price=float(prices.markPrice),
+        price=limit_price,
         side=Side.BID,
         max_fees_percent=float(exch_info.feeConfig.tradeTakerFeeRate) * 2.0,
-        trigger_price=float(prices.markPrice) * 0.95,
+        trigger_price=trigger_price,
     )
-    print(f"Market Order Placed: Nonce: {nonce}, Order ID: {order_id}")
+    print(f"Limit Order Placed: Nonce: {nonce}, Order ID: {order_id}")
 
     # Get Order Details
     # Order(
