@@ -61,6 +61,33 @@ print(f"total Position Notional: {account_info.totalPositionNotional}")
 
 Once you can see your account balance you can proceed with the below examples or specific documentation. Let us know if you need any help!
 
+## Price Tick Size
+
+All order prices must be a multiple of the contract's **tick size** (minimum price increment). The SDK validates this before sending the request and will raise `ValidationError` for non-aligned prices.
+
+Use `round_price_to_tick()` to snap prices to the nearest valid increment:
+
+```python
+from hibachi_xyz import round_price_to_tick
+
+# Get the tick size for a contract
+tick_size = hibachi.get_tick_size("BTC/USDT-P")
+
+# Round a price to the nearest valid increment
+price = round_price_to_tick(mark_price, tick_size)
+
+# Place the order with the rounded price
+hibachi.place_limit_order(
+    symbol="BTC/USDT-P",
+    quantity=0.001,
+    price=price,
+    side=Side.BID,
+    max_fees_percent=max_fees,
+)
+```
+
+Tick sizes for each contract are available via `hibachi.get_exchange_info()` or `hibachi.get_tick_size(symbol)`.
+
 # Examples
 
 See how to use the Python SDK from working code:
