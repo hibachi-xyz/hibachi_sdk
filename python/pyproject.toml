@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "hibachi_xyz"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
   {name = "Hibachi Engineer"}
 ]

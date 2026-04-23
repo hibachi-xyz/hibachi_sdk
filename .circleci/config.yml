@@ -113,24 +113,18 @@ jobs:
     executor: python-executor
     steps:
       - checkout
-      - run:
-          name: Patch version dynamically
-          command: |
-            VERSION_SUFFIX=$(date +%Y%m%d%H%M%S)
-            sed -i "s/^version = .*/version = \"0.0.1.dev$VERSION_SUFFIX\"/" python/pyproject.toml
-            grep version python/pyproject.toml
       - run: pip install poetry twine
       - run:
           name: Build SDK
           command: |
-            echo 'dry run publish'
-            # cd python
-            # poetry build
+            # echo 'dry run publish'
+            cd python
+            poetry build
       - run:
           name: Publish to PyPI
           command: |
-            # twine upload python/dist/* -u __token__ -p "$PYPI_TOKEN"
-            echo 'dry run publish'
+            twine upload python/dist/* -u __token__ -p "$PYPI_TOKEN"
+            # echo 'dry run publish'
 
 workflows:
   sdk-tests-and-deploy:
