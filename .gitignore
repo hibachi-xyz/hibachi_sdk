@@ -1,14 +1,35 @@
-**/build
-**/*.egg-info
-__pycache__
-/bin
-/lib
-/lib64
+```
+# Dependencies
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
 .env
-.pytest_cache
-/include
-.env.local*
-/dev_ws*
-**/dist/*
-**/.DS_Store
-**/Thumbs.db
+.env.local
+.env.*
+# Build artifacts
+build/
+dist/
+*.egg-info/
+# Logs
+*.log
+# Editor/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+# Coverage
+.coverage
+coverage/
+htmlcov/
+# Testing
+.pytest_cache/
+.mypy_cache/
+# OS
+.DS_Store
+Thumbs.db
+```
