@@ -74,7 +74,11 @@ class AiohttpWsConnection(WsConnection):
                 return msg.data  # type: ignore
             elif msg.type == aiohttp.WSMsgType.BINARY:
                 return msg.data.decode("utf-8")  # type: ignore
-            elif msg.type == aiohttp.WSMsgType.CLOSE:
+            elif msg.type in (
+                aiohttp.WSMsgType.CLOSE,
+                aiohttp.WSMsgType.CLOSING,
+                aiohttp.WSMsgType.CLOSED,
+            ):
                 raise WebSocketConnectionError("WebSocket closed")
             elif msg.type == aiohttp.WSMsgType.ERROR:
                 raise WebSocketConnectionError(
