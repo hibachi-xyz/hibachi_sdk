@@ -1,4 +1,7 @@
-![Hibachi Logo](./logo.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/logo-dark.svg">
+  <img alt="Hibachi" src="./assets/logo-light.svg" width="280">
+</picture>
 
 # Hibachi SDKs
 
