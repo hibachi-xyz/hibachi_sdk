@@ -5,14 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hibachi_xyz.executors.httpx &mdash; hibachi_xyz 0.2.0 documentation</title>
+  <title>hibachi_xyz.executors.httpx &mdash; hibachi_xyz 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
 
   
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
       <script src="../../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../../_static/documentation_options.js?v=71d9d8e6"></script>
       <script src="../../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../../_static/js/theme.js"></script>
@@ -24,12 +25,13 @@
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search"  style="background: #171718" >
 
           
           
           <a href="../../../index.html" class="icon icon-home">
             hibachi_xyz
+              <img src="../../../_static/logo.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
@@ -48,7 +50,7 @@
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #171718" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../../index.html">hibachi_xyz</a>
       </nav>
@@ -69,11 +71,11 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hibachi_xyz.executors.httpx</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;HTTP executor implementation using httpx.</span>
+<span></span><span class="sd">"""HTTP executor implementation using httpx.</span>
 
 <span class="sd">This module provides HTTP request handling using the httpx library,</span>
 <span class="sd">supporting both sync and async operations for the Hibachi SDK.</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">override</span>
 
@@ -101,10 +103,10 @@
 <div class="viewcode-block" id="HttpxHttpExecutor">
 <a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.httpx.HttpxHttpExecutor">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">HttpxHttpExecutor</span><span class="p">(</span><span class="n">HttpExecutor</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;HTTP executor implementation using httpx.</span>
+<span class="w">    </span><span class="sd">"""HTTP executor implementation using httpx.</span>
 
 <span class="sd">    Provides synchronous HTTP request execution using the httpx library.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -113,7 +115,7 @@
         <span class="n">data_api_url</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_DATA_API_URL</span><span class="p">,</span>
         <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the HTTPX HTTP executor.</span>
+<span class="w">        </span><span class="sd">"""Initialize the HTTPX HTTP executor.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            api_url: The base URL for the Hibachi API. Defaults to DEFAULT_API_URL.</span>
@@ -121,7 +123,7 @@
 <span class="sd">            api_key: Optional API key for authenticated requests. If not provided,</span>
 <span class="sd">                authorized requests will fail with a ValidationError.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api_url</span> <span class="o">=</span> <span class="n">api_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">data_api_url</span> <span class="o">=</span> <span class="n">data_api_url</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span> <span class="o">=</span> <span class="n">api_key</span>
@@ -131,7 +133,7 @@
 <a class="viewcode-back" href="../../../hibachi_xyz.executors.html#hibachi_xyz.executors.httpx.HttpxHttpExecutor.send_simple_request">[docs]</a>
     <span class="nd">@override</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">send_simple_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HttpResponse</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Send a simple unauthenticated GET request to the Data API.</span>
+<span class="w">        </span><span class="sd">"""Send a simple unauthenticated GET request to the Data API.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            path: The API endpoint path to request (will be appended to data_api_url).</span>
@@ -144,28 +146,28 @@
 <span class="sd">            HttpConnectionError: If there is a connection or network error.</span>
 <span class="sd">            TransportError: If any other transport-level error occurs.</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_api_url</span><span class="si">}{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="sd">        """</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data_api_url</span><span class="si">}{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
                 <span class="n">url</span><span class="p">,</span>
-                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Hibachi-Client&quot;</span><span class="p">:</span> <span class="n">get_hibachi_client</span><span class="p">()},</span>
+                <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">"Hibachi-Client"</span><span class="p">:</span> <span class="n">get_hibachi_client</span><span class="p">()},</span>
             <span class="p">)</span>
         <span class="k">except</span> <span class="n">BaseError</span><span class="p">:</span>
             <span class="k">raise</span>
         <span class="k">except</span> <span class="n">httpx</span><span class="o">.</span><span class="n">TimeoutException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="c1"># TODO better timeout</span>
             <span class="k">raise</span> <span class="n">TransportTimeoutError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> timed out&quot;</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="o">=</span><span class="kc">None</span>
+                <span class="sa">f</span><span class="s2">"Request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> timed out"</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="o">=</span><span class="kc">None</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">except</span> <span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">ConnectError</span><span class="p">,</span> <span class="n">httpx</span><span class="o">.</span><span class="n">ConnectTimeout</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to connect to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to connect to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">except</span> <span class="n">httpx</span><span class="o">.</span><span class="n">NetworkError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Network error during request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span>
+                <span class="sa">f</span><span class="s2">"Network error during request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span>
             <span class="n">status</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
             <span class="n">body</span><span class="o">=</span><span class="n">deserialize_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">url</span><span class="p">),</span>
@@ -181,10 +183,10 @@
         <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">json</span><span class="p">:</span> <span class="n">Json</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HttpResponse</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Send an authenticated request to the API.</span>
+<span class="w">        </span><span class="sd">"""Send an authenticated request to the API.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            method: The HTTP method to use (e.g., &#39;GET&#39;, &#39;POST&#39;, &#39;PUT&#39;, &#39;DELETE&#39;).</span>
+<span class="sd">            method: The HTTP method to use (e.g., 'GET', 'POST', 'PUT', 'DELETE').</span>
 <span class="sd">            path: The API endpoint path to request (will be appended to api_url).</span>
 <span class="sd">            json: Optional JSON data to include in the request body. Defaults to None.</span>
 
@@ -198,18 +200,18 @@
 <span class="sd">            TransportError: If any other transport-level error occurs.</span>
 <span class="sd">            ExchangeError: If an exchange-specific error occurs (re-raised).</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">        """</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;api_key is not set&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s2">"api_key is not set"</span><span class="p">)</span>
 
-        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_url</span><span class="si">}{</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">api_url</span><span class="si">}{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
         <span class="n">request_body</span> <span class="o">=</span> <span class="n">serialize_request</span><span class="p">(</span><span class="n">json</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span>
-                <span class="s2">&quot;Authorization&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
-                <span class="s2">&quot;Content-Type&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;Accept&quot;</span><span class="p">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;Hibachi-Client&quot;</span><span class="p">:</span> <span class="n">get_hibachi_client</span><span class="p">(),</span>
+                <span class="s2">"Authorization"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">api_key</span><span class="p">,</span>
+                <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span>
+                <span class="s2">"Accept"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span>
+                <span class="s2">"Hibachi-Client"</span><span class="p">:</span> <span class="n">get_hibachi_client</span><span class="p">(),</span>
             <span class="p">}</span>
 
             <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">request</span><span class="p">(</span>
@@ -220,16 +222,16 @@
             <span class="k">raise</span>
         <span class="k">except</span> <span class="n">httpx</span><span class="o">.</span><span class="n">TimeoutException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">TransportTimeoutError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> timed out&quot;</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="o">=</span><span class="kc">None</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> timed out"</span><span class="p">,</span> <span class="n">timeout_seconds</span><span class="o">=</span><span class="kc">None</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">except</span> <span class="p">(</span><span class="n">httpx</span><span class="o">.</span><span class="n">ConnectError</span><span class="p">,</span> <span class="n">httpx</span><span class="o">.</span><span class="n">ConnectTimeout</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to connect to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Failed to connect to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">except</span> <span class="n">httpx</span><span class="o">.</span><span class="n">NetworkError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">HttpConnectionError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Network error during </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span>
+                <span class="sa">f</span><span class="s2">"Network error during </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">url</span><span class="o">=</span><span class="n">url</span>
             <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+            <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> request to </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2"> failed: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
         <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span>
             <span class="n">status</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
             <span class="n">body</span><span class="o">=</span><span class="n">deserialize_response</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">,</span> <span class="n">url</span><span class="p">),</span>
@@ -237,7 +239,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cleanup the httpx client when the executor is destroyed.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">"""Cleanup the httpx client when the executor is destroyed."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
 
 </pre></div>

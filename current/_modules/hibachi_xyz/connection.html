@@ -5,14 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>hibachi_xyz.connection &mdash; hibachi_xyz 0.2.0 documentation</title>
+  <title>hibachi_xyz.connection &mdash; hibachi_xyz 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
 
   
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
       <script src="../../_static/jquery.js?v=5d32c60e"></script>
       <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="../../_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="../../_static/documentation_options.js?v=71d9d8e6"></script>
       <script src="../../_static/doctools.js?v=9bcbadda"></script>
       <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/js/theme.js"></script>
@@ -24,12 +25,13 @@
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search"  style="background: #171718" >
 
           
           
           <a href="../../index.html" class="icon icon-home">
             hibachi_xyz
+              <img src="../../_static/logo.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
@@ -48,7 +50,7 @@
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #171718" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="../../index.html">hibachi_xyz</a>
       </nav>
@@ -69,7 +71,7 @@
            <div itemprop="articleBody">
              
   <h1>Source code for hibachi_xyz.connection</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;Connection utilities for WebSocket connections.&quot;&quot;&quot;</span>
+<span></span><span class="sd">"""Connection utilities for WebSocket connections."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
@@ -90,7 +92,7 @@
     <span class="n">retry_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">backoff_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.5</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WsConnection</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Establish WebSocket connection with exponential backoff retry logic.</span>
+<span class="w">    </span><span class="sd">"""Establish WebSocket connection with exponential backoff retry logic.</span>
 
 <span class="sd">    Attempts to connect up to max_retries times with exponentially increasing delays</span>
 <span class="sd">    between attempts (starting at retry_delay seconds, doubling each time).</span>
@@ -109,7 +111,7 @@
 <span class="sd">    Raises:</span>
 <span class="sd">        Exception: If connection fails after all retry attempts</span>
 
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
     <span class="k">if</span> <span class="n">executor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">hibachi_xyz.executors.defaults</span><span class="w"> </span><span class="kn">import</span> <span class="n">DEFAULT_WS_EXECUTOR</span>
 
@@ -126,11 +128,11 @@
             <span class="n">retry_count</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">retry_count</span> <span class="o">&gt;=</span> <span class="n">max_retries</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">WebSocketConnectionError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Failed to connect after </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2"> attempts: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">"Failed to connect after </span><span class="si">{</span><span class="n">max_retries</span><span class="si">}</span><span class="s2"> attempts: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
 
             <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-                <span class="s2">&quot;Connection attempt </span><span class="si">%d</span><span class="s2"> failed: </span><span class="si">%s</span><span class="s2">. Retrying in </span><span class="si">%d</span><span class="s2"> seconds...&quot;</span><span class="p">,</span>
+                <span class="s2">"Connection attempt </span><span class="si">%d</span><span class="s2"> failed: </span><span class="si">%s</span><span class="s2">. Retrying in </span><span class="si">%d</span><span class="s2"> seconds..."</span><span class="p">,</span>
                 <span class="n">retry_count</span><span class="p">,</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span>
                 <span class="n">retry_delay</span><span class="p">,</span>
@@ -138,7 +140,7 @@
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">retry_delay</span><span class="p">)</span>
             <span class="n">retry_delay</span> <span class="o">*=</span> <span class="n">backoff_factor</span>  <span class="c1"># Exponential backoff</span>
 
-    <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span><span class="s2">&quot;Unreachable. Contact Hibachi support&quot;</span><span class="p">)</span></div>
+    <span class="k">raise</span> <span class="n">TransportError</span><span class="p">(</span><span class="s2">"Unreachable. Contact Hibachi support"</span><span class="p">)</span></div>
 
 </pre></div>
 

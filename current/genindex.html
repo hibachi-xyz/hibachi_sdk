@@ -5,14 +5,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Index &mdash; hibachi_xyz 0.2.0 documentation</title>
+  <title>Index &mdash; hibachi_xyz 0.3.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
       <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
 
   
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
       <script src="_static/jquery.js?v=5d32c60e"></script>
       <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=938c9ccc"></script>
+      <script src="_static/documentation_options.js?v=71d9d8e6"></script>
       <script src="_static/doctools.js?v=9bcbadda"></script>
       <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/js/theme.js"></script>
@@ -24,12 +25,13 @@
   <div class="wy-grid-for-nav">
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+        <div class="wy-side-nav-search"  style="background: #171718" >
 
           
           
           <a href="index.html" class="icon icon-home">
             hibachi_xyz
+              <img src="_static/logo.svg" class="logo" alt="Logo"/>
           </a>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -48,7 +50,7 @@
       </div>
     </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #171718" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="index.html">hibachi_xyz</a>
       </nav>
@@ -518,6 +520,12 @@
       </ul></li>
       <li><a href="hibachi_xyz.html#hibachi_xyz.helpers.check_maintenance_window">check_maintenance_window() (in module hibachi_xyz.helpers)</a>
 </li>
+      <li><a href="hibachi_xyz.html#hibachi_xyz.check_tick_size">check_tick_size() (in module hibachi_xyz)</a>
+
+      <ul>
+        <li><a href="hibachi_xyz.html#hibachi_xyz.types.check_tick_size">(in module hibachi_xyz.types)</a>
+</li>
+      </ul></li>
       <li><a href="hibachi_xyz.html#hibachi_xyz.OrderStatus.CHILD_PENDING">CHILD_PENDING (hibachi_xyz.OrderStatus attribute)</a>
 
       <ul>
@@ -604,6 +612,8 @@
         <li><a href="hibachi_xyz.html#hibachi_xyz.WebSocketOrdersCancelParams.contractId">(hibachi_xyz.WebSocketOrdersCancelParams attribute)</a>
 </li>
       </ul></li>
+      <li><a href="hibachi_xyz.html#hibachi_xyz.helpers.create_list_with">create_list_with() (in module hibachi_xyz.helpers)</a>
+</li>
       <li><a href="hibachi_xyz.html#hibachi_xyz.helpers.create_with">create_with() (in module hibachi_xyz.helpers)</a>
 </li>
       <li><a href="hibachi_xyz.html#hibachi_xyz.CreateOrder">CreateOrder (class in hibachi_xyz)</a>
@@ -1006,14 +1016,14 @@
         <li><a href="hibachi_xyz.html#hibachi_xyz.HibachiApiClient.get_open_interest">(hibachi_xyz.HibachiApiClient method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="hibachi_xyz.html#hibachi_xyz.api.HibachiApiClient.get_order_details">get_order_details() (hibachi_xyz.api.HibachiApiClient method)</a>
 
       <ul>
         <li><a href="hibachi_xyz.html#hibachi_xyz.HibachiApiClient.get_order_details">(hibachi_xyz.HibachiApiClient method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="hibachi_xyz.html#hibachi_xyz.api_ws_trade.HibachiWSTradeClient.get_order_status">get_order_status() (hibachi_xyz.api_ws_trade.HibachiWSTradeClient method)</a>
 
       <ul>
@@ -1054,6 +1064,18 @@
 
       <ul>
         <li><a href="hibachi_xyz.html#hibachi_xyz.HibachiApiClient.get_stats">(hibachi_xyz.HibachiApiClient method)</a>
+</li>
+      </ul></li>
+      <li><a href="hibachi_xyz.html#hibachi_xyz.api.HibachiApiClient.get_step_size">get_step_size() (hibachi_xyz.api.HibachiApiClient method)</a>
+
+      <ul>
+        <li><a href="hibachi_xyz.html#hibachi_xyz.HibachiApiClient.get_step_size">(hibachi_xyz.HibachiApiClient method)</a>
+</li>
+      </ul></li>
+      <li><a href="hibachi_xyz.html#hibachi_xyz.api.HibachiApiClient.get_tick_size">get_tick_size() (hibachi_xyz.api.HibachiApiClient method)</a>
+
+      <ul>
+        <li><a href="hibachi_xyz.html#hibachi_xyz.HibachiApiClient.get_tick_size">(hibachi_xyz.HibachiApiClient method)</a>
 </li>
       </ul></li>
       <li><a href="hibachi_xyz.html#hibachi_xyz.api.HibachiApiClient.get_trades">get_trades() (hibachi_xyz.api.HibachiApiClient method)</a>
@@ -2414,14 +2436,14 @@
         <li><a href="hibachi_xyz.executors.html#hibachi_xyz.executors.WsConnection.recv">(hibachi_xyz.executors.WsConnection method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="hibachi_xyz.html#hibachi_xyz.OrderFlags.ReduceOnly">ReduceOnly (hibachi_xyz.OrderFlags attribute)</a>
 
       <ul>
         <li><a href="hibachi_xyz.html#hibachi_xyz.types.OrderFlags.ReduceOnly">(hibachi_xyz.types.OrderFlags attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="hibachi_xyz.html#hibachi_xyz.OrderStatus.REJECTED">REJECTED (hibachi_xyz.OrderStatus attribute)</a>
 
       <ul>
@@ -2450,6 +2472,18 @@
         <li><a href="hibachi_xyz.html#hibachi_xyz.types.WebSocketResponse.result">(hibachi_xyz.types.WebSocketResponse attribute)</a>
 </li>
         <li><a href="hibachi_xyz.html#hibachi_xyz.WebSocketResponse.result">(hibachi_xyz.WebSocketResponse attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="hibachi_xyz.html#hibachi_xyz.round_price_to_tick">round_price_to_tick() (in module hibachi_xyz)</a>
+
+      <ul>
+        <li><a href="hibachi_xyz.html#hibachi_xyz.types.round_price_to_tick">(in module hibachi_xyz.types)</a>
+</li>
+      </ul></li>
+      <li><a href="hibachi_xyz.html#hibachi_xyz.round_quantity_to_step">round_quantity_to_step() (in module hibachi_xyz)</a>
+
+      <ul>
+        <li><a href="hibachi_xyz.html#hibachi_xyz.types.round_quantity_to_step">(in module hibachi_xyz.types)</a>
 </li>
       </ul></li>
   </ul></td>
@@ -3128,6 +3162,12 @@
 
       <ul>
         <li><a href="hibachi_xyz.html#hibachi_xyz.types.TriggerDirection">(class in hibachi_xyz.types)</a>
+</li>
+      </ul></li>
+      <li><a href="hibachi_xyz.html#hibachi_xyz.Order.triggerDirection">triggerDirection (hibachi_xyz.Order attribute)</a>
+
+      <ul>
+        <li><a href="hibachi_xyz.html#hibachi_xyz.types.Order.triggerDirection">(hibachi_xyz.types.Order attribute)</a>
 </li>
       </ul></li>
       <li><a href="hibachi_xyz.html#hibachi_xyz.Order.triggerPrice">triggerPrice (hibachi_xyz.Order attribute)</a>
