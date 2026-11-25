@@ -37,6 +37,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 ## Http
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
+html_logo = "_static/logo.svg"
+html_favicon = "_static/favicon.ico"
+# The logo has white lettering, so the theme header uses the brand background instead of its default blue.
+html_theme_options = {"style_nav_header_background": "#171718"}
 
 # Rendering
 autodoc_default_options = {
